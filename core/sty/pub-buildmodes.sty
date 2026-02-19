@@ -1,0 +1,90 @@
+%% Copyright (c) 2026 Sebastien Rousseau
+%% Licensed under the MIT License
+%% See LICENSE file for details
+%%
+%% pub-buildmodes.sty — Draft / Submission / Camera-Ready build mode logic
+%% Generalizes \ifPatentOfficeMode from patent.cls and \todaystamp from user-guide.cls
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{pub-buildmodes}[2026/02/17 Publications Build Modes]
+
+\RequirePackage{etoolbox}
+\RequirePackage{iftex}
+
+%% ── Mode flags (set by class options in pub-base.cls) ───────────────────
+%% \ifdraftmode, \ifsubmissionmode, \iffinalmode — exactly one should be true
+\newif\ifdraftmode
+\newif\ifsubmissionmode
+\newif\iffinalmode
+
+%% Default to draft if nothing is set (checked at begin-document)
+\AtBeginDocument{%
+  \ifdraftmode\else
+    \ifsubmissionmode\else
+      \iffinalmode\else
+        \draftmodetrue
+      \fi
+    \fi
+  \fi
+}
+
+%% ── Version stamping (from user-guide.cls) ──────────────────────────────
+\newcommand{\twoDigits}[1]{\ifnum#1<10 0\fi\number#1}
+
+\newcommand{\todaystamp}{%
+  \twoDigits{\numexpr\year-2000\relax}%
+  \twoDigits{\month}%
+  \twoDigits{\day}%
+}
+
+\def\pub@majorVersion{0}
+\def\pub@minorVersion{1}
+
+\newcommand{\setMajorVersion}[1]{\def\pub@majorVersion{#1}}
+\newcommand{\setMinorVersion}[1]{\def\pub@minorVersion{#1}}
+
+\newcommand{\documentVersion}{%
+  \pub@majorVersion.\pub@minorVersion.\todaystamp
+}
+
+%% ── Line numbers (draft + submission) ───────────────────────────────────
+\ifdraftmode
+  \RequirePackage{lineno}
+  \AtBeginDocument{\linenumbers}
+\fi
+\ifsubmissionmode
+  \RequirePackage{lineno}
+  \AtBeginDocument{\linenumbers}
+\fi
+
+%% ── Watermark ───────────────────────────────────────────────────────────
+\ifdraftmode
+  \RequirePackage{draftwatermark}
+  \SetWatermarkText{DRAFT}
+  \SetWatermarkScale{0.5}
+  \SetWatermarkColor[gray]{0.9}
+\fi
+\ifsubmissionmode
+  \RequirePackage{draftwatermark}
+  \SetWatermarkText{FOR REVIEW}
+  \SetWatermarkScale{0.4}
+  \SetWatermarkColor[gray]{0.9}
+\fi
+
+%% ── Overfull markers ────────────────────────────────────────────────────
+\ifdraftmode
+  \overfullrule=5pt
+\else
+  \overfullrule=0pt
+\fi
+
+%% ── Version stamp in footer (draft + submission) ────────────────────────
+\newcommand{\pub@versionfooter}{%
+  \ifdraftmode
+    v\documentVersion\ (draft)%
+  \fi
+  \ifsubmissionmode
+    v\documentVersion\ (submission)%
+  \fi
+}
+
+\endinput

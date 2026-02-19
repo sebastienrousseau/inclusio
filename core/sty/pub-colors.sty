@@ -1,0 +1,59 @@
+%% Copyright (c) 2026 Sebastien Rousseau
+%% Licensed under the MIT License
+%% See LICENSE file for details
+%%
+%% pub-colors.sty — Unified Apple-inspired color palette for Publications
+%% Consolidates palettes from cv.cls, faqs.cls, and user-guide.cls
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{pub-colors}[2026/02/17 Publications Unified Color Palette]
+
+\RequirePackage{xcolor}
+
+%% ── Monochrome & Greys ─────────────────────────────────────────────────
+\definecolor{black}{RGB}{0,0,0}
+\definecolor{white}{RGB}{255,255,255}
+\definecolor{gray}{RGB}{142,142,147}
+\definecolor{darkgray}{RGB}{76,76,76}
+\definecolor{lightgray}{RGB}{242,242,247}
+\definecolor{textgray}{RGB}{44,44,46}
+
+%% ── Core Tints ─────────────────────────────────────────────────────────
+\definecolor{blue}{RGB}{0,122,255}
+\definecolor{brown}{RGB}{162,132,94}
+\definecolor{cyan}{RGB}{50,173,230}
+\definecolor{green}{RGB}{52,199,89}
+\definecolor{indigo}{RGB}{88,86,214}
+\definecolor{mint}{RGB}{0,199,190}
+\definecolor{orange}{RGB}{255,149,0}
+\definecolor{pink}{RGB}{255,45,85}
+\definecolor{purple}{RGB}{175,82,222}
+\definecolor{red}{RGB}{255,59,48}
+\definecolor{teal}{RGB}{90,200,250}
+\definecolor{yellow}{RGB}{255,204,0}
+
+%% ── Light (Pastel) Tints ───────────────────────────────────────────────
+\definecolor{lightblue}{RGB}{217,235,255}
+\definecolor{lightbrown}{RGB}{241,237,231}
+\definecolor{lightcyan}{RGB}{224,243,251}
+\definecolor{lightgreen}{RGB}{225,247,230}
+\definecolor{lightindigo}{RGB}{230,230,249}
+\definecolor{lightmint}{RGB}{217,247,245}
+\definecolor{lightorange}{RGB}{255,239,217}
+\definecolor{lightpink}{RGB}{255,224,230}
+\definecolor{lightpurple}{RGB}{243,229,250}
+\definecolor{lightred}{RGB}{255,226,224}
+\definecolor{lightteal}{RGB}{230,247,254}
+\definecolor{lightyellow}{RGB}{255,247,217}
+
+%% ── Accessibility Colors ───────────────────────────────────────────────
+\definecolor{highcontrast}{RGB}{0,0,0}
+\definecolor{lowcontrast}{RGB}{128,128,128}
+\definecolor{accessible-blue}{RGB}{0,84,159}
+\definecolor{accessible-red}{RGB}{196,30,58}
+
+%% ── Semantic aliases ───────────────────────────────────────────────────
+\colorlet{headingColor}{black}
+\colorlet{subColor}{gray}
+\colorlet{linkColor}{blue}
+
+\endinput

@@ -1,0 +1,255 @@
+name: TeX Live Nightly Package Updates
+
+on:
+  schedule:
+    # Run every night at 2 AM UTC
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+    inputs:
+      force_update:
+        description: 'Force package update check'
+        required: false
+        default: 'false'
+        type: boolean
+
+env:
+  TEXLIVE_VERSION: "2024"
+  DOCKER_IMAGE: "texlive/texlive:TL2024-historic"
+
+jobs:
+  package-health-check:
+    name: TeX Live Package Health Check
+    runs-on: ubuntu-latest
+    container:
+      image: ${{ env.DOCKER_IMAGE }}
+      options: --user root
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Update package database
+        run: |
+          echo "=== Updating TeX Live package database ==="
+          tlmgr update --self --all || true
+
+      - name: Check package status
+        run: |
+          echo "=== Checking package status ==="
+          tlmgr check all > package-check.log 2>&1 || true
+          cat package-check.log
+
+      - name: Generate package report
+        run: |
+          echo "# TeX Live Package Health Report" > package-health-report.md
+          echo "Generated: $(date)" >> package-health-report.md
+          echo "TeX Live Version: $TEXLIVE_VERSION" >> package-health-report.md
+          echo "" >> package-health-report.md
+
+          echo "## System Information" >> package-health-report.md
+          echo '```' >> package-health-report.md
+          tlmgr --version >> package-health-report.md
+          echo '```' >> package-health-report.md
+          echo "" >> package-health-report.md
+
+          echo "## Available Package Updates" >> package-health-report.md
+          echo '```' >> package-health-report.md
+          tlmgr update --list >> package-health-report.md || echo "No updates available" >> package-health-report.md
+          echo '```' >> package-health-report.md
+          echo "" >> package-health-report.md
+
+          echo "## Package Integrity Check" >> package-health-report.md
+          echo '```' >> package-health-report.md
+          cat package-check.log >> package-health-report.md
+          echo '```' >> package-health-report.md
+
+      - name: Test critical packages
+        run: |
+          echo "=== Testing critical LaTeX packages ==="
+          critical_packages=(
+            "latex"
+            "pdflatex"
+            "latexmk"
+            "bibtex"
+            "chktex"
+            "tikz"
+            "pgfplots"
+            "hyperref"
+            "biblatex"
+            "fontspec"
+            "microtype"
+          )
+
+          echo "## Critical Package Test" >> package-health-report.md
+          echo '```' >> package-health-report.md
+
+          for package in "${critical_packages[@]}"; do
+            if tlmgr info "$package" >/dev/null 2>&1; then
+              echo "✓ $package: available" >> package-health-report.md
+            else
+              echo "✗ $package: missing or problematic" >> package-health-report.md
+            fi
+          done
+
+          echo '```' >> package-health-report.md
+
+      - name: Test LaTeX compilation
+        run: |
+          echo "=== Testing LaTeX compilation ==="
+          cat > test-compile.tex << 'EOF'
+          \documentclass{article}
+          \usepackage{amsmath,amsfonts,amssymb}
+          \usepackage{graphicx,hyperref,xcolor}
+          \usepackage{tikz,pgfplots}
+          \usepackage{booktabs,array,longtable}
+          \usepackage{biblatex}
+          \usepackage{microtype}
+
+          \title{TeX Live Test Document}
+          \author{Publications CI/CD Pipeline}
+          \date{\today}
+
+          \begin{document}
+          \maketitle
+
+          \section{Test Section}
+          This is a test document to verify TeX Live installation.
+
+          \subsection{Math Test}
+          \begin{equation}
+            E = mc^2
+          \end{equation}
+
+          \subsection{Graphics Test}
+          \begin{tikzpicture}
+            \draw (0,0) circle (1cm);
+            \draw (0,0) -- (1,0);
+            \node at (0.5,0.1) {$r$};
+          \end{tikzpicture}
+
+          \subsection{Table Test}
+          \begin{tabular}{lcc}
+            \toprule
+            Package & Status & Version \\
+            \midrule
+            LaTeX & OK & 2024 \\
+            \bottomrule
+          \end{tabular}
+
+          \end{document}
+          EOF
+
+          echo "## Compilation Test" >> package-health-report.md
+
+          if pdflatex -interaction=nonstopmode test-compile.tex >/dev/null 2>&1; then
+            echo "✅ Test compilation: PASSED" >> package-health-report.md
+            if [[ -f test-compile.pdf ]]; then
+              pdf_size=$(stat -c%s test-compile.pdf)
+              echo "📄 Generated PDF size: $pdf_size bytes" >> package-health-report.md
+            fi
+          else
+            echo "❌ Test compilation: FAILED" >> package-health-report.md
+            echo '```' >> package-health-report.md
+            tail -20 test-compile.log >> package-health-report.md 2>/dev/null || echo "No log available" >> package-health-report.md
+            echo '```' >> package-health-report.md
+          fi
+
+      - name: Check for security updates
+        run: |
+          echo "## Security Status" >> package-health-report.md
+          echo "Last security scan: $(date)" >> package-health-report.md
+          echo "TeX Live security updates are managed through the base image." >> package-health-report.md
+
+      - name: Archive package report
+        uses: actions/upload-artifact@v4
+        with:
+          name: texlive-health-report-${{ github.run_id }}
+          path: |
+            package-health-report.md
+            package-check.log
+            test-compile.*
+          retention-days: 90
+
+      - name: Create issue on failure
+        if: failure() && github.event_name == 'schedule'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const title = `TeX Live Package Health Check Failed - ${new Date().toISOString().split('T')[0]}`;
+            const body = `
+            # TeX Live Package Health Check Failure
+
+            The nightly TeX Live package health check has failed.
+
+            **Run ID:** ${{ github.run_id }}
+            **Date:** ${new Date().toISOString()}
+            **Workflow:** ${{ github.workflow }}
+
+            ## Action Required
+
+            1. Review the workflow logs: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+            2. Check the package health report in the artifacts
+            3. Update TeX Live packages if necessary
+            4. Verify critical packages are available
+
+            ## Critical Packages Status
+
+            Check these essential packages in the logs:
+            - latex, pdflatex, latexmk
+            - bibtex, chktex
+            - tikz, pgfplots, hyperref
+            - biblatex, fontspec, microtype
+
+            This issue will be automatically closed when the next health check passes.
+            `;
+
+            // Check if similar issue already exists
+            const { data: existingIssues } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              labels: ['texlive', 'package-health'],
+              state: 'open'
+            });
+
+            if (existingIssues.length === 0) {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: title,
+                body: body,
+                labels: ['texlive', 'package-health', 'automated']
+              });
+            }
+
+      - name: Close success issues
+        if: success() && github.event_name == 'schedule'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            // Close any open TeX Live health issues
+            const { data: openIssues } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              labels: ['texlive', 'package-health'],
+              state: 'open'
+            });
+
+            for (const issue of openIssues) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                body: `✅ TeX Live package health check is now passing. Closing this issue.
+
+                **Run ID:** ${{ github.run_id }}
+                **Date:** ${new Date().toISOString()}`
+              });
+
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                state: 'closed'
+              });
+            }

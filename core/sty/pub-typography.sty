@@ -1,0 +1,50 @@
+%% Copyright (c) 2026 Sebastien Rousseau
+%% Licensed under the MIT License
+%% See LICENSE file for details
+%%
+%% pub-typography.sty — Font + microtype configuration for Publications
+%% Merges settings from cv.cls, faqs.cls, user-guide.cls, patent.cls, arxiv_style.sty
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{pub-typography}[2026/02/17 Publications Typography]
+
+\RequirePackage[T1]{fontenc}
+\RequirePackage[utf8]{inputenc}
+\RequirePackage{lmodern}        % Latin Modern: provides bold typewriter + all font shapes
+
+%% ── Options: sans (default) or serif ────────────────────────────────────
+\newif\ifpub@serif \pub@seriffalse
+\DeclareOption{sans}{\pub@seriffalse}
+\DeclareOption{serif}{\pub@seriftrue}
+\ProcessOptions\relax
+
+\ifpub@serif
+  % Serif stack: Times — for papers and patents
+  \RequirePackage{times}
+  \renewcommand{\rmdefault}{ptm}
+  \renewcommand{\sfdefault}{phv}
+\else
+  % Sans-serif stack: Helvetica — for CVs, FAQs, guides
+  \RequirePackage{helvet}
+  \renewcommand{\familydefault}{\sfdefault}
+  \renewcommand{\sfdefault}{phv}
+\fi
+
+%% ── Microtype ───────────────────────────────────────────────────────────
+\RequirePackage[protrusion=true,expansion=true,verbose=silent,patch=none]{microtype}
+
+\microtypesetup{
+    activate={true,nocompatibility},
+    final,
+    tracking=true,
+    kerning=true,
+    spacing=false,
+    factor=1100
+}
+
+%% ── Golden ratio constants (from cv.cls) ────────────────────────────────
+\newcommand{\goldenratio}{1.618}
+\newcommand{\goldenratiom}{0.618}
+\newcommand{\goldenratiosm}{0.382}
+\newcommand{\goldenratioxs}{0.236}
+
+\endinput

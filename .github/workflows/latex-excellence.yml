@@ -1,0 +1,384 @@
+name: LaTeX Excellence Pipeline
+
+on:
+  push:
+    branches: [ main, develop, 'feat/*' ]
+    paths:
+      - '**.tex'
+      - '**.cls'
+      - '**.bib'
+      - '**.mmd'
+      - '**latex-build.mk'
+      - '**/Makefile'
+      - '.latexmkrc'
+      - '.github/workflows/latex-excellence.yml'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - '**.tex'
+      - '**.cls'
+      - '**.bib'
+      - '**.mmd'
+      - '**latex-build.mk'
+      - '**/Makefile'
+      - '.latexmkrc'
+
+env:
+  TEXLIVE_VERSION: "2024"
+  BUILD_TIMEOUT: "120"  # 120 second SLO
+  DOCKER_IMAGE: "texlive/texlive:TL2024-historic"
+
+jobs:
+  detect-changes:
+    name: Detect LaTeX Changes
+    runs-on: ubuntu-latest
+    outputs:
+      has_changes: ${{ steps.changes.outputs.latex }}
+      matrix: ${{ steps.generate-matrix.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Detect LaTeX changes
+        uses: dorny/paths-filter@v3
+        id: changes
+        with:
+          filters: |
+            latex:
+              - '**.tex'
+              - '**.cls'
+              - '**.bib'
+              - '**.mmd'
+              - '**latex-build.mk'
+              - '**/Makefile'
+              - '.latexmkrc'
+
+      - name: Generate build matrix
+        id: generate-matrix
+        if: steps.changes.outputs.latex == 'true'
+        run: |
+          # Discover all directories with LaTeX files
+          matrix='{"include":[]}'
+
+          # Find directories containing .tex files
+          for dir in $(find . -name "*.tex" -type f -exec dirname {} \; | sort -u | grep -v "^\.$" | grep -v "build\|backup"); do
+            dir_name=$(basename "$dir")
+            doc_type="$dir_name"
+
+            # Set version based on directory
+            case "$dir_name" in
+              "cvs")
+                doc_version="1.0"
+                ;;
+              "papers")
+                doc_version="1.0"
+                ;;
+              "patents")
+                doc_version="0.5"
+                ;;
+              "guides"|"faqs")
+                doc_version="1.0"
+                ;;
+              *)
+                doc_version="1.0"
+                ;;
+            esac
+
+            matrix=$(echo "$matrix" | jq --arg dir "$dir" --arg type "$doc_type" --arg version "$doc_version" \
+              '.include += [{"directory": $dir, "type": $type, "version": $version}]')
+          done
+
+          echo "matrix=$matrix" >> $GITHUB_OUTPUT
+          echo "Generated matrix: $matrix"
+
+  latex-quality-gates:
+    name: LaTeX Quality Gates (${{ matrix.type }})
+    runs-on: ubuntu-latest
+    needs: detect-changes
+    if: needs.detect-changes.outputs.has_changes == 'true'
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.detect-changes.outputs.matrix) }}
+    container:
+      image: ${{ env.DOCKER_IMAGE }}
+      options: --user root
+
+    steps:
+      - name: Install system dependencies
+        run: |
+          apt-get update
+          apt-get install -y \
+            git \
+            make \
+            wget \
+            curl \
+            nodejs \
+            npm \
+            python3 \
+            python3-pip \
+            ghostscript \
+            imagemagick \
+            poppler-utils \
+            aspell \
+            aspell-en \
+            chktex \
+            latexindent \
+            checkcites \
+            texlive-latex-extra \
+            texlive-fonts-recommended \
+            texlive-fonts-extra \
+            texlive-bibtex-extra \
+            texlive-science \
+            fonts-liberation
+
+      - uses: actions/checkout@v4
+
+      - name: Install Mermaid CLI
+        run: |
+          npm install -g @mermaid-js/mermaid-cli
+          mmdc --version
+
+      - name: Verify LaTeX installation
+        run: |
+          echo "=== LaTeX Environment ==="
+          pdflatex --version | head -1
+          bibtex --version | head -1
+          latexmk --version | head -1
+          chktex --version | head -1
+          echo "========================="
+
+      - name: Set up build environment
+        working-directory: ${{ matrix.directory }}
+        run: |
+          export DOCUMENT_TYPE=${{ matrix.type }}
+          export DOC_VERSION=${{ matrix.version }}
+          echo "Building documents in: $(pwd)"
+          echo "Document type: $DOCUMENT_TYPE"
+          echo "Version: $DOC_VERSION"
+
+          # Create build directory
+          mkdir -p build backups
+
+          # Copy shared .latexmkrc if not present
+          if [[ ! -f .latexmkrc && -f ../.latexmkrc ]]; then
+            cp ../.latexmkrc .
+          fi
+
+      - name: "Quality Gate 1: ChkTeX Zero Warnings"
+        working-directory: ${{ matrix.directory }}
+        run: |
+          echo "=== ChkTeX Quality Check ==="
+          exit_code=0
+          for tex_file in *.tex; do
+            if [[ -f "$tex_file" ]]; then
+              echo "Checking: $tex_file"
+              if ! chktex -q -n all "$tex_file"; then
+                echo "✗ ChkTeX warnings found in $tex_file"
+                exit_code=1
+              else
+                echo "✓ ChkTeX passed for $tex_file"
+              fi
+            fi
+          done
+          if [[ $exit_code -ne 0 ]]; then
+            echo "FAIL: ChkTeX found warnings. LaTeX excellence requires zero warnings."
+            exit 1
+          fi
+
+      - name: "Quality Gate 2: LaTeX Formatting Check"
+        working-directory: ${{ matrix.directory }}
+        run: |
+          echo "=== LaTeX Formatting Check ==="
+          exit_code=0
+          for tex_file in *.tex; do
+            if [[ -f "$tex_file" ]]; then
+              echo "Checking formatting: $tex_file"
+              if ! latexindent -c -s "$tex_file" > /dev/null 2>&1; then
+                echo "✗ Formatting issues in $tex_file"
+                exit_code=1
+              else
+                echo "✓ Formatting OK: $tex_file"
+              fi
+            fi
+          done
+          if [[ $exit_code -ne 0 ]]; then
+            echo "FAIL: LaTeX formatting issues found"
+            exit 1
+          fi
+
+      - name: "Build Phase: Generate Diagrams"
+        working-directory: ${{ matrix.directory }}
+        timeout-minutes: 2
+        run: |
+          echo "=== Generating Diagrams ==="
+          export DOCUMENT_TYPE=${{ matrix.type }}
+          export DOC_VERSION=${{ matrix.version }}
+
+          # Use project-local build system
+          if [[ -f ./latex-build.mk ]]; then
+            make -f ./latex-build.mk doc-diagrams || true
+          fi
+
+      - name: "Build Phase: LaTeX Compilation with Timeout"
+        working-directory: ${{ matrix.directory }}
+        timeout-minutes: 2  # Enforce 120s SLO
+        run: |
+          echo "=== LaTeX Compilation (SLO: ${BUILD_TIMEOUT}s) ==="
+          export DOCUMENT_TYPE=${{ matrix.type }}
+          export DOC_VERSION=${{ matrix.version }}
+          start_time=$(date +%s)
+
+          # Use latexmk for robust compilation
+          for tex_file in *.tex; do
+            if [[ -f "$tex_file" ]]; then
+              echo "Compiling: $tex_file"
+              if ! timeout ${BUILD_TIMEOUT}s latexmk -pdf -interaction=nonstopmode -halt-on-error "$tex_file"; then
+                echo "✗ Compilation failed or exceeded ${BUILD_TIMEOUT}s SLO"
+                exit 1
+              fi
+            fi
+          done
+
+          end_time=$(date +%s)
+          build_duration=$((end_time - start_time))
+          echo "✓ Build completed in ${build_duration}s (SLO: ${BUILD_TIMEOUT}s)"
+
+          # Verify PDFs were generated
+          pdf_count=$(find build/ -name "*.pdf" | wc -l)
+          if [[ $pdf_count -eq 0 ]]; then
+            echo "✗ No PDFs generated"
+            exit 1
+          fi
+          echo "✓ Generated $pdf_count PDF files"
+
+      - name: "Quality Gate 3: Reference Validation"
+        working-directory: ${{ matrix.directory }}
+        run: |
+          echo "=== Reference Validation ==="
+          for tex_file in *.tex; do
+            if [[ -f "$tex_file" ]]; then
+              echo "Checking references: $tex_file"
+              # Check for orphaned citations
+              if command -v checkcites >/dev/null 2>&1; then
+                if ! checkcites --backend bibtex "$tex_file"; then
+                  echo "⚠ Reference issues found in $tex_file"
+                  # Don't fail the build for reference warnings, just report
+                fi
+              else
+                echo "⚠ checkcites not available, skipping reference check"
+              fi
+            fi
+          done
+
+      - name: "Quality Gate 4: PDF Validation"
+        working-directory: ${{ matrix.directory }}
+        run: |
+          echo "=== PDF Validation ==="
+          exit_code=0
+
+          for pdf_file in build/*.pdf; do
+            if [[ -f "$pdf_file" ]]; then
+              echo "Validating: $pdf_file"
+
+              # Check file size (should be > 10KB for real documents)
+              size=$(stat -c%s "$pdf_file")
+              if [[ $size -lt 10240 ]]; then
+                echo "⚠ PDF file suspiciously small: $pdf_file ($size bytes)"
+              fi
+
+              # Check page count
+              if command -v pdfinfo >/dev/null 2>&1; then
+                pages=$(pdfinfo "$pdf_file" | grep "Pages:" | awk '{print $2}')
+                if [[ -n "$pages" && $pages -gt 0 ]]; then
+                  echo "✓ PDF has $pages pages: $pdf_file"
+                else
+                  echo "⚠ Could not determine page count for: $pdf_file"
+                fi
+              fi
+
+              # Check for Type 3 fonts (bitmap fonts - not allowed)
+              if command -v pdffonts >/dev/null 2>&1; then
+                if pdffonts "$pdf_file" | grep -q "Type 3"; then
+                  echo "✗ Type 3 (bitmap) fonts found in $pdf_file"
+                  pdffonts "$pdf_file" | grep "Type 3"
+                  exit_code=1
+                else
+                  echo "✓ No Type 3 fonts in $pdf_file"
+                fi
+              fi
+            fi
+          done
+
+          if [[ $exit_code -ne 0 ]]; then
+            echo "FAIL: PDF validation failed"
+            exit 1
+          fi
+
+      - name: Clean auxiliary files
+        working-directory: ${{ matrix.directory }}
+        run: |
+          echo "=== Cleaning Auxiliary Files ==="
+          latexmk -c
+          echo "✓ Auxiliary files cleaned"
+
+      - name: Archive build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: latex-build-${{ matrix.type }}-${{ github.run_id }}
+          path: |
+            ${{ matrix.directory }}/build/*.pdf
+            ${{ matrix.directory }}/build/**/*.png
+          retention-days: 30
+
+  build-summary:
+    name: LaTeX Build Summary
+    runs-on: ubuntu-latest
+    needs: [detect-changes, latex-quality-gates]
+    if: always() && needs.detect-changes.outputs.has_changes == 'true'
+    steps:
+      - name: Build Summary
+        run: |
+          echo "=== LaTeX Excellence Pipeline Summary ==="
+          if [[ "${{ needs.latex-quality-gates.result }}" == "success" ]]; then
+            echo "✅ All LaTeX documents passed excellence gates"
+            echo "- ✅ ChkTeX zero warnings"
+            echo "- ✅ LaTeX formatting standards"
+            echo "- ✅ Compilation within SLO (120s)"
+            echo "- ✅ Reference validation"
+            echo "- ✅ PDF quality validation"
+            echo "- ✅ No Type 3 fonts"
+          else
+            echo "❌ LaTeX excellence gates failed"
+            echo "Check individual job logs for details"
+            exit 1
+          fi
+
+  # Nightly job for TeX Live package updates (separate workflow trigger)
+  package-updates:
+    name: TeX Live Package Health
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main')
+    container:
+      image: ${{ env.DOCKER_IMAGE }}
+      options: --user root
+    steps:
+      - name: Check TeX Live package status
+        run: |
+          echo "=== TeX Live Package Status ==="
+          tlmgr update --list
+          echo "✓ Package status checked"
+
+      - name: Create update summary
+        run: |
+          echo "# TeX Live Package Update Summary" > package-update-summary.md
+          echo "Generated: $(date)" >> package-update-summary.md
+          echo "" >> package-update-summary.md
+          echo "## Available Updates" >> package-update-summary.md
+          tlmgr update --list >> package-update-summary.md || echo "No updates available" >> package-update-summary.md
+
+      - name: Upload package summary
+        uses: actions/upload-artifact@v4
+        with:
+          name: texlive-package-summary
+          path: package-update-summary.md

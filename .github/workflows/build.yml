@@ -1,0 +1,98 @@
+name: Build Documents
+
+on:
+  push:
+    branches: [ main, develop, 'feat/*' ]
+    paths:
+      - 'src/**'
+      - 'core/**'
+      - 'data/**'
+      - 'assets/**'
+      - 'scripts/**'
+      - 'tests/**'
+      - 'Makefile'
+      - '.github/workflows/build.yml'
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    name: Build (${{ matrix.mode }})
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        mode: [draft, camera-ready]
+      fail-fast: false
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Python dependencies
+        run: pip install pyyaml pytest pikepdf jinja2
+
+      - name: Install pandoc
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq pandoc
+
+      - name: Install TeX Live
+        uses: xu-cheng/latex-action@v3
+        with:
+          run: echo "TeX Live installed"
+
+      - name: Build documents
+        run: python3 scripts/build.py build --mode ${{ matrix.mode }}
+
+      - name: Validate PDFs
+        run: python3 -m pytest tests/test_pdf_validation.py -v
+
+      - name: Stamp PDFs with git provenance
+        run: |
+          if [ "${{ matrix.mode }}" = "camera-ready" ]; then
+            python3 scripts/stamp-pdfs.py build/
+          else
+            python3 scripts/stamp-pdfs.py build/ \
+              --watermark "DRAFT — $(git rev-parse --abbrev-ref HEAD)"
+          fi
+
+      - name: Render blog posts
+        run: python3 scripts/build.py blog
+
+      - name: Upload PDF artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: pdfs-${{ matrix.mode }}
+          path: build/**/*.pdf
+          if-no-files-found: warn
+
+      - name: Upload blog artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: blog-${{ matrix.mode }}
+          path: build/blog/*.md
+          if-no-files-found: warn
+
+  lint:
+    name: Quality Checks
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: pip install pyyaml pytest
+
+      - name: Run semantic check
+        run: bash scripts/check-semantic.sh
+
+      - name: Run tests
+        run: python3 -m pytest tests/ -v

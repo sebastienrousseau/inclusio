@@ -1,0 +1,150 @@
+# Pre-commit hooks for LaTeX document quality
+# Enforces code style and catches issues before commit
+
+repos:
+  # LaTeX-specific hooks
+  - repo: local
+    hooks:
+      - id: chktex-check
+        name: ChkTeX LaTeX Linter
+        entry: chktex
+        args: ['-q', '-n', 'all']
+        language: system
+        files: '\.tex$'
+        fail_fast: true
+        description: 'Enforce zero ChkTeX warnings for LaTeX files'
+
+      - id: latexindent-check
+        name: LaTeX Formatting Check
+        entry: bash
+        args:
+          - '-c'
+          - |
+            for file in "$@"; do
+              echo "Checking LaTeX formatting: $file"
+              if ! latexindent -c -s "$file" > /dev/null 2>&1; then
+                echo "✗ LaTeX formatting issues found in $file"
+                echo "  Run: latexindent -w '$file' to fix"
+                exit 1
+              fi
+              echo "✓ LaTeX formatting OK: $file"
+            done
+        language: system
+        files: '\.tex$'
+        fail_fast: true
+        description: 'Check LaTeX code formatting'
+
+      - id: tex-forbidden-patterns
+        name: LaTeX Anti-patterns Check
+        entry: bash
+        args:
+          - '-c'
+          - |
+            forbidden_patterns=(
+              '\$\$[^$]*\$\$'  # $$ math mode (use \[ \] instead)
+              '\\\\\\s*\\n'    # Double backslash followed by newline
+              '\\usepackage.*{times}'  # Outdated times package
+              '\\bf\b'         # Deprecated \bf command
+              '\\it\b'         # Deprecated \it command
+              '\\rm\b'         # Deprecated \rm command
+            )
+
+            for file in "$@"; do
+              echo "Checking anti-patterns in: $file"
+              for pattern in "${forbidden_patterns[@]}"; do
+                if grep -P "$pattern" "$file" > /dev/null; then
+                  echo "✗ Forbidden pattern found in $file: $pattern"
+                  grep -n -P "$pattern" "$file"
+                  exit 1
+                fi
+              done
+              echo "✓ No anti-patterns found in: $file"
+            done
+        language: system
+        files: '\.tex$'
+        description: 'Prevent common LaTeX anti-patterns'
+
+      - id: tex-spell-check
+        name: LaTeX Spell Check
+        entry: bash
+        args:
+          - '-c'
+          - |
+            for file in "$@"; do
+              echo "Spell checking: $file"
+              if command -v aspell >/dev/null 2>&1; then
+                # Extract text content and check spelling
+                if ! aspell --mode=tex --personal=/dev/null list < "$file" | head -10 | grep -q .; then
+                  echo "✓ Spell check passed: $file"
+                else
+                  echo "⚠ Potential spelling issues found in $file (review manually)"
+                fi
+              else
+                echo "⚠ aspell not available, skipping spell check for $file"
+              fi
+            done
+        language: system
+        files: '\.tex$'
+        description: 'Basic spell checking for LaTeX files'
+
+  # General file hygiene
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: trailing-whitespace
+        files: '\.(tex|cls|bib)$'
+      - id: end-of-file-fixer
+        files: '\.(tex|cls|bib)$'
+      - id: check-merge-conflict
+      - id: check-added-large-files
+        args: ['--maxkb=2048']
+      - id: check-yaml
+        files: '\.ya?ml$'
+
+  # Bibliography validation
+  - repo: local
+    hooks:
+      - id: bibtex-validate
+        name: BibTeX Validation
+        entry: bash
+        args:
+          - '-c'
+          - |
+            for file in "$@"; do
+              echo "Validating BibTeX: $file"
+              if command -v bibtex >/dev/null 2>&1; then
+                # Create temporary LaTeX file to test bibliography
+                temp_tex=$(mktemp --suffix=.tex)
+                cat > "$temp_tex" << 'EOF'
+            \documentclass{article}
+            \begin{document}
+            \bibliography{BIBFILE}
+            \bibliographystyle{plain}
+            \end{document}
+            EOF
+                sed -i "s/BIBFILE/$(basename "$file" .bib)/" "$temp_tex"
+                temp_dir=$(dirname "$temp_tex")
+                cp "$file" "$temp_dir/"
+
+                if (cd "$temp_dir" && bibtex "$(basename "$temp_tex" .tex)" >/dev/null 2>&1); then
+                  echo "✓ BibTeX validation passed: $file"
+                else
+                  echo "✗ BibTeX validation failed: $file"
+                  rm -f "$temp_tex" "$temp_dir/$(basename "$file")"
+                  exit 1
+                fi
+                rm -f "$temp_tex" "$temp_dir/$(basename "$file")"
+              else
+                echo "⚠ bibtex not available, skipping validation for $file"
+              fi
+            done
+        language: system
+        files: '\.bib$'
+        description: 'Validate BibTeX bibliography files'
+
+# Global configuration
+default_language_version:
+  python: python3
+
+fail_fast: false
+minimum_pre_commit_version: '2.15.0'
