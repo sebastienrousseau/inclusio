@@ -8,11 +8,18 @@ SHELL := /bin/bash
 PYTHON := python3
 BUILD  := $(PYTHON) scripts/build.py
 
+# External content directory (set via EUXIS_CONTENT_DIR env var)
+CONTENT_DIR ?= $(EUXIS_CONTENT_DIR)
+ifneq ($(CONTENT_DIR),)
+  BUILD += --content-dir $(CONTENT_DIR)
+  export EUXIS_CONTENT_DIR := $(CONTENT_DIR)
+endif
+
 ###############################################################################
 # Build Targets
 ###############################################################################
 
-.PHONY: all draft submission final assets lint fix render render-md blog tailor sitemap docs setup clean clean-build distclean test coverage validate validate-private list help
+.PHONY: all draft submission final publish assets lint fix render render-md blog tailor sitemap docs setup clean clean-build distclean test coverage validate validate-private list help
 
 all: draft ## Build all documents in draft mode (default)
 
@@ -23,6 +30,13 @@ submission: ## Build all documents in submission mode
 	$(BUILD) build --mode submission
 
 final: ## Build all documents in camera-ready mode (PDF/A-2b)
+	$(BUILD) build --mode camera-ready
+
+publish: ## Camera-ready build using external content dir (requires EUXIS_CONTENT_DIR)
+ifeq ($(CONTENT_DIR),)
+	@echo "ERROR: publish requires EUXIS_CONTENT_DIR or CONTENT_DIR=<path>"
+	@exit 1
+endif
 	$(BUILD) build --mode camera-ready
 
 assets: ## Run asset pipeline (MMD → SVG → PDF/PNG)

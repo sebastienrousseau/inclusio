@@ -94,6 +94,47 @@ class TestTexinputsEnv:
         sep = ":" if os.name != "nt" else ";"
         assert sep in result
 
+    def test_split_roots_includes_both_assets(self, tmp_path, monkeypatch):
+        """When CONTENT_ROOT != PROJECT_ROOT, both asset dirs appear."""
+        content = tmp_path / "content"
+        content.mkdir()
+        monkeypatch.setattr(build, "CONTENT_ROOT", content)
+        # PROJECT_ROOT stays at the real value — they differ
+        result = build.texinputs_env(Path("/doc"))
+        sep = ":" if os.name != "nt" else ";"
+        parts = result.split(sep)
+        assert str(content / "assets") in parts
+        assert str(build.PROJECT_ROOT / "assets") in parts
+
+
+# ── _resolve_content_paths ───────────────────────────────────────────────
+
+
+class TestResolveContentPaths:
+    def test_rebinds_all_globals(self, tmp_path, monkeypatch):
+        """_resolve_content_paths sets CONTENT_ROOT and all derived paths."""
+        # Save originals to restore after test
+        orig = {
+            attr: getattr(build, attr)
+            for attr in ("CONTENT_ROOT", "META_FILE", "BUILD_DIR",
+                         "CACHE_DIR", "RENDERED_DIR", "TAILORED_DIR")
+        }
+        try:
+            build._resolve_content_paths(tmp_path)
+            assert build.CONTENT_ROOT == tmp_path.resolve()
+            assert build.META_FILE == tmp_path.resolve() / "data" / "meta.yaml"
+            assert build.BUILD_DIR == tmp_path.resolve() / "build"
+            assert build.CACHE_DIR == tmp_path.resolve() / "build" / ".cache"
+            assert build.RENDERED_DIR == (
+                tmp_path.resolve() / "build" / ".cache" / "rendered"
+            )
+            assert build.TAILORED_DIR == (
+                tmp_path.resolve() / "data" / "tailored"
+            )
+        finally:
+            for attr, val in orig.items():
+                setattr(build, attr, val)
+
 
 # ── build_document ───────────────────────────────────────────────────────
 
@@ -511,6 +552,16 @@ class TestMain:
             build.main()
         mock_tailor.assert_called_once()
 
+    @patch("build.cmd_list")
+    @patch("build._resolve_content_paths")
+    def test_content_dir_flag(self, mock_resolve, mock_list, tmp_path):
+        """--content-dir calls _resolve_content_paths before dispatching."""
+        with patch("sys.argv", ["build.py", "--content-dir",
+                                 str(tmp_path), "list"]):
+            build.main()
+        mock_resolve.assert_called_once_with(str(tmp_path))
+        mock_list.assert_called_once()
+
 
 # ── cmd_render ──────────────────────────────────────────────────────────
 
@@ -525,7 +576,8 @@ class TestCmdRender:
             meta = build.load_meta()
             build.cmd_render(args, meta)
             mock_render_mod.render_document.assert_called_once_with(
-                "cv", "latex", "draft"
+                "cv", "latex", "draft",
+                content_root=build.CONTENT_ROOT,
             )
 
     def test_render_import_error(self, monkeypatch):
@@ -722,10 +774,11 @@ class TestCmdTailor:
         # Create the tailored YAML file so shutil.copy2 can read it
         yaml_file = tmp_path / "out.yaml"
         yaml_file.write_text("role: Test\n")
-        # Redirect PROJECT_ROOT so copy target lands in tmp_path
+        # Redirect PROJECT_ROOT and CONTENT_ROOT so copy target lands in tmp_path
         fake_root = tmp_path / "project"
         (fake_root / "data" / "tailored").mkdir(parents=True)
         monkeypatch.setattr(build, "PROJECT_ROOT", fake_root)
+        monkeypatch.setattr(build, "CONTENT_ROOT", fake_root)
         monkeypatch.setattr(build, "BUILD_DIR", fake_root / "build")
         monkeypatch.setattr(build, "CACHE_DIR", fake_root / "build" / ".cache")
         monkeypatch.setattr(build, "RENDERED_DIR",
@@ -764,6 +817,7 @@ class TestCmdTailor:
             "tailor": mock_tailor_mod,
             "render": mock_render_mod,
         }), patch.object(build, "PROJECT_ROOT", fake_root), \
+             patch.object(build, "CONTENT_ROOT", fake_root), \
              patch.object(build, "BUILD_DIR", fake_root / "build"), \
              patch.object(build, "CACHE_DIR",
                           fake_root / "build" / ".cache"), \
@@ -1115,6 +1169,7 @@ class TestRenderedPathFallback:
         monkeypatch.setattr(build, "BUILD_DIR", tmp_path / "build")
         monkeypatch.setattr(build, "CACHE_DIR", tmp_path / "build" / ".cache")
         monkeypatch.setattr(build, "PROJECT_ROOT", tmp_path)
+        monkeypatch.setattr(build, "CONTENT_ROOT", tmp_path)
         rendered_dir = tmp_path / "build" / ".cache" / "rendered"
         rendered_dir.mkdir(parents=True)
         monkeypatch.setattr(build, "RENDERED_DIR", rendered_dir)
@@ -1395,6 +1450,7 @@ class TestDiscoverTailored:
         monkeypatch.setattr(build, "TAILORED_DIR", tmp_path / "tailored")
         monkeypatch.setattr(build, "RENDERED_DIR", tmp_path / "rendered")
         monkeypatch.setattr(build, "PROJECT_ROOT", tmp_path)
+        monkeypatch.setattr(build, "CONTENT_ROOT", tmp_path)
         (tmp_path / "tailored").mkdir()
         (tmp_path / "rendered").mkdir()
 
@@ -1442,6 +1498,7 @@ class TestDiscoverTailored:
         monkeypatch.setattr(build, "TAILORED_DIR", tmp_path / "tailored")
         monkeypatch.setattr(build, "RENDERED_DIR", tmp_path / "rendered")
         monkeypatch.setattr(build, "PROJECT_ROOT", tmp_path)
+        monkeypatch.setattr(build, "CONTENT_ROOT", tmp_path)
         (tmp_path / "tailored").mkdir()
         (tmp_path / "rendered").mkdir()
 
@@ -1511,6 +1568,7 @@ class TestDiscoverTailored:
         monkeypatch.setattr(build, "TAILORED_DIR", tmp_path / "tailored")
         monkeypatch.setattr(build, "RENDERED_DIR", tmp_path / "rendered")
         monkeypatch.setattr(build, "PROJECT_ROOT", tmp_path)
+        monkeypatch.setattr(build, "CONTENT_ROOT", tmp_path)
         (tmp_path / "tailored").mkdir()
         (tmp_path / "rendered").mkdir()
 

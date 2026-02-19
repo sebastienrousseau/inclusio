@@ -34,8 +34,14 @@ import yaml
 # ── Paths ────────────────────────────────────────────────────────────────
 SCRIPT_DIR = Path(__file__).resolve().parent
 PROJECT_ROOT = SCRIPT_DIR.parent
-STOPWORDS_FILE = PROJECT_ROOT / "data" / "stopwords.txt"
-TAILORED_DIR = PROJECT_ROOT / "data" / "tailored"
+
+# CONTENT_ROOT: where content lives (data/, src/).
+# Defaults to PROJECT_ROOT; overridden by EUXIS_CONTENT_DIR env var.
+_env_content = os.environ.get("EUXIS_CONTENT_DIR")
+CONTENT_ROOT = Path(_env_content).resolve() if _env_content else PROJECT_ROOT
+
+STOPWORDS_FILE = CONTENT_ROOT / "data" / "stopwords.txt"
+TAILORED_DIR = CONTENT_ROOT / "data" / "tailored"
 
 
 # ── Theme map for domain-aware matching ──────────────────────────────────
@@ -596,7 +602,7 @@ def generate(brief_path, doc_type="cv", output_id=None, base_path=None,
     if base_path:
         data_file = Path(base_path)
     else:
-        data_file = PROJECT_ROOT / "data" / f"{doc_type}-data.yaml"
+        data_file = CONTENT_ROOT / "data" / f"{doc_type}-data.yaml"
     if not data_file.exists():
         print(f"ERROR: Base data file not found: {data_file}", file=sys.stderr)
         sys.exit(1)
