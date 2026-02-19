@@ -1,0 +1,26 @@
+title: Bug Discovered in Quantum Algorithm for Lattice-Based Crypto
+author: contact@sebastienrousseau.com
+date_pretty: Apr 22, 2024
+date: "2024-04-22"
+layout: report
+locale: en_GB
+banner_alt: Image generated using MidJourney
+changefreq: weekly
+charset: UTF-8
+news_genres: Blog
+twitter_card: summary
+twitter_creator: "@wwdseb"
+site_software: "Shokunin, Rust"
+description: post-quantum cryptography analysis
+body: |
+  The Quantum Conundrum
+
+  Researchers Yilei Chen and Nigel Smart discuss weaknesses around CRYSTALS-KYBER
+  and CRYSTALS-Dilithium in selected assumptions.
+
+  Shokunin SSG pipeline notes.
+  apple-mobile-web-app-capable
+  msapplication-navbutton-color
+
+  [00]: intro reference
+  [07]: closing reference

@@ -108,7 +108,7 @@ class TestBuildDocument:
 
     def test_skips_input_files(self, capsys):
         config = {
-            "src": "src/papers/qaas-paper.tex",
+            "src": "src/papers/patent-paper.tex",
             "class": "pub-paper",
             "title": "T",
             "note": "This is an input file, not standalone",
@@ -667,7 +667,7 @@ class TestCmdBlog:
         mock_render_mod = MagicMock()
         with patch.dict("sys.modules", {"render": mock_render_mod}):
             meta = build.load_meta()
-            args = Namespace(doc="qaas-blog")
+            args = Namespace(doc="security-blog")
             with pytest.raises(SystemExit):
                 build.cmd_blog(args, meta)
 
@@ -1359,7 +1359,7 @@ class TestArtifactSubdir:
         [
             ("src/cvs/cv.tex", "cvs"),
             ("src/papers/whisper.tex", "papers"),
-            ("src/patents/qaas/qaas.tex", "patents"),
+            ("src/patents/patent/patent.tex", "patents"),
             ("src/faqs/faqs.tex", "faqs"),
             ("src/guides/user-guide.tex", "guides"),
         ],

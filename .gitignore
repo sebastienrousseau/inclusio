@@ -43,3 +43,4 @@ __pycache__/
 *.pyc
 .coverage
 .pytest_cache/
+docs/_build/
