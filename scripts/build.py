@@ -30,10 +30,32 @@ import yaml
 # ── Paths ────────────────────────────────────────────────────────────────
 SCRIPT_DIR = Path(__file__).resolve().parent
 PROJECT_ROOT = SCRIPT_DIR.parent
-META_FILE = PROJECT_ROOT / "data" / "meta.yaml"
-BUILD_DIR = PROJECT_ROOT / "build"
+
+# CONTENT_ROOT: where content lives (data/, src/, templates/, build/).
+# Defaults to PROJECT_ROOT; overridden by EUXIS_CONTENT_DIR env var or
+# --content-dir CLI flag for split-repo workflows.
+_env_content = os.environ.get("EUXIS_CONTENT_DIR")
+CONTENT_ROOT = Path(_env_content).resolve() if _env_content else PROJECT_ROOT
+
+META_FILE = CONTENT_ROOT / "data" / "meta.yaml"
+BUILD_DIR = CONTENT_ROOT / "build"
 CACHE_DIR = BUILD_DIR / ".cache"
 RENDERED_DIR = CACHE_DIR / "rendered"
+
+
+def _resolve_content_paths(root):
+    """Re-bind content-path globals to *root* (a Path).
+
+    Called when --content-dir is provided on the CLI, after argparse runs.
+    """
+    global CONTENT_ROOT, META_FILE, BUILD_DIR, CACHE_DIR, RENDERED_DIR
+    global TAILORED_DIR
+    CONTENT_ROOT = Path(root).resolve()
+    META_FILE = CONTENT_ROOT / "data" / "meta.yaml"
+    BUILD_DIR = CONTENT_ROOT / "build"
+    CACHE_DIR = BUILD_DIR / ".cache"
+    RENDERED_DIR = CACHE_DIR / "rendered"
+    TAILORED_DIR = CONTENT_ROOT / "data" / "tailored"
 
 
 def load_meta():
@@ -80,8 +102,11 @@ def texinputs_env(doc_dir, extra_dir=None):
     ]
     if extra_dir and str(extra_dir) != str(doc_dir):
         paths.append(str(extra_dir))
+    paths.append(str(CONTENT_ROOT / "assets"))
+    if CONTENT_ROOT != PROJECT_ROOT:
+        paths.append(str(PROJECT_ROOT / "assets"))
     paths += [
-        str(PROJECT_ROOT / "assets"),
+        str(CONTENT_ROOT),
         str(PROJECT_ROOT),
         "",  # trailing colon for system default
     ]
@@ -275,7 +300,7 @@ def _post_process_pdf(pdf_path, doc_id, doc_config, meta):
         )
 
 
-TAILORED_DIR = PROJECT_ROOT / "data" / "tailored"
+TAILORED_DIR = CONTENT_ROOT / "data" / "tailored"
 
 
 def _artifact_subdir(doc_id, doc_config):
@@ -364,7 +389,7 @@ def _discover_tailored(meta):
         # src/{category}/{doc_id}/ so every file needed to compile
         # lives in one self-contained directory.
         category = type_to_category.get(doc_type, f"{doc_type}s")
-        src_subdir = PROJECT_ROOT / "src" / category / doc_id
+        src_subdir = CONTENT_ROOT / "src" / category / doc_id
         src_subdir.mkdir(parents=True, exist_ok=True)
         src_tex = src_subdir / f"{doc_id}.tex"
         src_tex.write_text(output, encoding="utf-8")
@@ -374,7 +399,7 @@ def _discover_tailored(meta):
                          src_subdir / f"{doc_id}.xmpdata")
 
         # Copy shared figures from parent category directory
-        figures_dir = PROJECT_ROOT / "src" / category / "figures"
+        figures_dir = CONTENT_ROOT / "src" / category / "figures"
         target_figures = src_subdir / "figures"
         if figures_dir.exists() and not target_figures.exists():
             shutil.copytree(figures_dir, target_figures)
@@ -400,7 +425,7 @@ def _discover_tailored(meta):
 
 def build_document(doc_id, doc_config, mode, meta, force=False):
     """Compile a single document."""
-    src_path = PROJECT_ROOT / doc_config["src"]
+    src_path = CONTENT_ROOT / doc_config["src"]
     original_src_dir = src_path.parent
 
     # Use rendered template if available (but not for tailored docs whose
@@ -447,7 +472,7 @@ def build_document(doc_id, doc_config, mode, meta, force=False):
     # category dir so shared figures/ are found.
     figures_src = doc_config.get("figures_src", "")
     if figures_src:
-        fig_dir = str(PROJECT_ROOT / figures_src)
+        fig_dir = str(CONTENT_ROOT / figures_src)
         sep = ":" if os.name != "nt" else ";"
         env["TEXINPUTS"] = fig_dir + sep + env["TEXINPUTS"]
 
@@ -582,19 +607,25 @@ def cmd_assets(args, meta):
         print(f"ERROR: {script} not found", file=sys.stderr)
         sys.exit(1)
 
-    result = subprocess.run(["bash", str(script)], cwd=str(PROJECT_ROOT))
+    env = os.environ.copy()
+    env["EUXIS_CONTENT_DIR"] = str(CONTENT_ROOT)
+    result = subprocess.run(["bash", str(script)], cwd=str(CONTENT_ROOT),
+                            env=env)
     sys.exit(result.returncode)
 
 
 def cmd_lint(args, meta):
     """Run quality checks."""
     errors = 0
+    env = os.environ.copy()
+    env["EUXIS_CONTENT_DIR"] = str(CONTENT_ROOT)
 
     # 1. Semantic check
     print("Running semantic check...")
     check_script = PROJECT_ROOT / "scripts" / "check-semantic.sh"
     if check_script.exists():
-        result = subprocess.run(["bash", str(check_script)], cwd=str(PROJECT_ROOT))
+        result = subprocess.run(["bash", str(check_script)],
+                                cwd=str(CONTENT_ROOT), env=env)
         if result.returncode != 0:
             errors += 1
     else:
@@ -603,15 +634,18 @@ def cmd_lint(args, meta):
     # 2. chktex
     if check_tool("chktex"):
         print("\nRunning chktex...")
-        for tex_file in (PROJECT_ROOT / "src").rglob("*.tex"):
-            result = subprocess.run(
-                ["chktex", "-q", str(tex_file)],
-                capture_output=True,
-                text=True,
-            )
-            if result.stdout.strip():
-                print(f"  {tex_file.relative_to(PROJECT_ROOT)}: warnings found")
-                errors += 1
+        src_dir = CONTENT_ROOT / "src"
+        if src_dir.exists():
+            for tex_file in src_dir.rglob("*.tex"):
+                result = subprocess.run(
+                    ["chktex", "-q", str(tex_file)],
+                    capture_output=True,
+                    text=True,
+                )
+                if result.stdout.strip():
+                    print(f"  {tex_file.relative_to(CONTENT_ROOT)}: "
+                          f"warnings found")
+                    errors += 1
     else:
         print("  SKIP: chktex not installed")
 
@@ -620,7 +654,7 @@ def cmd_lint(args, meta):
         print("\nRunning vale...")
         result = subprocess.run(
             ["vale", "src/"],
-            cwd=str(PROJECT_ROOT),
+            cwd=str(CONTENT_ROOT),
             capture_output=True,
             text=True,
         )
@@ -649,7 +683,8 @@ def cmd_render(args, meta):
     doc_id = args.doc
     fmt = getattr(args, "format", "latex")
     mode = getattr(args, "mode", "draft")
-    render_module.render_document(doc_id, fmt, mode)
+    render_module.render_document(doc_id, fmt, mode,
+                                  content_root=CONTENT_ROOT)
 
 
 def cmd_fix(args, meta):
@@ -664,7 +699,9 @@ def cmd_fix(args, meta):
         cmd.append("--dry-run")
     if getattr(args, "verbose", False):
         cmd.append("--verbose")
-    result = subprocess.run(cmd, cwd=str(PROJECT_ROOT))
+    env = os.environ.copy()
+    env["EUXIS_CONTENT_DIR"] = str(CONTENT_ROOT)
+    result = subprocess.run(cmd, cwd=str(CONTENT_ROOT), env=env)
     sys.exit(result.returncode)
 
 
@@ -721,7 +758,7 @@ def cmd_blog(args, meta):
     print(f"Rendering {len(entries)} blog post(s)...\n")
 
     for blog_id, config in entries.items():
-        render_module.render_blog(blog_id, config, PROJECT_ROOT)
+        render_module.render_blog(blog_id, config, CONTENT_ROOT)
 
     print(f"\nBlog: {len(entries)} post(s) rendered")
 
@@ -793,13 +830,14 @@ def cmd_tailor(args, meta):
 
             # Link tailored data so render_document finds it under the
             # template's doc_type ID (e.g. data/tailored/cv.yaml).
-            tailored_dir = PROJECT_ROOT / "data" / "tailored"
+            tailored_dir = CONTENT_ROOT / "data" / "tailored"
             type_link = tailored_dir / f"{doc_type}.yaml"
             if output_id != doc_type:
                 shutil.copy2(yaml_path, type_link)
 
             render_module.render_document(doc_type, fmt="latex",
-                                          build_mode=mode)
+                                          build_mode=mode,
+                                          content_root=CONTENT_ROOT)
 
             # Rename the rendered file to the output_id
             rendered_dir = RENDERED_DIR
@@ -863,6 +901,10 @@ Commands:
   distclean Remove build output + dev artifacts (.coverage, .pytest_cache)
   list      Show registered documents
         """,
+    )
+    parser.add_argument(
+        "--content-dir",
+        help="External content directory (overrides EUXIS_CONTENT_DIR env var)",
     )
 
     subparsers = parser.add_subparsers(dest="command", help="Command to run")
@@ -1009,6 +1051,10 @@ Commands:
     if not args.command:
         parser.print_help()
         sys.exit(0)
+
+    # Resolve content directory from CLI flag (highest priority)
+    if getattr(args, "content_dir", None):
+        _resolve_content_paths(args.content_dir)
 
     meta = load_meta()
 

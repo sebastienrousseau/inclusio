@@ -17,6 +17,7 @@ Usage:
 
 import argparse
 import json
+import os
 import re
 import sys
 from datetime import date
@@ -27,8 +28,14 @@ import yaml
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 PROJECT_ROOT = SCRIPT_DIR.parent
-META_FILE = PROJECT_ROOT / "data" / "meta.yaml"
-BUILD_DIR = PROJECT_ROOT / "build"
+
+# CONTENT_ROOT: where content lives (data/, build/).
+# Defaults to PROJECT_ROOT; overridden by EUXIS_CONTENT_DIR env var.
+_env_content = os.environ.get("EUXIS_CONTENT_DIR")
+CONTENT_ROOT = Path(_env_content).resolve() if _env_content else PROJECT_ROOT
+
+META_FILE = CONTENT_ROOT / "data" / "meta.yaml"
+BUILD_DIR = CONTENT_ROOT / "build"
 OUTPUT_FILE = BUILD_DIR / "site-map.json"
 
 

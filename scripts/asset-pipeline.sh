@@ -8,8 +8,9 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
-ASSETS_DIR="$PROJECT_ROOT/assets"
+ENGINE_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+CONTENT_ROOT="${EUXIS_CONTENT_DIR:-$ENGINE_ROOT}"
+ASSETS_DIR="$CONTENT_ROOT/assets"
 
 # Configurable options (overridable via environment)
 DIAGRAM_WIDTH="${DIAGRAM_WIDTH:-2048}"

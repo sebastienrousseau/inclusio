@@ -312,6 +312,7 @@ class TestLintIntegration:
     def test_generate_logs_lint_warnings(self, brief_file, tmp_path,
                                           monkeypatch, capsys):
         monkeypatch.setattr(tailor, "PROJECT_ROOT", tmp_path)
+        monkeypatch.setattr(tailor, "CONTENT_ROOT", tmp_path)
         monkeypatch.setattr(
             tailor, "TAILORED_DIR", tmp_path / "data" / "tailored"
         )
@@ -885,6 +886,7 @@ class TestGenerate:
     def test_writes_yaml(self, brief_file, sample_cv_data, tmp_path,
                          monkeypatch):
         monkeypatch.setattr(tailor, "PROJECT_ROOT", tmp_path)
+        monkeypatch.setattr(tailor, "CONTENT_ROOT", tmp_path)
         monkeypatch.setattr(
             tailor, "TAILORED_DIR", tmp_path / "data" / "tailored"
         )
@@ -904,6 +906,7 @@ class TestGenerate:
     def test_default_output_id_from_filename(self, brief_file, sample_cv_data,
                                               tmp_path, monkeypatch):
         monkeypatch.setattr(tailor, "PROJECT_ROOT", tmp_path)
+        monkeypatch.setattr(tailor, "CONTENT_ROOT", tmp_path)
         monkeypatch.setattr(
             tailor, "TAILORED_DIR", tmp_path / "data" / "tailored"
         )
@@ -918,6 +921,7 @@ class TestGenerate:
     def test_custom_output_id(self, brief_file, sample_cv_data, tmp_path,
                                monkeypatch):
         monkeypatch.setattr(tailor, "PROJECT_ROOT", tmp_path)
+        monkeypatch.setattr(tailor, "CONTENT_ROOT", tmp_path)
         monkeypatch.setattr(
             tailor, "TAILORED_DIR", tmp_path / "data" / "tailored"
         )
@@ -946,6 +950,7 @@ class TestGenerate:
     def test_claude_used_by_default(self, brief_file, sample_cv_data,
                                      tmp_path, monkeypatch):
         monkeypatch.setattr(tailor, "PROJECT_ROOT", tmp_path)
+        monkeypatch.setattr(tailor, "CONTENT_ROOT", tmp_path)
         monkeypatch.setattr(
             tailor, "TAILORED_DIR", tmp_path / "data" / "tailored"
         )
@@ -964,6 +969,7 @@ class TestGenerate:
     def test_no_ai_flag_skips_claude(self, brief_file, sample_cv_data,
                                       tmp_path, monkeypatch):
         monkeypatch.setattr(tailor, "PROJECT_ROOT", tmp_path)
+        monkeypatch.setattr(tailor, "CONTENT_ROOT", tmp_path)
         monkeypatch.setattr(
             tailor, "TAILORED_DIR", tmp_path / "data" / "tailored"
         )
@@ -978,6 +984,7 @@ class TestGenerate:
 
     def test_non_cv_type_copies_base(self, brief_file, tmp_path, monkeypatch):
         monkeypatch.setattr(tailor, "PROJECT_ROOT", tmp_path)
+        monkeypatch.setattr(tailor, "CONTENT_ROOT", tmp_path)
         monkeypatch.setattr(
             tailor, "TAILORED_DIR", tmp_path / "data" / "tailored"
         )
@@ -997,6 +1004,7 @@ class TestGenerate:
     def test_custom_base_path(self, brief_file, sample_cv_data, tmp_path,
                                monkeypatch):
         monkeypatch.setattr(tailor, "PROJECT_ROOT", tmp_path)
+        monkeypatch.setattr(tailor, "CONTENT_ROOT", tmp_path)
         monkeypatch.setattr(
             tailor, "TAILORED_DIR", tmp_path / "data" / "tailored"
         )
@@ -1013,6 +1021,7 @@ class TestGenerate:
 
     def test_missing_base_data_exits(self, brief_file, tmp_path, monkeypatch):
         monkeypatch.setattr(tailor, "PROJECT_ROOT", tmp_path)
+        monkeypatch.setattr(tailor, "CONTENT_ROOT", tmp_path)
         monkeypatch.setattr(
             tailor, "TAILORED_DIR", tmp_path / "data" / "tailored"
         )
@@ -1027,6 +1036,7 @@ class TestTailorMain:
     def test_main_cv(self, brief_file, sample_cv_data, tmp_path, monkeypatch,
                      capsys):
         monkeypatch.setattr(tailor, "PROJECT_ROOT", tmp_path)
+        monkeypatch.setattr(tailor, "CONTENT_ROOT", tmp_path)
         monkeypatch.setattr(
             tailor, "TAILORED_DIR", tmp_path / "data" / "tailored"
         )
@@ -1043,6 +1053,7 @@ class TestTailorMain:
     def test_main_with_custom_id(self, brief_file, sample_cv_data, tmp_path,
                                   monkeypatch, capsys):
         monkeypatch.setattr(tailor, "PROJECT_ROOT", tmp_path)
+        monkeypatch.setattr(tailor, "CONTENT_ROOT", tmp_path)
         monkeypatch.setattr(
             tailor, "TAILORED_DIR", tmp_path / "data" / "tailored"
         )
@@ -1060,6 +1071,7 @@ class TestTailorMain:
     def test_main_uses_claude_by_default(self, brief_file, sample_cv_data,
                                           tmp_path, monkeypatch, capsys):
         monkeypatch.setattr(tailor, "PROJECT_ROOT", tmp_path)
+        monkeypatch.setattr(tailor, "CONTENT_ROOT", tmp_path)
         monkeypatch.setattr(
             tailor, "TAILORED_DIR", tmp_path / "data" / "tailored"
         )
@@ -1077,6 +1089,7 @@ class TestTailorMain:
     def test_main_with_render_flag(self, brief_file, sample_cv_data, tmp_path,
                                     monkeypatch):
         monkeypatch.setattr(tailor, "PROJECT_ROOT", tmp_path)
+        monkeypatch.setattr(tailor, "CONTENT_ROOT", tmp_path)
         monkeypatch.setattr(
             tailor, "TAILORED_DIR", tmp_path / "data" / "tailored"
         )
@@ -1095,6 +1108,7 @@ class TestTailorMain:
     def test_main_with_build_flag(self, brief_file, sample_cv_data, tmp_path,
                                    monkeypatch):
         monkeypatch.setattr(tailor, "PROJECT_ROOT", tmp_path)
+        monkeypatch.setattr(tailor, "CONTENT_ROOT", tmp_path)
         monkeypatch.setattr(
             tailor, "TAILORED_DIR", tmp_path / "data" / "tailored"
         )
@@ -1124,6 +1138,7 @@ class TestTailorMain:
     def test_main_render_import_error(self, brief_file, sample_cv_data,
                                        tmp_path, monkeypatch):
         monkeypatch.setattr(tailor, "PROJECT_ROOT", tmp_path)
+        monkeypatch.setattr(tailor, "CONTENT_ROOT", tmp_path)
         monkeypatch.setattr(
             tailor, "TAILORED_DIR", tmp_path / "data" / "tailored"
         )
@@ -1149,6 +1164,7 @@ class TestTailorMain:
     def test_main_build_import_error(self, brief_file, sample_cv_data,
                                       tmp_path, monkeypatch):
         monkeypatch.setattr(tailor, "PROJECT_ROOT", tmp_path)
+        monkeypatch.setattr(tailor, "CONTENT_ROOT", tmp_path)
         monkeypatch.setattr(
             tailor, "TAILORED_DIR", tmp_path / "data" / "tailored"
         )
@@ -1176,6 +1192,7 @@ class TestTailorMain:
     def test_main_with_base_flag(self, brief_file, sample_cv_data, tmp_path,
                                   monkeypatch, capsys):
         monkeypatch.setattr(tailor, "PROJECT_ROOT", tmp_path)
+        monkeypatch.setattr(tailor, "CONTENT_ROOT", tmp_path)
         monkeypatch.setattr(
             tailor, "TAILORED_DIR", tmp_path / "data" / "tailored"
         )

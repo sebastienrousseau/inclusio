@@ -154,61 +154,55 @@ class TestRenderDocument:
 
     def test_registered_template_renders(self, monkeypatch, tmp_path):
         # Create minimal meta, data, and template
-        meta_file = tmp_path / "meta.yaml"
-        meta_file.write_text(
+        data_dir = tmp_path / "data"
+        data_dir.mkdir()
+        (data_dir / "meta.yaml").write_text(
             "templates:\n"
             "  testdoc:\n"
             "    template: test.tex.j2\n"
             "    data: test-data.yaml\n"
             "    type: cv\n"
         )
-        data_dir = tmp_path / "data"
-        data_dir.mkdir()
         (data_dir / "test-data.yaml").write_text("title: Hello\n")
         template_dir = tmp_path / "templates"
         template_dir.mkdir()
         (template_dir / "test.tex.j2").write_text("<< title >>")
-        build_rendered = tmp_path / "build" / "rendered"
+        build_rendered = tmp_path / "build" / ".cache" / "rendered"
 
-        monkeypatch.setattr(render, "META_FILE", meta_file)
-        monkeypatch.setattr(render, "PROJECT_ROOT", tmp_path)
-        monkeypatch.setattr(render, "TEMPLATE_DIR", template_dir)
-        monkeypatch.setattr(render, "RENDERED_DIR", build_rendered)
+        monkeypatch.setattr(render, "CONTENT_ROOT", tmp_path)
 
         result = render.render_document("testdoc", "latex", "draft")
         assert "Hello" in result
         assert (build_rendered / "testdoc.tex").exists()
 
     def test_missing_meta_exits(self, monkeypatch, tmp_path):
-        monkeypatch.setattr(render, "META_FILE", tmp_path / "no.yaml")
+        monkeypatch.setattr(render, "CONTENT_ROOT", tmp_path)
         with pytest.raises(SystemExit):
             render.render_document("cv")
 
     def test_missing_data_file_exits(self, monkeypatch, tmp_path):
-        meta_file = tmp_path / "meta.yaml"
-        meta_file.write_text(
+        data_dir = tmp_path / "data"
+        data_dir.mkdir()
+        (data_dir / "meta.yaml").write_text(
             "templates:\n"
             "  bad:\n"
             "    template: t.j2\n"
             "    data: missing.yaml\n"
         )
-        (tmp_path / "data").mkdir()
-        monkeypatch.setattr(render, "META_FILE", meta_file)
-        monkeypatch.setattr(render, "PROJECT_ROOT", tmp_path)
+        monkeypatch.setattr(render, "CONTENT_ROOT", tmp_path)
         with pytest.raises(SystemExit):
             render.render_document("bad")
 
     def test_markdown_format(self, monkeypatch, tmp_path):
-        meta_file = tmp_path / "meta.yaml"
-        meta_file.write_text(
+        data_dir = tmp_path / "data"
+        data_dir.mkdir()
+        (data_dir / "meta.yaml").write_text(
             "templates:\n"
             "  cvtest:\n"
             "    template: cv.tex.j2\n"
             "    data: cv.yaml\n"
             "    type: cv\n"
         )
-        data_dir = tmp_path / "data"
-        data_dir.mkdir()
         (data_dir / "cv.yaml").write_text(
             "name:\n  first: A\n  last: B\n"
             "role: R\n"
@@ -220,30 +214,25 @@ class TestRenderDocument:
             "education: []\n"
             "languages: L\n"
         )
-        build_rendered = tmp_path / "build" / "rendered"
-        monkeypatch.setattr(render, "META_FILE", meta_file)
-        monkeypatch.setattr(render, "PROJECT_ROOT", tmp_path)
-        monkeypatch.setattr(render, "RENDERED_DIR", build_rendered)
+        build_rendered = tmp_path / "build" / ".cache" / "rendered"
+        monkeypatch.setattr(render, "CONTENT_ROOT", tmp_path)
 
         result = render.render_document("cvtest", "markdown", "draft")
         assert "# A B" in result
         assert (build_rendered / "cvtest.md").exists()
 
     def test_json_format(self, monkeypatch, tmp_path):
-        meta_file = tmp_path / "meta.yaml"
-        meta_file.write_text(
+        data_dir = tmp_path / "data"
+        data_dir.mkdir()
+        (data_dir / "meta.yaml").write_text(
             "templates:\n"
             "  jtest:\n"
             "    template: t.j2\n"
             "    data: d.yaml\n"
         )
-        data_dir = tmp_path / "data"
-        data_dir.mkdir()
         (data_dir / "d.yaml").write_text("key: value\n")
-        build_rendered = tmp_path / "build" / "rendered"
-        monkeypatch.setattr(render, "META_FILE", meta_file)
-        monkeypatch.setattr(render, "PROJECT_ROOT", tmp_path)
-        monkeypatch.setattr(render, "RENDERED_DIR", build_rendered)
+        build_rendered = tmp_path / "build" / ".cache" / "rendered"
+        monkeypatch.setattr(render, "CONTENT_ROOT", tmp_path)
 
         result = render.render_document("jtest", "json", "draft")
         parsed = json.loads(result)
@@ -252,16 +241,15 @@ class TestRenderDocument:
 
     def test_tailored_data_override(self, monkeypatch, tmp_path):
         """When data/tailored/{doc_id}.yaml exists, use it instead of base."""
-        meta_file = tmp_path / "meta.yaml"
-        meta_file.write_text(
+        data_dir = tmp_path / "data"
+        data_dir.mkdir()
+        (data_dir / "meta.yaml").write_text(
             "templates:\n"
             "  testdoc:\n"
             "    template: test.tex.j2\n"
             "    data: test-data.yaml\n"
             "    type: cv\n"
         )
-        data_dir = tmp_path / "data"
-        data_dir.mkdir()
         (data_dir / "test-data.yaml").write_text("title: Original\n")
         # Create tailored override
         tailored_dir = data_dir / "tailored"
@@ -270,30 +258,24 @@ class TestRenderDocument:
         template_dir = tmp_path / "templates"
         template_dir.mkdir()
         (template_dir / "test.tex.j2").write_text("<< title >>")
-        build_rendered = tmp_path / "build" / "rendered"
 
-        monkeypatch.setattr(render, "META_FILE", meta_file)
-        monkeypatch.setattr(render, "PROJECT_ROOT", tmp_path)
-        monkeypatch.setattr(render, "TEMPLATE_DIR", template_dir)
-        monkeypatch.setattr(render, "RENDERED_DIR", build_rendered)
+        monkeypatch.setattr(render, "CONTENT_ROOT", tmp_path)
 
         result = render.render_document("testdoc", "latex", "draft")
         assert "Tailored" in result
         assert "Original" not in result
 
     def test_unknown_format_exits(self, monkeypatch, tmp_path):
-        meta_file = tmp_path / "meta.yaml"
-        meta_file.write_text(
+        data_dir = tmp_path / "data"
+        data_dir.mkdir()
+        (data_dir / "meta.yaml").write_text(
             "templates:\n"
             "  doc:\n"
             "    template: t.j2\n"
             "    data: d.yaml\n"
         )
-        data_dir = tmp_path / "data"
-        data_dir.mkdir()
         (data_dir / "d.yaml").write_text("key: value\n")
-        monkeypatch.setattr(render, "META_FILE", meta_file)
-        monkeypatch.setattr(render, "PROJECT_ROOT", tmp_path)
+        monkeypatch.setattr(render, "CONTENT_ROOT", tmp_path)
         with pytest.raises(SystemExit):
             render.render_document("doc", "xml", "draft")
 
@@ -593,8 +575,8 @@ class TestRenderBlog:
             assert "---" in result
 
     def test_render_blog_default_project_root(self, tmp_path):
-        """render_blog uses PROJECT_ROOT when project_root is None."""
-        with patch.object(render, "PROJECT_ROOT", tmp_path):
+        """render_blog uses CONTENT_ROOT when content_root is None."""
+        with patch.object(render, "CONTENT_ROOT", tmp_path):
             templates = tmp_path / "templates"
             templates.mkdir()
             (templates / "blog-post.md.j2").write_text("<< body | default('') >>")
@@ -784,8 +766,9 @@ class TestXmpDataGeneration:
 
     def test_xmpdata_generated_on_latex_render(self, monkeypatch, tmp_path):
         """render_document() generates .xmpdata when format is latex."""
-        meta_file = tmp_path / "meta.yaml"
-        meta_file.write_text(
+        data_dir = tmp_path / "data"
+        data_dir.mkdir()
+        (data_dir / "meta.yaml").write_text(
             "author:\n  name: Author\n"
             "templates:\n"
             "  testdoc:\n"
@@ -793,20 +776,15 @@ class TestXmpDataGeneration:
             "    data: test-data.yaml\n"
             "    type: cv\n"
         )
-        data_dir = tmp_path / "data"
-        data_dir.mkdir()
         (data_dir / "test-data.yaml").write_text(
             "title: Hello\nsubject: S\nkeywords: K\n"
         )
         template_dir = tmp_path / "templates"
         template_dir.mkdir()
         (template_dir / "test.tex.j2").write_text("<< title >>")
-        build_rendered = tmp_path / "build" / "rendered"
+        build_rendered = tmp_path / "build" / ".cache" / "rendered"
 
-        monkeypatch.setattr(render, "META_FILE", meta_file)
-        monkeypatch.setattr(render, "PROJECT_ROOT", tmp_path)
-        monkeypatch.setattr(render, "TEMPLATE_DIR", template_dir)
-        monkeypatch.setattr(render, "RENDERED_DIR", build_rendered)
+        monkeypatch.setattr(render, "CONTENT_ROOT", tmp_path)
 
         render.render_document("testdoc", "latex", "draft")
         xmp_path = build_rendered / "testdoc.xmpdata"
@@ -816,8 +794,9 @@ class TestXmpDataGeneration:
 
     def test_xmpdata_not_generated_for_markdown(self, monkeypatch, tmp_path):
         """render_document() does NOT generate .xmpdata for markdown format."""
-        meta_file = tmp_path / "meta.yaml"
-        meta_file.write_text(
+        data_dir = tmp_path / "data"
+        data_dir.mkdir()
+        (data_dir / "meta.yaml").write_text(
             "author:\n  name: Author\n"
             "templates:\n"
             "  cvtest:\n"
@@ -825,8 +804,6 @@ class TestXmpDataGeneration:
             "    data: cv.yaml\n"
             "    type: cv\n"
         )
-        data_dir = tmp_path / "data"
-        data_dir.mkdir()
         (data_dir / "cv.yaml").write_text(
             "name:\n  first: A\n  last: B\n"
             "role: R\n"
@@ -838,10 +815,8 @@ class TestXmpDataGeneration:
             "education: []\n"
             "languages: L\n"
         )
-        build_rendered = tmp_path / "build" / "rendered"
-        monkeypatch.setattr(render, "META_FILE", meta_file)
-        monkeypatch.setattr(render, "PROJECT_ROOT", tmp_path)
-        monkeypatch.setattr(render, "RENDERED_DIR", build_rendered)
+        build_rendered = tmp_path / "build" / ".cache" / "rendered"
+        monkeypatch.setattr(render, "CONTENT_ROOT", tmp_path)
 
         render.render_document("cvtest", "markdown", "draft")
         xmp_path = build_rendered / "cvtest.xmpdata"

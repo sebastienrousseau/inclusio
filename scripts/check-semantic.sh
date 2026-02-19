@@ -9,8 +9,9 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
-SRC_DIR="$PROJECT_ROOT/src"
+ENGINE_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+CONTENT_ROOT="${EUXIS_CONTENT_DIR:-$ENGINE_ROOT}"
+SRC_DIR="$CONTENT_ROOT/src"
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'

@@ -17,6 +17,7 @@ Usage:
 
 import argparse
 import json
+import os
 import re
 import subprocess
 import sys
@@ -29,9 +30,15 @@ from jinja2 import Environment, FileSystemLoader, StrictUndefined
 # ── Paths ────────────────────────────────────────────────────────────────
 SCRIPT_DIR = Path(__file__).resolve().parent
 PROJECT_ROOT = SCRIPT_DIR.parent
-META_FILE = PROJECT_ROOT / "data" / "meta.yaml"
-TEMPLATE_DIR = PROJECT_ROOT / "templates"
-BUILD_DIR = PROJECT_ROOT / "build"
+
+# CONTENT_ROOT: where content lives (data/, templates/, build/).
+# Defaults to PROJECT_ROOT; overridden by EUXIS_CONTENT_DIR env var.
+_env_content = os.environ.get("EUXIS_CONTENT_DIR")
+CONTENT_ROOT = Path(_env_content).resolve() if _env_content else PROJECT_ROOT
+
+META_FILE = CONTENT_ROOT / "data" / "meta.yaml"
+TEMPLATE_DIR = CONTENT_ROOT / "templates"
+BUILD_DIR = CONTENT_ROOT / "build"
 RENDERED_DIR = BUILD_DIR / ".cache" / "rendered"
 
 
@@ -158,12 +165,13 @@ def render_json(data):
     return json.dumps(data, indent=2, ensure_ascii=False)
 
 
-def _generate_xmpdata(doc_id, data, meta):
+def _generate_xmpdata(doc_id, data, meta, rendered_dir=None):
     """Generate XMP metadata file for PDF/A compliance.
 
     Writes a .xmpdata file alongside the rendered .tex, used by the
     pdfx package in final (camera-ready) mode.
     """
+    out_dir = rendered_dir if rendered_dir else RENDERED_DIR
     author_name = meta.get("author", {}).get("name", "")
     lines = []
     lines.append(f"\\Title{{{data.get('title', doc_id)}}}")
@@ -175,22 +183,31 @@ def _generate_xmpdata(doc_id, data, meta):
     lines.append("\\Creator{LaTeX with hyperref}")
     lines.append("\\CreatorTool{Publications Build System}")
     lines.append("\\Language{en}")
-    RENDERED_DIR.mkdir(parents=True, exist_ok=True)
-    xmp_path = RENDERED_DIR / f"{doc_id}.xmpdata"
+    out_dir.mkdir(parents=True, exist_ok=True)
+    xmp_path = out_dir / f"{doc_id}.xmpdata"
     xmp_path.write_text("\n".join(lines) + "\n")
     return xmp_path
 
 
-def render_document(doc_id, fmt="latex", build_mode="draft"):
+def render_document(doc_id, fmt="latex", build_mode="draft",
+                    content_root=None):
     """Look up a template in meta.yaml and render it.
 
     Writes output to build/rendered/{doc_id}.{ext}
+
+    When *content_root* is provided, all content paths (data/, templates/,
+    build/) resolve from it instead of the module-level defaults.
     """
-    if not META_FILE.exists():
-        print(f"ERROR: {META_FILE} not found", file=sys.stderr)
+    root = Path(content_root).resolve() if content_root else CONTENT_ROOT
+    meta_file = root / "data" / "meta.yaml"
+    template_dir = root / "templates"
+    rendered_dir = root / "build" / ".cache" / "rendered"
+
+    if not meta_file.exists():
+        print(f"ERROR: {meta_file} not found", file=sys.stderr)
         sys.exit(1)
 
-    with open(META_FILE) as f:
+    with open(meta_file) as f:
         meta = yaml.safe_load(f)
 
     templates = meta.get("templates", {})
@@ -202,11 +219,11 @@ def render_document(doc_id, fmt="latex", build_mode="draft"):
 
     entry = templates[doc_id]
     template_name = entry["template"]
-    data_file = PROJECT_ROOT / "data" / entry["data"]
+    data_file = root / "data" / entry["data"]
     doc_type = entry.get("type", doc_id)
 
     # Check for tailored data override
-    tailored_data = PROJECT_ROOT / "data" / "tailored" / f"{doc_id}.yaml"
+    tailored_data = root / "data" / "tailored" / f"{doc_id}.yaml"
     if tailored_data.exists():
         data_file = tailored_data
 
@@ -225,9 +242,9 @@ def render_document(doc_id, fmt="latex", build_mode="draft"):
     ext = ext_map.get(fmt, "tex")
 
     if fmt == "latex":
-        output = render_latex(template_name, data)
+        output = render_latex(template_name, data, template_dir)
         # Generate .xmpdata for PDF/A metadata in final mode
-        _generate_xmpdata(doc_id, data, meta)
+        _generate_xmpdata(doc_id, data, meta, rendered_dir)
     elif fmt == "markdown":
         output = render_markdown(data, doc_type)
     elif fmt == "json":
@@ -236,8 +253,8 @@ def render_document(doc_id, fmt="latex", build_mode="draft"):
         print(f"ERROR: Unknown format '{fmt}'", file=sys.stderr)
         sys.exit(1)
 
-    RENDERED_DIR.mkdir(parents=True, exist_ok=True)
-    out_path = RENDERED_DIR / f"{doc_id}.{ext}"
+    rendered_dir.mkdir(parents=True, exist_ok=True)
+    out_path = rendered_dir / f"{doc_id}.{ext}"
     out_path.write_text(output, encoding="utf-8")
     print(f"Rendered {doc_id} → {out_path}")
     return output
@@ -250,9 +267,9 @@ def render_blog_markdown(data, template_name, template_dir=None):
     return template.render(**data)
 
 
-def convert_latex_to_blog(tex_path, meta_entry, project_root=None):
+def convert_latex_to_blog(tex_path, meta_entry, content_root=None):
     """Convert a .tex file to blog Markdown via pandoc with Shokunin frontmatter."""
-    root = Path(project_root) if project_root else PROJECT_ROOT
+    root = Path(content_root) if content_root else CONTENT_ROOT
     src = root / tex_path
 
     result = subprocess.run(
@@ -294,12 +311,12 @@ def convert_latex_to_blog(tex_path, meta_entry, project_root=None):
     return "\n".join(fm_lines) + result.stdout
 
 
-def render_blog(blog_id, blog_config, project_root=None):
+def render_blog(blog_id, blog_config, content_root=None):
     """Orchestrator: render a single blog post (jinja2 or pandoc convert).
 
     Writes output to build/blog/YYYY-MM-DD-slug.md.
     """
-    root = Path(project_root) if project_root else PROJECT_ROOT
+    root = Path(content_root) if content_root else CONTENT_ROOT
     blog_type = blog_config.get("type", "jinja2")
     title = blog_config.get("title", blog_id)
     slug = slugify(title)
