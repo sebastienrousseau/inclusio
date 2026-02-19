@@ -5,7 +5,7 @@
 SHELL := /bin/bash
 .DEFAULT_GOAL := help
 
-PYTHON := python3
+PYTHON := $(shell command -v mise >/dev/null 2>&1 && mise which python3 2>/dev/null || echo python3)
 BUILD  := $(PYTHON) scripts/build.py
 
 # External content directory (set via EUXIS_CONTENT_DIR env var)
