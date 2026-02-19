@@ -1,0 +1,7 @@
+title: Engineering Insights
+author: Sebastien Rousseau
+date: "2026-02-18"
+description: Engine insights
+tags: [engineering, publishing]
+body: |
+  Notes on building an engine-only public repository.

@@ -62,7 +62,7 @@ class TestPdfSize:
         """Patent PDFs should be > 50 KB (ensures figures compiled)."""
         pdfs = _pdfs_required()
         patent_pdfs = [p for p in pdfs if "patent" in p.stem.lower()
-                       or "qaas" in p.stem.lower()
+                       or "patent" in p.stem.lower()
                        or "brevet" in p.stem.lower()]
         if not patent_pdfs:
             pytest.skip("No patent PDFs found")

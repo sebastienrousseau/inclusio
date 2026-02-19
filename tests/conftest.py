@@ -1,9 +1,8 @@
-"""Shared fixtures for Publications test suite."""
+"""Shared fixtures for Euxis Publisher tests."""
 
 from pathlib import Path
 
 import pytest
-import yaml
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 META_FILE = PROJECT_ROOT / "data" / "meta.yaml"
@@ -16,13 +15,24 @@ def project_root():
 
 
 @pytest.fixture(scope="session")
-def meta():
-    """Load and return the document manifest."""
+def has_private_content(project_root):
+    """Whether a private content pack is present in this checkout."""
+    return (project_root / "data" / "meta.yaml").exists()
+
+
+@pytest.fixture(scope="session")
+def meta(has_private_content):
+    """Load and return the document manifest when available."""
+    if not has_private_content:
+        return None
+    import yaml
     with open(META_FILE) as f:
         return yaml.safe_load(f)
 
 
 @pytest.fixture(scope="session")
 def documents(meta):
-    """Return the documents dict from meta.yaml."""
+    """Return the documents dict from meta.yaml when available."""
+    if not meta:
+        return {}
     return meta.get("documents", {})

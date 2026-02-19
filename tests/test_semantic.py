@@ -16,7 +16,7 @@ FORBIDDEN_PATTERNS = [
 
 # Files that define formatting macros (not pure content) — excluded from check
 EXCLUDED_FILES = {
-    "qaas-paper.tex",  # Shared titling/structure macros, not content
+    "patent-paper.tex",  # Shared titling/structure macros, not content
 }
 
 
@@ -67,7 +67,7 @@ def test_all_documents_have_source(project_root, documents):
 
 def test_all_documents_use_pub_class(project_root, documents):
     """Verify all src/ .tex files reference pub-* classes (not old project classes)."""
-    old_classes = ["cv", "faqs", "user-guide", "qaas-patent"]
+    old_classes = ["cv", "faqs", "user-guide", "patent"]
     issues = []
 
     for doc_id, config in documents.items():

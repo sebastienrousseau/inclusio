@@ -72,7 +72,7 @@ Publications/
 │   ├── references.bib        # Shared bibliography
 │   └── *.tex                 # LaTeX source files
 ├── patents/                  # Patent applications
-│   ├── qaas-patent-application/
+│   ├── patent-application/
 │   └── qeap-patent-application/
 ├── cvs/                      # Curriculum vitae documents
 ├── faqs/                     # Frequently asked questions
@@ -447,12 +447,12 @@ pandoc papers/my-paper.tex --from latex --to html5 \
 #### Patents
 ```bash
 # Build PDF
-make -C patents/qaas-quantum-safe-api-authentication all
+make -C patents/quantum-safe-api-authentication all
 
 # Convert to DOCX
-pandoc patents/qaas-quantum-safe-api-authentication/qaas-patent.tex \
+pandoc patents/quantum-safe-api-authentication/patent.tex \
   --from latex --to docx \
-  --output build/qaas-patent.docx \
+  --output build/patent-application.docx \
   --reference-doc=templates/reference.docx
 ```
 

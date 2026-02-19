@@ -1,0 +1,116 @@
+author:
+  name: Sebastien Rousseau
+  role: Research Engineer
+  publisher: Euxis Publisher
+  copyright: "© 2026 Sebastien Rousseau"
+  copyright_url: "https://sebastienrousseau.com"
+
+build:
+  compiler: pdflatex
+  max_passes: 1
+  bib_engine: bibtex
+
+documents:
+  cv:
+    title: Curriculum Vitae
+    class: pub-cv
+    src: src/cvs/cv.tex
+    version: "1.0"
+    description: Professional CV
+  whisper-paper:
+    title: Realtime ASR Paper
+    class: pub-paper
+    src: src/papers/whisper-mps-realtime-asr.tex
+    version: "1.0"
+    description: Paper draft
+  patent-paper:
+    title: Patent Input Section
+    class: pub-paper
+    src: src/papers/patent-paper.tex
+    version: "1.0"
+    description: Input section
+    note: This is an input file used by another
+  patent-application:
+    title: Patent Application
+    class: pub-patent-us
+    src: src/patents/patent/patent.tex
+    version: "0.1"
+    description: Patent draft
+  faq:
+    title: FAQ
+    class: pub-faq
+    src: src/faqs/faqs.tex
+    version: "1.0"
+    description: FAQ document
+  user-guide-doc:
+    title: User Guide
+    class: pub-guide
+    src: src/guides/user-guide.tex
+    version: "1.0"
+    description: User guide
+  bio:
+    title: Biography
+    class: pub-bio
+    src: src/bios/bio.tex
+    version: "1.0"
+    description: Professional biography
+  arxiv-paper:
+    title: ArXiv Submission
+    class: pub-arxiv
+    src: src/papers/arxiv-paper.tex
+    version: "1.0"
+    description: ArXiv paper
+  preprint-paper:
+    title: Preprint Draft
+    class: pub-preprint
+    src: src/papers/preprint-paper.tex
+    version: "1.0"
+    description: Preprint
+  prime-paper:
+    title: Prime Research Note
+    class: pub-prime
+    src: src/papers/prime-paper.tex
+    version: "1.0"
+    description: Prime paper
+
+templates:
+  cv:
+    template: cv.tex.j2
+    data: cv-data.yaml
+    type: cv
+  paper:
+    template: paper.tex.j2
+    data: paper-data.yaml
+    type: paper
+  faq:
+    template: faq.tex.j2
+    data: faq-data.yaml
+    type: faq
+  guide:
+    template: guide.tex.j2
+    data: guide-data.yaml
+    type: guide
+
+blog:
+  whisper-blog:
+    title: Whisper Performance Notes
+    type: jinja2
+    date: "2026-02-17"
+    description: Whisper benchmark notes
+    data: blog/whisper-blog.yaml
+    template: blog-post.md.j2
+  security-blog:
+    title: Security Design Notes
+    type: convert
+    date: "2026-02-17"
+    description: Security post
+    src: src/papers/whisper-mps-realtime-asr.tex
+    author: Sebastien Rousseau
+    tags: [security, architecture]
+  insights-blog:
+    title: Engineering Insights
+    type: jinja2
+    date: "2026-02-18"
+    description: Publishing engine insights
+    data: blog/insights-blog.yaml
+    template: blog-post.md.j2

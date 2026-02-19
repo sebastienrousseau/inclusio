@@ -1,5 +1,5 @@
 ###############################################################################
-# Root Makefile for Publications — Thin wrapper around scripts/build.py
+# Root Makefile for Euxis Publisher — Thin wrapper around scripts/build.py
 ###############################################################################
 
 SHELL := /bin/bash
@@ -12,7 +12,7 @@ BUILD  := $(PYTHON) scripts/build.py
 # Build Targets
 ###############################################################################
 
-.PHONY: all draft submission final assets lint fix render render-md blog tailor sitemap setup clean clean-build distclean test list help
+.PHONY: all draft submission final assets lint fix render render-md blog tailor sitemap docs setup clean clean-build distclean test coverage validate validate-private list help
 
 all: draft ## Build all documents in draft mode (default)
 
@@ -40,7 +40,7 @@ render: ## Render Jinja2 templates to LaTeX
 render-md: ## Render all templates to Markdown
 	$(BUILD) render --format markdown
 
-blog: ## Render blog posts to Shokunin-compatible Markdown
+blog: ## Render blog posts to Markdown
 	$(BUILD) blog
 
 tailor: ## Generate tailored document from a brief
@@ -50,7 +50,11 @@ tailor: ## Generate tailored document from a brief
 sitemap: ## Generate semantic search metadata (build/site-map.json)
 	$(BUILD) sitemap --pretty
 
-setup: ## Install dependencies (auto-detects nix/brew/apt)
+docs: ## Build Sphinx documentation (HTML)
+	@$(PYTHON) -c "import importlib.util,sys;mods=['sphinx','myst_parser','furo'];missing=[m for m in mods if importlib.util.find_spec(m) is None];print('Missing docs deps: ' + ', '.join(missing) + '. Install with: ' + '$(PYTHON) -m pip install --user sphinx myst-parser furo') if missing else None;sys.exit(1 if missing else 0)"
+	$(PYTHON) -m sphinx -b html docs docs/_build/html
+
+setup: ## Show dependency setup guidance
 	./bin/setup
 
 clean: ## Remove build/ directory
@@ -62,12 +66,24 @@ clean-build: ## Remove only build cache (keep final PDFs)
 distclean: ## Remove build output + dev artifacts (.coverage, .pytest_cache)
 	$(BUILD) distclean
 
-test: ## Run test suite
-	$(PYTHON) -m pytest tests/ -v
+test: ## Run public engine tests
+	$(PYTHON) -m pytest -q tests/test_assets.py tests/test_build.py tests/test_engine_smoke.py tests/test_macro_contract.py
+
+coverage: ## Measure Python logic coverage (>=95% required)
+	COVERAGE_FILE=/tmp/euxis-publisher.coverage $(PYTHON) -m pytest --cov=scripts --cov-report=term-missing --cov-fail-under=95 tests/
+
+validate: ## Run full local validation (tests, coverage, docs)
+	$(MAKE) test PYTHON=$(PYTHON)
+	$(MAKE) coverage PYTHON=$(PYTHON)
+	$(MAKE) docs PYTHON=$(PYTHON)
+
+validate-private: ## Reminder: run content + British-English validation in private repo
+	@echo "Run private validations in ../euxis-publisher-private"
+	@echo "Example: python3 ../euxis-publisher/scripts/tailor.py data/jobs/brief.txt --type cv --id be-check --no-ai"
 
 list: ## List all registered documents
 	$(BUILD) list
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | \
-		awk 'BEGIN {FS = ":.*?## "}; {printf "  %-15s %s\n", $$1, $$2}'
+		awk 'BEGIN {FS = ":.*?## "}; {printf "  %-18s %s\n", $$1, $$2}'

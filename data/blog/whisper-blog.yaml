@@ -1,0 +1,7 @@
+title: Whisper Performance Notes
+author: Sebastien Rousseau
+date: "2026-02-17"
+description: Whisper benchmark notes
+tags: [asr, whisper]
+body: |
+  Whisper benchmark notes and implementation details.

@@ -1,5 +1,5 @@
 {
-  description = "Publications — Publisher-grade LaTeX document system";
+  description = "Euxis Publisher — Public document publishing engine";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.05";
@@ -14,7 +14,8 @@
       {
         devShells.default = pkgs.mkShell {
           packages = with pkgs; [
-            # TeX Live (full distribution for maximum compatibility)
+            # TeX Live runtime for public engine development.
+            # texliveFull includes tagpdf; shellHook verifies availability.
             texliveFull
 
             # Build orchestrator
@@ -24,8 +25,8 @@
             python3Packages.jinja2
 
             # Asset pipeline
-            nodePackages.mermaid-cli   # mmdc: MMD → SVG
-            librsvg                    # rsvg-convert: SVG → PDF/PNG
+            nodePackages.mermaid-cli
+            librsvg
 
             # Document conversion
             pandoc
@@ -34,17 +35,19 @@
             ghostscript
 
             # Quality tools
-            vale                       # Prose linting
-            chktex                     # LaTeX linting
+            vale
+            chktex
           ];
 
           shellHook = ''
-            echo "Publications dev shell ready."
-            echo "  make all    — build all documents (draft mode)"
-            echo "  make final  — build all documents (camera-ready, PDF/A)"
-            echo "  make assets — run asset pipeline"
+            echo "Euxis Publisher dev shell ready."
+            if kpsewhich tagpdf.sty >/dev/null 2>&1; then
+              echo "  tagpdf: available"
+            else
+              echo "  tagpdf: MISSING (install TeX package 'tagpdf' for PDF/UA tagging)"
+            fi
+            echo "  make test   — run public engine tests"
             echo "  make lint   — run quality checks"
-            echo "  make test   — run test suite"
           '';
         };
       }
