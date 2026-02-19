@@ -1,0 +1,148 @@
+%% Copyright (c) 2026 Sebastien Rousseau
+%% Licensed under the MIT License
+%% See LICENSE file for details
+%%
+%% pub-common.sty — Shared semantic macros for all document types
+%% Extracted and unified from user-guide.cls, faqs.cls, cv.cls
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{pub-common}[2026/02/17 Publications Common Semantic Macros]
+
+\RequirePackage{graphicx}
+\RequirePackage{enumitem}
+\RequirePackage{fancyhdr}
+\RequirePackage[skins,breakable]{tcolorbox}
+\RequirePackage{xspace}
+
+%% ── Semantic inline macros ──────────────────────────────────────────────
+%% Use these INSTEAD of raw \texttt, \textbf, \textit in src/ files.
+
+% Code/monospace text
+\newcommand{\code}[1]{\texttt{#1}}
+
+% Key term emphasis
+\newcommand{\keyterm}[1]{\textbf{#1}}
+
+% File/directory paths
+\newcommand{\filepath}[1]{%
+  \texttt{\textcolor{textgray}{#1}}%
+}
+
+% Menu navigation paths
+\newcommand{\menupath}[1]{%
+  \textbf{\textcolor{blue}{#1}}%
+}
+
+% URL with hyperlink
+\newcommand{\docUrl}[2]{\href{#1}{#2}}
+
+% Backward-compatible class aliases consolidated here
+\newcommand{\faqcode}[1]{\code{#1}}
+\newcommand{\faqkey}[1]{\keyterm{#1}}
+\newcommand{\faqpath}[1]{\textit{#1}}
+\newcommand{\faqurl}[1]{\href{#1}{#1}}
+
+\newcommand{\guidecode}[1]{\code{#1}}
+\newcommand{\guidekey}[1]{\keyterm{#1}}
+\newcommand{\guidepath}[1]{\textit{#1}}
+\newcommand{\guideurl}[1]{\href{#1}{#1}}
+
+%% ── Common tcolorbox style (from user-guide.cls) ────────────────────────
+\tcbset{
+  pub-common/.style={
+    leftrule=2pt,
+    rightrule=0pt,
+    toprule=0pt,
+    bottomrule=0pt,
+    left=15pt,
+    right=15pt,
+    top=12pt,
+    bottom=12pt,
+    sharp corners,
+    before skip=12pt,
+    after skip=12pt,
+    breakable,
+    arc=0pt
+  }
+}
+
+%% ── Semantic environments ───────────────────────────────────────────────
+\newtcolorbox{note}{
+  pub-common,
+  colback=lightblue,
+  colframe=blue
+}
+
+\newtcolorbox{warning}{
+  pub-common,
+  colback=lightred,
+  colframe=red
+}
+
+\newtcolorbox{tip}{
+  pub-common,
+  colback=lightgreen,
+  colframe=green
+}
+
+\newtcolorbox{important}{
+  pub-common,
+  colback=lightyellow,
+  colframe=yellow
+}
+
+\newtcolorbox{example}{
+  pub-common,
+  colback=lightindigo,
+  colframe=indigo
+}
+
+\newtcolorbox{caution}{
+  pub-common,
+  colback=lightorange,
+  colframe=orange
+}
+
+%% ── Keystroke box (from user-guide.cls) ─────────────────────────────────
+\newcommand{\keystroke}[1]{%
+  \tcbox[
+    on line,
+    boxsep=1pt,
+    left=2pt,
+    right=2pt,
+    top=2pt,
+    bottom=2pt,
+    colback=lightgray,
+    colframe=blue,
+    sharp corners,
+    nobeforeafter,
+    arc=0pt
+  ]{\texttt{#1}}%
+}
+
+%% ── Command box (from user-guide.cls) ───────────────────────────────────
+\newcommand{\cmd}[1]{%
+  \tcbox[
+    on line,
+    boxsep=1pt,
+    left=4pt,
+    right=4pt,
+    top=2pt,
+    bottom=2pt,
+    colback=black,
+    colframe=black,
+    coltext=white,
+    sharp corners,
+    nobeforeafter,
+    arc=0pt
+  ]{\texttt{#1}}%
+}
+
+%% ── Step environment (from user-guide.cls) ──────────────────────────────
+\newcounter{stepcount}
+\newenvironment{steps}{%
+  \begin{enumerate}[label=\textbf{Step \arabic*.}, leftmargin=*, align=left]
+  \setcounter{stepcount}{0}}{%
+  \end{enumerate}
+}
+
+\endinput

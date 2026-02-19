@@ -1,0 +1,45 @@
+# OS files
+*.DS_Store
+
+# Editor files
+/.vscode/
+
+# Build output (intermediates, final PDFs, blog)
+build/
+artifacts/
+
+# Node.js
+node_modules/
+
+# Archive
+/archive/
+
+# LaTeX intermediates (safety net for stray files outside build/)
+*.aux
+*.log
+*.out
+*.fls
+*.fdb_latexmk
+*.synctex.gz
+pdfa.xmpi
+*.bbl
+*.blg
+*.toc
+*.lof
+*.lot
+*.nav
+*.snm
+*.vrb
+
+# Nix
+result
+.direnv/
+
+# Vale styles (downloaded)
+.vale/styles/
+
+# Python
+__pycache__/
+*.pyc
+.coverage
+.pytest_cache/

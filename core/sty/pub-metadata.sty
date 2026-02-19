@@ -1,0 +1,76 @@
+%% Copyright (c) 2026 Sebastien Rousseau
+%% Licensed under the MIT License
+%% See LICENSE file for details
+%%
+%% pub-metadata.sty — Unified PDF/A + hyperref metadata setup
+%% Merges from cv.cls (PDF/A-1a, PDF/UA) and user-guide.cls (PDF/A-2b)
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{pub-metadata}[2026/02/17 Publications PDF Metadata]
+
+\RequirePackage{etoolbox}
+
+%% ── Document metadata macros ────────────────────────────────────────────
+\def\pub@docTitle{}
+\def\pub@docAuthor{}
+\def\pub@docDate{\today}
+\def\pub@docVersion{}
+\def\pub@docKeywords{}
+\def\pub@docSubject{}
+\def\pub@docCopyright{}
+\def\pub@docPublisher{}
+\def\pub@docLanguage{en}
+
+\newcommand{\docTitle}[1]{\def\pub@docTitle{#1}}
+\newcommand{\docAuthor}[1]{\def\pub@docAuthor{#1}}
+\newcommand{\docDate}[1]{\def\pub@docDate{#1}}
+\newcommand{\docVersion}[1]{\def\pub@docVersion{#1}}
+\newcommand{\docKeywords}[1]{\def\pub@docKeywords{#1}}
+\newcommand{\docSubject}[1]{\def\pub@docSubject{#1}}
+\newcommand{\docCopyright}[1]{\def\pub@docCopyright{#1}}
+\newcommand{\docPublisher}[1]{\def\pub@docPublisher{#1}}
+\newcommand{\docLanguage}[1]{\def\pub@docLanguage{#1}}
+
+%% ── PDF/A compliance ────────────────────────────────────────────────────
+%% Camera-ready → PDF/A-2b via pdfx; draft/submission → plain hyperref (faster)
+\newif\ifpub@pdfa \pub@pdfafalse
+
+%% Allow class to request PDF/A conformance level
+\def\pub@pdfalevel{a-2b}
+\newcommand{\setPdfALevel}[1]{\def\pub@pdfalevel{#1}}
+
+\iffinalmode
+  \pub@pdfatrue
+\fi
+
+\ifpub@pdfa
+  \PassOptionsToPackage{hidelinks}{hyperref}
+  \RequirePackage{silence}
+  \WarningFilter{pdfx}{Setting all color commands}
+  \RequirePackage[\pub@pdfalevel]{pdfx}
+\else
+  %% Pass 'final' so hyperref never inherits the document-level draft flag.
+  %% Do NOT set colorlinks here — individual classes set it in \AtBeginDocument.
+  %% pdfborder={0 0 0} hides link boxes by default.
+  \PassOptionsToPackage{final}{hyperref}
+  \RequirePackage{hyperref}
+  \hypersetup{pdfborder={0 0 0}}
+\fi
+
+%% ── Hyperref behavioural settings + metadata injection ─────────────────
+\AtBeginDocument{%
+  \hypersetup{
+    pdftitle=\pub@docTitle,
+    pdfauthor=\pub@docAuthor,
+    pdfsubject=\pub@docSubject,
+    pdfkeywords=\pub@docKeywords,
+    pdfcreator={LaTeX with hyperref},
+    pdfproducer={Publications Build System},
+    pdflang=\pub@docLanguage,
+    bookmarksopen=true,
+    bookmarksnumbered=true,
+    breaklinks=true,
+    unicode=true
+  }%
+}
+
+\endinput
