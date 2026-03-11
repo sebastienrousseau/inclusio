@@ -1,103 +1,50 @@
-# Euxis Publisher
+<p align="center">
+  <img src="https://kura.pro/euxis/images/logos/euxis.svg" alt="Euxis Publisher logo" width="128" />
+</p>
 
-Public publishing engine for the Euxis framework.
+<h1 align="center">Euxis Publisher</h1>
 
-This repository intentionally contains the public engine plus generic
-non-sensitive fixtures:
-- LaTeX classes and styles (`core/`)
-- packaged Python orchestration (`euxis_publisher/`)
-- compatibility wrappers (`scripts/`)
-- CI and tests for engine behavior
-- public sample `data/`, `src/`, and `templates/` fixtures
+<p align="center">
+  <strong>Public publishing engine for LaTeX-first documents, packaged as a Python CLI and built for macOS, Linux, and WSL.</strong>
+</p>
 
-Private documents and proprietary templates must live in `euxis-publisher-private`.
+<p align="center">
+  <a href="https://github.com/sebastienrousseau/euxis-publisher/actions/workflows/engine-validation.yml"><img src="https://img.shields.io/github/actions/workflow/status/sebastienrousseau/euxis-publisher/engine-validation.yml?style=for-the-badge&logo=github" alt="Engine Validation" /></a>
+  <a href="https://github.com/sebastienrousseau/euxis-publisher"><img src="https://img.shields.io/badge/Coverage-100%25-blue?style=for-the-badge" alt="Coverage" /></a>
+  <a href="https://github.com/sebastienrousseau/euxis-publisher"><img src="https://img.shields.io/badge/Python-%3E%3D3.9-3776AB?style=for-the-badge&logo=python&logoColor=white" alt="Python >= 3.9" /></a>
+  <a href="https://github.com/sebastienrousseau/euxis-publisher/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-MIT-black?style=for-the-badge" alt="License" /></a>
+</p>
 
-## Public vs Private Boundary
+---
 
-Public repo (`euxis-publisher`):
-- `core/`
-- `euxis_publisher/`
-- `scripts/` (compatibility wrappers)
-- `tests/` (engine-only)
-- public non-sensitive fixtures in `data/`, `src/`, `templates/`
-- `.github/`, `Makefile`, `flake.nix`, docs
+## Install
 
-Private repo (`euxis-publisher-private`):
-- `data/`
-- `src/`
-- `templates/`
-- content-bearing assets
-- content validation tests (metadata schema, patent assets, British-English tailoring validation)
-
-## Validation Status
-
-- This repository does **not** claim 100% logic coverage by default.
-- Measure coverage explicitly with:
-
-```bash
-make coverage
-```
-
-## British-English Tailoring Scope
-
-British-English tailoring behavior is defined by `euxis_publisher/cli/tailor.py` prompt/config and should be validated in `euxis-publisher-private` where real content and briefs live.
-
-Suggested private validation flow:
-
-```bash
-# in euxis-publisher-private
-python3 -m euxis_publisher.cli.tailor data/jobs/brief.txt --type cv --id be-check --no-ai
-python3 -m euxis_publisher.cli.build --content-dir . render --doc cv --mode final
-```
-
-## Macro Reference
-
-- See `docs/macro-reference.md` for the canonical macro contract for prompts and templates.
-
-## Documentation
-
-- `docs/README.md`
-- `docs/architecture.md`
-- `docs/classes-and-styles.md`
-- `docs/package-reference.md`
-- `docs/macro-reference.md`
-- `docs/usage.md`
-- `docs/testing-and-ci.md`
-- `docs/public-private-boundary.md`
-
-## Folder Guides
-
-- `bin/README.md`
-- `core/README.md`
-- `data/README.md`
-- `euxis_publisher/README.md`
-- `euxis_publisher/cli/README.md`
-- `euxis_publisher/tools/README.md`
-- `scripts/README.md`
-- `src/README.md`
-- `templates/README.md`
-- `tests/README.md`
-
-## Setup
+Run the local bootstrap:
 
 ```bash
 ./bin/setup
 ```
 
-Install `tagpdf.sty` in TeX Live if you need accessibility tagging.
+Then validate the engine:
 
-## Publish With Private Content
+```bash
+make test
+make coverage
+```
 
-`make publish` reads content from the engine repo by default. To publish against
-the private content repo, pass the real content path:
+**Requires** `python3`, `git`, and a TeX toolchain. Use WSL for full Windows support. Install `tagpdf.sty` if you need accessibility tagging.
+
+---
+
+## Publish
+
+Publish against the private content repository with the shell-agnostic form:
 
 ```bash
 make publish CONTENT_DIR=/home/seb/Code/Private/TeX/euxis-publisher-private
 ```
 
-Use this form across shells. It avoids shell-specific environment syntax.
-
-Use the shell-specific form only if you need it:
+Use the shell-specific form only when you need it:
 
 ```bash
 # Bash / Zsh / POSIX sh
@@ -111,11 +58,135 @@ $env:EUXIS_CONTENT_DIR = "/home/seb/Code/Private/TeX/euxis-publisher-private"
 make publish
 ```
 
-## Quick Checks
+`EUXIS_PUBLISHER_CONTENT_DIR` is **not** supported.
+
+---
+
+## Overview
+
+Use this repository as the public engine layer of the Euxis publishing stack.
+Keep private content in `euxis-publisher-private`.
+
+You get:
+
+- **LaTeX classes and styles** through `core/cls/` and `core/sty/`
+- **Packaged Python entrypoints** through `euxis_publisher/cli/`
+- **Operator utilities** through `euxis_publisher/tools/`
+- **Compatibility wrappers** through `scripts/`
+- **Public fixture content** through `data/`, `src/`, and `templates/`
+- **100% package coverage** over `euxis_publisher`
+
+---
+
+## Architecture
+
+First, render or tailor content. Then compile camera-ready output from the same engine.
+
+```mermaid
+graph TD
+    A[Private or Public Content] --> B{euxis_publisher.cli.build}
+    B --> C[Render: Jinja2 to LaTeX or Markdown]
+    B --> D[Build: latexmk or TeX compiler]
+    B --> E[Tailor: Brief to structured YAML]
+    C --> F[build/.cache/rendered]
+    D --> G[PDF artifacts]
+    E --> H[data/tailored]
+    G --> I[Stamping and metadata tooling]
+```
+
+---
+
+## Features
+
+| | |
+| :--- | :--- |
+| **Engine** | Packaged Python CLI with `build`, `render`, `blog`, `tailor`, `lint`, and cleanup commands |
+| **Typography** | Shared LaTeX classes and style packages for CVs, papers, patents, FAQs, guides, and bios |
+| **Build Modes** | Draft, submission, and camera-ready flows managed from one orchestration layer |
+| **Publishing** | PDF/A-oriented metadata flow with provenance stamping support |
+| **Fixtures** | Public sample content for engine validation without exposing private briefs or templates |
+| **Coverage** | 100% package coverage across `euxis_publisher` |
+| **Platforms** | macOS, Linux, and WSL |
+| **Docs** | Sphinx docs plus folder-level READMEs for every major public surface |
+
+---
+
+## Commands
+
+| Command | Execute this to... |
+| :--- | :--- |
+| `make list` | inspect registered documents |
+| `make draft` | compile all public documents in draft mode |
+| `make final` | compile camera-ready output from the current content root |
+| `make render` | render Jinja2 templates to LaTeX |
+| `make render-md` | render Markdown output |
+| `make blog` | render blog posts |
+| `make tailor BRIEF=data/jobs/job.txt` | generate tailored YAML and build output |
+| `make sitemap` | generate `build/site-map.json` |
+| `make test` | run the public engine test target |
+| `make coverage` | enforce the package coverage gate |
+| `make docs` | build the Sphinx site |
+
+Use the packaged CLIs directly when you need lower-level control:
 
 ```bash
-# public engine tests
-pytest -q tests/test_assets.py tests/test_build.py tests/test_engine_smoke.py
-
-# full content validation runs in euxis-publisher-private
+python3 -m euxis_publisher.cli.build list
+python3 -m euxis_publisher.cli.render --doc cv
+python3 -m euxis_publisher.cli.sitemap --pretty
+python3 -m euxis_publisher.cli.tailor data/jobs/test.txt --no-ai
 ```
+
+---
+
+## Public vs Private Boundary
+
+Keep these surfaces public:
+
+- `core/`
+- `euxis_publisher/`
+- `scripts/`
+- `tests/`
+- non-sensitive fixtures in `data/`, `src/`, and `templates/`
+- CI, docs, and build metadata
+
+Keep these surfaces private:
+
+- real briefs and client content
+- proprietary templates and assets
+- content-bearing metadata sets
+- content-specific QA and linguistic validation
+
+For the full boundary contract, read [docs/public-private-boundary.md](docs/public-private-boundary.md).
+
+---
+
+## Documentation
+
+Start here:
+
+- [docs/README.md](docs/README.md)
+- [docs/architecture.md](docs/architecture.md)
+- [docs/classes-and-styles.md](docs/classes-and-styles.md)
+- [docs/package-reference.md](docs/package-reference.md)
+- [docs/macro-reference.md](docs/macro-reference.md)
+- [docs/usage.md](docs/usage.md)
+- [docs/testing-and-ci.md](docs/testing-and-ci.md)
+
+Folder guides:
+
+- [bin/README.md](bin/README.md)
+- [core/README.md](core/README.md)
+- [data/README.md](data/README.md)
+- [euxis_publisher/README.md](euxis_publisher/README.md)
+- [euxis_publisher/cli/README.md](euxis_publisher/cli/README.md)
+- [euxis_publisher/tools/README.md](euxis_publisher/tools/README.md)
+- [scripts/README.md](scripts/README.md)
+- [src/README.md](src/README.md)
+- [templates/README.md](templates/README.md)
+- [tests/README.md](tests/README.md)
+
+---
+
+## License
+
+Licensed under the **MIT License**. See [LICENSE](LICENSE) for details.
