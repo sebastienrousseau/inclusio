@@ -41,20 +41,20 @@ make coverage
 Publish against the private content repository with the shell-agnostic form:
 
 ```bash
-make publish CONTENT_DIR=/home/seb/Code/Private/TeX/euxis-publisher-private
+make publish CONTENT_DIR=/absolute/path/to/euxis-publisher-private
 ```
 
 Use the shell-specific form only when you need it:
 
 ```bash
 # Bash / Zsh / POSIX sh
-EUXIS_CONTENT_DIR=/home/seb/Code/Private/TeX/euxis-publisher-private make publish
+EUXIS_CONTENT_DIR=/absolute/path/to/euxis-publisher-private make publish
 
 # fish
-env EUXIS_CONTENT_DIR=/home/seb/Code/Private/TeX/euxis-publisher-private make publish
+env EUXIS_CONTENT_DIR=/absolute/path/to/euxis-publisher-private make publish
 
 # PowerShell
-$env:EUXIS_CONTENT_DIR = "/home/seb/Code/Private/TeX/euxis-publisher-private"
+$env:EUXIS_CONTENT_DIR = "/absolute/path/to/euxis-publisher-private"
 make publish
 ```
 
