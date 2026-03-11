@@ -7,6 +7,7 @@
 README
 architecture
 classes-and-styles
+package-reference
 macro-reference
 usage
 testing-and-ci

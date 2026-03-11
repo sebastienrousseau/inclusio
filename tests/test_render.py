@@ -7,8 +7,9 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
-import render
+from euxis_publisher.cli import render
+
+sys.modules["render"] = render
 
 
 # ── TestCreateJinjaEnv ───────────────────────────────────────────────────

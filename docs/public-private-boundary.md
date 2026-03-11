@@ -3,6 +3,7 @@
 ## Public (`euxis-publisher`)
 
 - Engine code (`core/`, `scripts/`)
+- Packaged Python logic (`euxis_publisher/`)
 - Public tests and CI configuration
 - Generic non-sensitive fixtures used only for engine validation
 - Public documentation

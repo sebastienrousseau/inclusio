@@ -9,9 +9,9 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-# Import build module from scripts/
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
-import build
+from euxis_publisher.cli import build
+
+sys.modules["build"] = build
 
 
 # ── load_meta ────────────────────────────────────────────────────────────
@@ -493,6 +493,21 @@ class TestCmdList:
         assert "pub-cv" in output
         assert "ID" in output
 
+    def test_lists_tailored_documents_with_tailored_source(self, capsys):
+        meta = {"documents": {}}
+        args = Namespace()
+        tailored = {
+            "tailored-cv": {
+                "class": "pub-cv",
+                "description": "Tailored CV",
+                "tailored": True,
+            }
+        }
+        with patch.object(build, "_discover_tailored", return_value=tailored):
+            build.cmd_list(args, meta)
+        output = capsys.readouterr().out
+        assert "data/tailored/tailored-cv.yaml [tailored]" in output
+
 
 # ── main ─────────────────────────────────────────────────────────────────
 
@@ -596,6 +611,20 @@ class TestCmdRender:
         with pytest.raises(SystemExit):
             build.cmd_render(args, meta)
 
+    def test_import_render_module_falls_back_to_package(self, monkeypatch):
+        import builtins
+        from euxis_publisher.cli import render as package_render
+
+        real_import = builtins.__import__
+
+        def mock_import(name, *args, **kwargs):
+            if name == "render":
+                raise ModuleNotFoundError("No module named 'render'")
+            return real_import(name, *args, **kwargs)
+
+        monkeypatch.setattr(builtins, "__import__", mock_import)
+        assert build._import_render_module() is package_render
+
 
 # ── cmd_fix ─────────────────────────────────────────────────────────────
 
@@ -634,7 +663,7 @@ class TestCmdFix:
         assert "--verbose" in cmd
 
     def test_fix_missing_script_exits(self, monkeypatch):
-        monkeypatch.setattr(build, "SCRIPT_DIR", Path("/nonexistent"))
+        monkeypatch.setattr(build, "PROJECT_ROOT", Path("/nonexistent"))
         meta = {}
         args = Namespace(dry_run=False, verbose=False)
         with pytest.raises(SystemExit):
@@ -677,7 +706,7 @@ class TestCmdSitemap:
         assert "--stdout" in cmd
 
     def test_sitemap_missing_script_exits(self, monkeypatch):
-        monkeypatch.setattr(build, "SCRIPT_DIR", Path("/nonexistent"))
+        monkeypatch.setattr(build, "PROJECT_ROOT", Path("/nonexistent"))
         meta = {}
         args = Namespace(pretty=False, stdout=False)
         with pytest.raises(SystemExit):
@@ -916,6 +945,20 @@ class TestCmdTailor:
         )
         with pytest.raises(SystemExit):
             build.cmd_tailor(args, meta)
+
+    def test_import_tailor_module_falls_back_to_package(self, monkeypatch):
+        import builtins
+        from euxis_publisher.cli import tailor as package_tailor
+
+        real_import = builtins.__import__
+
+        def mock_import(name, *args, **kwargs):
+            if name == "tailor":
+                raise ModuleNotFoundError("No module named 'tailor'")
+            return real_import(name, *args, **kwargs)
+
+        monkeypatch.setattr(builtins, "__import__", mock_import)
+        assert build._import_tailor_module() is package_tailor
 
     def test_tailor_render_import_error(self, monkeypatch, tmp_path):
         # Create the tailored YAML file so copy2 won't fail before the
@@ -1536,6 +1579,44 @@ class TestDiscoverTailored:
         target_fig = tmp_path / "src" / "cvs" / "fig-job" / "figures" / "logo.png"
         assert target_fig.exists()
         assert target_fig.read_bytes() == b"\x89PNG"
+
+    def test_copies_rendered_xmpdata(self, tmp_path, monkeypatch):
+        import yaml
+        monkeypatch.setattr(build, "TAILORED_DIR", tmp_path / "tailored")
+        monkeypatch.setattr(build, "RENDERED_DIR", tmp_path / "rendered")
+        monkeypatch.setattr(build, "PROJECT_ROOT", tmp_path)
+        monkeypatch.setattr(build, "CONTENT_ROOT", tmp_path)
+        (tmp_path / "tailored").mkdir()
+        (tmp_path / "rendered").mkdir()
+
+        cv_data = {
+            "name": {"first": "Jane", "last": "Doe"},
+            "role": "PM", "summary": "Test",
+            "experience": [{"title": "PM", "company": "Co", "dates": "2020",
+                            "logo": "", "bullets": ["Did stuff."]}],
+            "skills": [], "education": [], "languages": "English",
+            "contact": {"phone": "+1", "email": "j@e.com"},
+            "footer_address": "London",
+        }
+        with open(tmp_path / "tailored" / "xmp-job.yaml", "w") as f:
+            yaml.dump(cv_data, f)
+        (tmp_path / "rendered" / "xmp-job.xmpdata").write_text("Title: XMP")
+
+        meta = {"documents": {"cv": {}}, "templates": {
+            "cv": {"template": "cv.tex.j2", "data": "cv-data.yaml",
+                   "type": "cv"},
+        }}
+        mock_render = MagicMock(
+            render_latex=MagicMock(return_value="\\documentclass{pub-cv}"),
+            _generate_xmpdata=MagicMock(),
+            TEMPLATE_DIR=tmp_path,
+        )
+        with patch.dict("sys.modules", {"render": mock_render}):
+            result = build._discover_tailored(meta)
+
+        assert "xmp-job" in result
+        copied = tmp_path / "src" / "cvs" / "xmp-job" / "xmp-job.xmpdata"
+        assert copied.exists()
 
     def test_skips_registered_documents(self, tmp_path, monkeypatch):
         import yaml

@@ -1,23 +1,14 @@
 """test_stamp_pdfs.py — Tests for scripts/stamp-pdfs.py PDF stamping."""
 
-import importlib
 import subprocess
 import sys
-from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pikepdf
 import pytest
 
-# Import module with hyphenated filename and register in sys.modules
-_scripts_dir = str(Path(__file__).resolve().parent.parent / "scripts")
-sys.path.insert(0, _scripts_dir)
-_spec = importlib.util.spec_from_file_location(
-    "stamp_pdfs",
-    Path(_scripts_dir) / "stamp-pdfs.py",
-)
-stamp_pdfs = importlib.util.module_from_spec(_spec)
-_spec.loader.exec_module(stamp_pdfs)
+from euxis_publisher.tools import stamp_pdfs
+
 sys.modules["stamp_pdfs"] = stamp_pdfs
 
 
@@ -165,6 +156,48 @@ class TestWatermarkPdf:
             page = pdf.pages[0]
             assert "/Resources" in page
             assert "/Watermark0" in page["/Resources"]["/XObject"]
+
+    def test_page_without_resources_branch_with_mock(self):
+        class FakePage(dict):
+            pass
+
+        class FakePdf:
+            def __init__(self):
+                self.pages = [FakePage({"/MediaBox": [0, 0, 612, 792],
+                                        "/Contents": "orig"})]
+
+            def make_indirect(self, obj):
+                return obj
+
+            def save(self, _path):
+                return None
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, exc_type, exc, tb):
+                return False
+
+        fake_pdf = FakePdf()
+
+        class FakePikePdf:
+            Array = list
+            Dictionary = dict
+
+            @staticmethod
+            def Stream(_pdf, data):
+                return data
+
+            @staticmethod
+            def open(_path, allow_overwriting_input=True):
+                return fake_pdf
+
+        with patch.object(stamp_pdfs, "_build_watermark_xobject",
+                          return_value="xobj"), \
+             patch.dict(sys.modules, {"pikepdf": FakePikePdf}):
+            stamp_pdfs.watermark_pdf("dummy.pdf", "DRAFT")
+
+        assert "/Resources" in fake_pdf.pages[0]
 
     def test_page_without_xobject(self, tmp_path):
         """Pages with /Resources but no /XObject get one created."""

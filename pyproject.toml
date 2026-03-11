@@ -35,11 +35,11 @@ dev = [
 ]
 
 [project.scripts]
-euxis-publisher = "scripts.build:main"
+euxis-publisher = "euxis_publisher.cli.build:main"
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["scripts*", "core*"]
+include = ["euxis_publisher*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

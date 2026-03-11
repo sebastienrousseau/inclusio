@@ -32,14 +32,27 @@
 %% ── Microtype ───────────────────────────────────────────────────────────
 \RequirePackage[protrusion=true,expansion=true,verbose=silent,patch=none]{microtype}
 
-\microtypesetup{
-    activate={true,nocompatibility},
-    final,
-    tracking=true,
-    kerning=true,
-    spacing=false,
-    factor=1100
-}
+\RequirePackage{iftex}
+
+\ifPDFTeX
+  \microtypesetup{
+      activate={true,nocompatibility},
+      final,
+      tracking=true,
+      kerning=true,
+      spacing=false,
+      factor=1100
+  }
+\else
+  \microtypesetup{
+      activate={true,nocompatibility},
+      final,
+      tracking=true,
+      kerning=false,
+      spacing=false,
+      factor=1100
+  }
+\fi
 
 %% ── Golden ratio constants (from cv.cls) ────────────────────────────────
 \newcommand{\goldenratio}{1.618}

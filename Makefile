@@ -1,12 +1,11 @@
 ###############################################################################
-# Root Makefile for Euxis Publisher — Thin wrapper around scripts/build.py
+# Root Makefile for Euxis Publisher — Thin wrapper around the packaged build CLI
 ###############################################################################
 
-SHELL := /bin/bash
 .DEFAULT_GOAL := help
 
 PYTHON := $(shell command -v mise >/dev/null 2>&1 && mise which python3 2>/dev/null || echo python3)
-BUILD  := $(PYTHON) scripts/build.py
+BUILD  := $(PYTHON) -m euxis_publisher.cli.build
 
 # External content directory (set via EUXIS_CONTENT_DIR env var)
 CONTENT_DIR ?= $(EUXIS_CONTENT_DIR)
@@ -46,7 +45,7 @@ lint: ## Run quality checks (semantic, chktex, vale)
 	$(BUILD) lint
 
 fix: ## Auto-fix semantic violations in src/
-	$(PYTHON) scripts/fix-semantic.py src/
+	$(PYTHON) -m euxis_publisher.tools.fix_semantic src/
 
 render: ## Render Jinja2 templates to LaTeX
 	$(BUILD) render
@@ -84,7 +83,7 @@ test: ## Run public engine tests
 	$(PYTHON) -m pytest -q tests/test_assets.py tests/test_build.py tests/test_engine_smoke.py tests/test_macro_contract.py
 
 coverage: ## Measure Python logic coverage (>=95% required)
-	COVERAGE_FILE=/tmp/euxis-publisher.coverage $(PYTHON) -m pytest --cov=scripts --cov-report=term-missing --cov-fail-under=95 tests/
+	COVERAGE_FILE=/tmp/euxis-publisher.coverage $(PYTHON) -m pytest --cov=euxis_publisher --cov-report=term-missing --cov-fail-under=95 tests/
 
 validate: ## Run full local validation (tests, coverage, docs)
 	$(MAKE) test PYTHON=$(PYTHON)
@@ -93,7 +92,7 @@ validate: ## Run full local validation (tests, coverage, docs)
 
 validate-private: ## Reminder: run content + British-English validation in private repo
 	@echo "Run private validations in ../euxis-publisher-private"
-	@echo "Example: python3 ../euxis-publisher/scripts/tailor.py data/jobs/brief.txt --type cv --id be-check --no-ai"
+	@echo "Example: python3 -m euxis_publisher.cli.tailor data/jobs/brief.txt --type cv --id be-check --no-ai"
 
 list: ## List all registered documents
 	$(BUILD) list

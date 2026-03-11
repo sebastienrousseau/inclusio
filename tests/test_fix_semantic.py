@@ -1,21 +1,13 @@
 """test_fix_semantic.py — Tests for scripts/fix-semantic.py auto-fixer."""
 
-import importlib
 import sys
-from pathlib import Path
 from unittest.mock import patch
 
 import pytest
 
-# Import module with hyphenated filename
-_scripts_dir = str(Path(__file__).resolve().parent.parent / "scripts")
-sys.path.insert(0, _scripts_dir)
-_spec = importlib.util.spec_from_file_location(
-    "fix_semantic",
-    Path(_scripts_dir) / "fix-semantic.py",
-)
-fix_semantic = importlib.util.module_from_spec(_spec)
-_spec.loader.exec_module(fix_semantic)
+from euxis_publisher.tools import fix_semantic
+
+sys.modules["fix_semantic"] = fix_semantic
 fix_file = fix_semantic.fix_file
 fix_line = fix_semantic.fix_line
 
