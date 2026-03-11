@@ -6,8 +6,8 @@
 ./bin/setup
 ```
 
-This script installs the Python package in editable mode with dev
-dependencies. On Windows, use WSL for the full TeX toolchain.
+Install the package in editable mode with dev dependencies. On Windows, run the
+full TeX toolchain through WSL.
 
 ## Common Commands
 
@@ -16,7 +16,7 @@ make test
 make coverage
 make render
 make sitemap
-make publish CONTENT_DIR=/absolute/path/to/euxis-publisher-private
+make publish CONTENT_DIR=/home/seb/Code/Private/TeX/euxis-publisher-private
 ```
 
 ## Build Script
@@ -38,16 +38,16 @@ Use one of the following patterns:
 
 ```bash
 # Shell-agnostic and recommended
-make publish CONTENT_DIR=/absolute/path/to/euxis-publisher-private
+make publish CONTENT_DIR=/home/seb/Code/Private/TeX/euxis-publisher-private
 
 # Bash / Zsh / POSIX sh
-EUXIS_CONTENT_DIR=/absolute/path/to/euxis-publisher-private make publish
+EUXIS_CONTENT_DIR=/home/seb/Code/Private/TeX/euxis-publisher-private make publish
 
 # fish
-env EUXIS_CONTENT_DIR=/absolute/path/to/euxis-publisher-private make publish
+env EUXIS_CONTENT_DIR=/home/seb/Code/Private/TeX/euxis-publisher-private make publish
 
 # PowerShell
-$env:EUXIS_CONTENT_DIR = "/absolute/path/to/euxis-publisher-private"
+$env:EUXIS_CONTENT_DIR = "/home/seb/Code/Private/TeX/euxis-publisher-private"
 make publish
 ```
 

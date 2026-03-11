@@ -84,31 +84,30 @@ python3 -m euxis_publisher.cli.build --content-dir . render --doc cv --mode fina
 ./bin/setup
 ```
 
-For accessibility tagging support, ensure TeX Live provides `tagpdf.sty`.
+Install `tagpdf.sty` in TeX Live if you need accessibility tagging.
 
 ## Publish With Private Content
 
 `make publish` reads content from the engine repo by default. To publish against
-the private content repo, pass the content path explicitly:
+the private content repo, pass the real content path:
 
 ```bash
-make publish CONTENT_DIR=/absolute/path/to/euxis-publisher-private
+make publish CONTENT_DIR=/home/seb/Code/Private/TeX/euxis-publisher-private
 ```
 
-This form works across shells because it avoids shell-specific environment
-variable syntax.
+Use this form across shells. It avoids shell-specific environment syntax.
 
-Optional shell-specific equivalents:
+Use the shell-specific form only if you need it:
 
 ```bash
 # Bash / Zsh / POSIX sh
-EUXIS_CONTENT_DIR=/absolute/path/to/euxis-publisher-private make publish
+EUXIS_CONTENT_DIR=/home/seb/Code/Private/TeX/euxis-publisher-private make publish
 
 # fish
-env EUXIS_CONTENT_DIR=/absolute/path/to/euxis-publisher-private make publish
+env EUXIS_CONTENT_DIR=/home/seb/Code/Private/TeX/euxis-publisher-private make publish
 
 # PowerShell
-$env:EUXIS_CONTENT_DIR = "/absolute/path/to/euxis-publisher-private"
+$env:EUXIS_CONTENT_DIR = "/home/seb/Code/Private/TeX/euxis-publisher-private"
 make publish
 ```
 
