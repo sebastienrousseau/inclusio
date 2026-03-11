@@ -27,4 +27,4 @@ WORKDIR /workspace
 COPY . /workspace
 
 # Default command: build all documents in draft mode
-CMD ["python3", "scripts/build.py", "build", "--mode", "draft"]
+CMD ["python3", "-m", "euxis_publisher.cli.build", "build", "--mode", "draft"]

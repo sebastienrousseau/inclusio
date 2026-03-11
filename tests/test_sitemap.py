@@ -7,9 +7,9 @@ from unittest.mock import patch
 
 import pytest
 
-# Import sitemap module from scripts/
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
-import sitemap
+from euxis_publisher.cli import sitemap
+
+sys.modules["sitemap"] = sitemap
 
 
 # ── load_meta ────────────────────────────────────────────────────────────

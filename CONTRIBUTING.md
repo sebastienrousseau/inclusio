@@ -416,10 +416,9 @@ The repository supports generating documents in multiple formats via Pandoc:
 # Convert all documents to all formats
 make all-formats
 
-# Use the pipeline script directly
-./scripts/pandoc-pipeline.sh all                    # All formats, all docs
-./scripts/pandoc-pipeline.sh docx papers/my-paper.tex build/  # Single file
-./scripts/pandoc-pipeline.sh html cvs/              # All CVs to HTML
+# Use pandoc directly for format conversion
+pandoc papers/my-paper.tex --from latex --to docx --output build/my-paper.docx
+pandoc papers/my-paper.tex --from latex --to html5 --output build/my-paper.html
 ```
 
 ### Template Usage Examples

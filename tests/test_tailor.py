@@ -11,9 +11,9 @@ from unittest.mock import MagicMock, patch
 import pytest
 import yaml
 
-# Import tailor module from scripts/
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
-import tailor
+from euxis_publisher.cli import tailor
+
+sys.modules["tailor"] = tailor
 
 
 # ── Fixtures ──────────────────────────────────────────────────────────────
@@ -1188,6 +1188,68 @@ class TestTailorMain:
                 monkeypatch.setattr(builtins, "__import__", mock_import)
                 with pytest.raises(SystemExit):
                     tailor.main()
+
+    def test_main_render_uses_packaged_fallback(self, brief_file,
+                                                sample_cv_data, tmp_path,
+                                                monkeypatch):
+        monkeypatch.setattr(tailor, "PROJECT_ROOT", tmp_path)
+        monkeypatch.setattr(tailor, "CONTENT_ROOT", tmp_path)
+        monkeypatch.setattr(
+            tailor, "TAILORED_DIR", tmp_path / "data" / "tailored"
+        )
+        data_dir = tmp_path / "data"
+        data_dir.mkdir(exist_ok=True)
+        with open(data_dir / "cv-data.yaml", "w") as f:
+            yaml.dump(sample_cv_data, f, default_flow_style=False)
+
+        import builtins
+        from euxis_publisher.cli import render as package_render
+        real_import = builtins.__import__
+
+        def mock_import(name, *args, **kwargs):
+            if name == "render":
+                raise ModuleNotFoundError("No module named 'render'")
+            return real_import(name, *args, **kwargs)
+
+        with patch.object(package_render, "render_document") as mock_render:
+            with patch("sys.argv", ["tailor.py", str(brief_file),
+                                     "--render", "--no-ai"]):
+                monkeypatch.setattr(builtins, "__import__", mock_import)
+                tailor.main()
+        mock_render.assert_called_once()
+
+    def test_main_build_uses_packaged_fallback(self, brief_file,
+                                               sample_cv_data, tmp_path,
+                                               monkeypatch):
+        monkeypatch.setattr(tailor, "PROJECT_ROOT", tmp_path)
+        monkeypatch.setattr(tailor, "CONTENT_ROOT", tmp_path)
+        monkeypatch.setattr(
+            tailor, "TAILORED_DIR", tmp_path / "data" / "tailored"
+        )
+        data_dir = tmp_path / "data"
+        data_dir.mkdir(exist_ok=True)
+        with open(data_dir / "cv-data.yaml", "w") as f:
+            yaml.dump(sample_cv_data, f, default_flow_style=False)
+
+        import builtins
+        from euxis_publisher.cli import build as package_build
+        real_import = builtins.__import__
+
+        def mock_import(name, *args, **kwargs):
+            if name == "build":
+                raise ModuleNotFoundError("No module named 'build'")
+            return real_import(name, *args, **kwargs)
+
+        mock_render = MagicMock()
+        with patch.object(package_build, "load_meta",
+                          return_value={"build": {}}), \
+             patch.object(package_build, "build_document") as mock_build_doc:
+            with patch("sys.argv", ["tailor.py", str(brief_file),
+                                     "--build", "--no-ai"]):
+                with patch.dict("sys.modules", {"render": mock_render}):
+                    monkeypatch.setattr(builtins, "__import__", mock_import)
+                    tailor.main()
+        mock_build_doc.assert_called_once()
 
     def test_main_with_base_flag(self, brief_file, sample_cv_data, tmp_path,
                                   monkeypatch, capsys):
