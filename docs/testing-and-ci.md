@@ -9,7 +9,6 @@
 
 `make coverage` enforces:
 
-- `--cov=scripts`
 - `--cov=euxis_publisher`
 - `--cov-fail-under=95`
 
