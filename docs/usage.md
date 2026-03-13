@@ -19,6 +19,10 @@ make sitemap
 make publish CONTENT_DIR=/absolute/path/to/euxis-publisher-private
 ```
 
+Use `make publish` when you want one-step private output. It scans
+`data/jobs/`, generates or refreshes tailored YAML for supported briefs, and
+then builds the PDFs.
+
 ## Build Script
 
 ```bash
@@ -31,6 +35,9 @@ python3 -m euxis_publisher.cli.build sitemap --pretty
 ## Tailoring Note
 
 British-English tailoring quality checks belong in `euxis-publisher-private` where real briefs and content live.
+
+Supported brief formats for automatic tailoring: `.txt`, `.md`, `.markdown`,
+`.rtf`, `.doc`, `.docx`, `.odt`, and `.html`.
 
 ## Publishing With Private Content
 
@@ -52,3 +59,7 @@ make publish
 ```
 
 `EUXIS_PUBLISHER_CONTENT_DIR` is not a supported variable name.
+
+Use `make tailor BRIEF=data/jobs/job.txt` when you want to regenerate one brief
+explicitly. Use `make publish` when you want the engine to process every
+supported brief in `data/jobs/`.

@@ -60,6 +60,11 @@ make publish
 
 `EUXIS_PUBLISHER_CONTENT_DIR` is **not** supported.
 
+Drop supported briefs into `data/jobs/` in the private content repo, then run
+`publish`. The build now promotes `.txt`, `.md`, `.markdown`, `.rtf`, `.doc`,
+`.docx`, `.odt`, and `.html` briefs into `data/tailored/` automatically before
+compiling PDFs.
+
 ---
 
 ## Overview
@@ -118,10 +123,11 @@ graph TD
 | `make list` | inspect registered documents |
 | `make draft` | compile all public documents in draft mode |
 | `make final` | compile camera-ready output from the current content root |
+| `make publish CONTENT_DIR=/absolute/path/to/euxis-publisher-private` | auto-tailor briefs from `data/jobs/` and compile the full private set |
 | `make render` | render Jinja2 templates to LaTeX |
 | `make render-md` | render Markdown output |
 | `make blog` | render blog posts |
-| `make tailor BRIEF=data/jobs/job.txt` | generate tailored YAML and build output |
+| `make tailor BRIEF=data/jobs/job.txt` | generate one tailored document explicitly and build it |
 | `make sitemap` | generate `build/site-map.json` |
 | `make test` | run the public engine test target |
 | `make coverage` | enforce the package coverage gate |
@@ -135,6 +141,9 @@ python3 -m euxis_publisher.cli.render --doc cv
 python3 -m euxis_publisher.cli.sitemap --pretty
 python3 -m euxis_publisher.cli.tailor data/jobs/test.txt --no-ai
 ```
+
+For bulk private publishing, prefer `make publish`. It scans `data/jobs/`,
+refreshes stale tailored YAML, and compiles the resulting PDFs in one pass.
 
 ---
 

@@ -91,13 +91,14 @@ def render_latex(template_name, data, template_dir=None):
 def render_markdown(data, doc_type):
     """Render structured data to Markdown format.
 
-    Currently supports: cv, blog
+    Supports dedicated CV data and falls back to a generic Markdown renderer
+    for other structured document types.
     """
     if doc_type == "cv":
         return _render_cv_markdown(data)
     if doc_type == "blog":
         return render_blog_markdown(data, "blog-post.md.j2")
-    raise ValueError(f"Unknown document type for Markdown: {doc_type}")
+    return _render_generic_markdown(data, doc_type)
 
 
 def _render_cv_markdown(data):
@@ -111,40 +112,90 @@ def _render_cv_markdown(data):
     lines.append(f"Email: {data['contact']['email']}")
     lines.append("")
 
-    lines.append("## Summary")
+    summary = data.get("executive_profile") or data.get("summary", "")
+    lines.append("## Executive Summary" if data.get("executive_profile") else "## Summary")
     lines.append("")
-    lines.append(data["summary"])
+    lines.append(summary)
     lines.append("")
+
+    achievements = data.get("achievements", [])
+    if achievements:
+        lines.append("## Selected Impact")
+        lines.append("")
+        for item in achievements:
+            lines.append(f"- {item}")
+        lines.append("")
 
     lines.append("## Professional Experience")
     lines.append("")
     for job in data.get("experience", []):
+        if job.get("roles"):
+            heading = job["company"]
+            details = " | ".join(
+                part for part in (job.get("location"), job.get("dates")) if part
+            )
+            lines.append(f"### {heading}")
+            if details:
+                lines.append(f"*{details}*")
+            if job.get("context"):
+                lines.append("")
+                lines.append(_strip_markdown_escapes(job["context"]))
+            lines.append("")
+            for role_entry in job.get("roles", []):
+                lines.append(f"#### {role_entry['title']}")
+                lines.append("")
+                for item in role_entry.get("bullets", []):
+                    lines.append(f"- {_strip_markdown_escapes(item)}")
+                lines.append("")
+            continue
+
         lines.append(f"### {job['title']} — {job['company']}")
         lines.append(f"*{job['dates']}*")
         lines.append("")
         for item in job.get("bullets", []):
-            # Strip LaTeX escapes for Markdown
-            clean = item.replace("\\$", "$").replace("\\&", "&")
-            lines.append(f"- {clean}")
+            lines.append(f"- {_strip_markdown_escapes(item)}")
         lines.append("")
 
-    lines.append("## Prior Experience")
-    lines.append("")
-    for prior in data.get("prior_experience", []):
-        lines.append(
-            f"- **{prior['title']}**, {prior['company']} "
-            f"({prior['dates']})"
-        )
-    lines.append("")
+    prior_experience = data.get("prior_experience", [])
+    if prior_experience:
+        lines.append("## Prior Experience")
+        lines.append("")
+        for prior in prior_experience:
+            lines.append(
+                f"- **{prior['title']}**, {prior['company']} "
+                f"({prior['dates']})"
+            )
+        lines.append("")
 
-    lines.append("## Skills")
-    lines.append("")
-    for skill in data.get("skills", []):
-        desc = skill["description"].replace("\\hbox{-}", "-")
-        lines.append(f"### {skill['title']}")
+    innovation = data.get("innovation", [])
+    if innovation:
+        lines.append("## Innovation & Thought Leadership")
         lines.append("")
-        lines.append(desc)
+        for item in innovation:
+            lines.append(f"- {_strip_markdown_escapes(item)}")
         lines.append("")
+
+    competencies = data.get("competencies")
+    skills = data.get("skills", [])
+    if competencies:
+        lines.append("## Core Competencies")
+        lines.append("")
+        for item in competencies:
+            lines.append(
+                f"- **{item['title']}**: {_strip_markdown_escapes(item['description'])}"
+            )
+        lines.append("")
+    elif skills:
+        lines.append("## Skills")
+        lines.append("")
+        for skill in skills:
+            desc = _strip_markdown_escapes(skill["description"]).replace(
+                "\\hbox{-}", "-"
+            )
+            lines.append(f"### {skill['title']}")
+            lines.append("")
+            lines.append(desc)
+            lines.append("")
 
     lines.append("## Education")
     lines.append("")
@@ -161,6 +212,63 @@ def _render_cv_markdown(data):
     lines.append("")
 
     return "\n".join(lines)
+
+
+def _strip_markdown_escapes(text):
+    """Remove LaTeX-oriented escapes when emitting Markdown."""
+    return (
+        text.replace("\\$", "$")
+        .replace("\\&", "&")
+        .replace("\\%", "%")
+        .replace("\\_", "_")
+    )
+
+
+def _render_generic_markdown(data, doc_type):
+    """Render arbitrary structured data to a readable Markdown document."""
+    title = data.get("title") or data.get("subject") or doc_type.replace("-", " ").title()
+    lines = [f"# {title}", ""]
+
+    for key, value in data.items():
+        if key.startswith("_") or key in {"title", "build_mode"}:
+            continue
+        heading = key.replace("_", " ").title()
+        lines.append(f"## {heading}")
+        lines.append("")
+        lines.extend(_markdown_lines(value))
+        lines.append("")
+
+    return "\n".join(lines)
+
+
+def _markdown_lines(value):
+    """Convert nested structured values to Markdown lines."""
+    if isinstance(value, dict):
+        lines = []
+        for key, item in value.items():
+            label = key.replace("_", " ").title()
+            if isinstance(item, (dict, list)):
+                lines.append(f"### {label}")
+                lines.append("")
+                lines.extend(_markdown_lines(item))
+            else:
+                lines.append(f"- **{label}**: {item}")
+        return lines
+    if isinstance(value, list):
+        lines = []
+        for item in value:
+            if isinstance(item, (dict, list)):
+                nested = _markdown_lines(item)
+                if nested:
+                    first, *rest = nested
+                    lines.append(f"- {first}")
+                    lines.extend(rest)
+            else:
+                lines.append(f"- {item}")
+        return lines
+    if value is None:
+        return ["-"]
+    return [str(value)]
 
 
 def render_json(data):
@@ -224,10 +332,11 @@ def render_document(doc_id, fmt="latex", build_mode="draft",
     template_name = entry["template"]
     data_file = root / "data" / entry["data"]
     doc_type = entry.get("type", doc_id)
+    allow_tailored_override = entry.get("allow_tailored_override", True)
 
     # Check for tailored data override
     tailored_data = root / "data" / "tailored" / f"{doc_id}.yaml"
-    if tailored_data.exists():
+    if allow_tailored_override and tailored_data.exists():
         data_file = tailored_data
 
     if not data_file.exists():

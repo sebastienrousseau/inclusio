@@ -258,6 +258,19 @@ class TestLintCvData:
         warnings = tailor.lint_cv_data(data)
         assert not any("vague" in w["issue"] for w in warnings)
 
+    def test_partnered_bullet_not_flagged(self):
+        data = {
+            "experience": [
+                {
+                    "bullets": [
+                        "Partnered with sales to drive commercial adoption.",
+                    ]
+                }
+            ],
+        }
+        warnings = tailor.lint_cv_data(data)
+        assert not any("vague" in w["issue"] for w in warnings)
+
     def test_currency_symbols_count_as_metrics(self):
         data = {
             "experience": [
@@ -304,6 +317,22 @@ class TestLintCvData:
         warnings = tailor.lint_cv_data(data)
         fields = [w["field"] for w in warnings]
         assert any("experience[1].bullets[0]" in f for f in fields)
+
+
+class TestCleanCvLanguage:
+    def test_partnering_bullet_is_rewritten(self):
+        cleaned = tailor._clean_cv_language(
+            {
+                "experience": [
+                    {
+                        "bullets": [
+                            "Partnering with sales to drive commercial adoption.",
+                        ]
+                    }
+                ]
+            }
+        )
+        assert cleaned["experience"][0]["bullets"][0].startswith("Partnered")
 
 
 class TestLintIntegration:
@@ -883,6 +912,157 @@ class TestClaudeGenerate:
 
 
 class TestGenerate:
+    def test_stamps_publisher_metadata(self, brief_file, sample_cv_data,
+                                       tmp_path, monkeypatch):
+        monkeypatch.setattr(tailor, "PROJECT_ROOT", tmp_path)
+        monkeypatch.setattr(tailor, "CONTENT_ROOT", tmp_path)
+        monkeypatch.setattr(
+            tailor, "TAILORED_DIR", tmp_path / "data" / "tailored"
+        )
+        data_dir = tmp_path / "data"
+        data_dir.mkdir(exist_ok=True)
+        with open(data_dir / "cv-data.yaml", "w") as f:
+            yaml.dump(sample_cv_data, f, default_flow_style=False)
+
+        result = tailor.generate(brief_file, "cv", "meta-test", use_ai=False)
+        with open(result) as f:
+            content = yaml.safe_load(f)
+
+        assert content["_publisher"]["doc_type"] == "cv"
+        assert content["_publisher"]["output_id"] == "meta-test"
+        assert content["_publisher"]["source_brief"].endswith(
+            str(brief_file.name)
+        )
+
+    def test_cleans_cv_language_and_rewrites_weak_bullets(
+        self, brief_file, sample_cv_data, tmp_path, monkeypatch
+    ):
+        monkeypatch.setattr(tailor, "PROJECT_ROOT", tmp_path)
+        monkeypatch.setattr(tailor, "CONTENT_ROOT", tmp_path)
+        monkeypatch.setattr(
+            tailor, "TAILORED_DIR", tmp_path / "data" / "tailored"
+        )
+        data_dir = tmp_path / "data"
+        data_dir.mkdir(exist_ok=True)
+        with open(data_dir / "cv-data.yaml", "w") as f:
+            yaml.dump(sample_cv_data, f, default_flow_style=False)
+
+        ai_data = copy.deepcopy(sample_cv_data)
+        ai_data["experience"][0]["bullets"] = [
+            "Driving platform migration across Europe.",
+            "Leading payment programmes across six markets.",
+            "Coordinating robust tokenization programs for clients.",
+        ]
+
+        with patch.object(tailor, "claude_generate", return_value=ai_data):
+            result_path = tailor.generate(brief_file, "cv", "cleaned-cv")
+
+        with open(result_path) as f:
+            content = yaml.safe_load(f)
+
+        bullets = content["experience"][0]["bullets"]
+        assert bullets[0].startswith("Drove")
+        assert bullets[1].startswith("Led")
+        assert bullets[2].startswith("Coordinated")
+        assert "robust" not in " ".join(bullets).lower()
+        assert "programs" not in " ".join(bullets).lower()
+
+    def test_trims_generated_cv_for_ats(self, brief_file, sample_cv_data,
+                                        tmp_path, monkeypatch):
+        monkeypatch.setattr(tailor, "PROJECT_ROOT", tmp_path)
+        monkeypatch.setattr(tailor, "CONTENT_ROOT", tmp_path)
+        monkeypatch.setattr(
+            tailor, "TAILORED_DIR", tmp_path / "data" / "tailored"
+        )
+        data_dir = tmp_path / "data"
+        data_dir.mkdir(exist_ok=True)
+        with open(data_dir / "cv-data.yaml", "w") as f:
+            yaml.dump(sample_cv_data, f, default_flow_style=False)
+
+        ai_data = copy.deepcopy(sample_cv_data)
+        ai_data["experience"][0]["bullets"] = [
+            "One", "Two", "Three", "Four", "Five"
+        ]
+        ai_data["prior_experience"] = [
+            {"title": str(i), "company": "X", "location": "", "dates": "2020"}
+            for i in range(6)
+        ]
+        ai_data["skills"] = [
+            {"title": str(i), "description": "Desc"} for i in range(4)
+        ]
+
+        with patch.object(tailor, "claude_generate", return_value=ai_data):
+            result_path = tailor.generate(brief_file, "cv", "trimmed-cv")
+
+        with open(result_path) as f:
+            content = yaml.safe_load(f)
+
+        assert len(content["experience"][0]["bullets"]) == 4
+        assert len(content["prior_experience"]) == 4
+        assert len(content["skills"]) == 2
+
+    def test_escapes_raw_latex_special_chars_in_generated_cv(
+        self, brief_file, sample_cv_data, tmp_path, monkeypatch
+    ):
+        monkeypatch.setattr(tailor, "PROJECT_ROOT", tmp_path)
+        monkeypatch.setattr(tailor, "CONTENT_ROOT", tmp_path)
+        monkeypatch.setattr(
+            tailor, "TAILORED_DIR", tmp_path / "data" / "tailored"
+        )
+        data_dir = tmp_path / "data"
+        data_dir.mkdir(exist_ok=True)
+        with open(data_dir / "cv-data.yaml", "w") as f:
+            yaml.dump(sample_cv_data, f, default_flow_style=False)
+
+        ai_data = {
+            "name": {"first": "James", "last": "Croft"},
+            "role": "Senior Product Manager, Corporate Banking & Payments",
+            "summary": "Managed revenue growth by 25% across API_products.",
+        }
+        with patch.object(tailor, "claude_generate", return_value=ai_data):
+            result_path = tailor.generate(brief_file, "cv", "escaped-cv")
+
+        with open(result_path) as f:
+            content = yaml.safe_load(f)
+
+        assert content["role"] == (
+            r"Senior Product Manager, Corporate Banking \& Payments"
+        )
+        assert content["summary"] == (
+            r"Managed revenue growth by 25\% across API\_products."
+        )
+
+    def test_preserves_existing_latex_escapes(
+        self, brief_file, sample_cv_data, tmp_path, monkeypatch
+    ):
+        monkeypatch.setattr(tailor, "PROJECT_ROOT", tmp_path)
+        monkeypatch.setattr(tailor, "CONTENT_ROOT", tmp_path)
+        monkeypatch.setattr(
+            tailor, "TAILORED_DIR", tmp_path / "data" / "tailored"
+        )
+        data_dir = tmp_path / "data"
+        data_dir.mkdir(exist_ok=True)
+        with open(data_dir / "cv-data.yaml", "w") as f:
+            yaml.dump(sample_cv_data, f, default_flow_style=False)
+
+        ai_data = {
+            "name": {"first": "James", "last": "Croft"},
+            "role": r"Senior Product Manager, Payments \& Platforms",
+            "summary": r"Managed \$100 billion in transaction volume.",
+        }
+        with patch.object(tailor, "claude_generate", return_value=ai_data):
+            result_path = tailor.generate(brief_file, "cv", "preserved-cv")
+
+        with open(result_path) as f:
+            content = yaml.safe_load(f)
+
+        assert content["role"] == (
+            r"Senior Product Manager, Payments \& Platforms"
+        )
+        assert content["summary"] == (
+            r"Managed \$100 billion in transaction volume."
+        )
+
     def test_writes_yaml(self, brief_file, sample_cv_data, tmp_path,
                          monkeypatch):
         monkeypatch.setattr(tailor, "PROJECT_ROOT", tmp_path)

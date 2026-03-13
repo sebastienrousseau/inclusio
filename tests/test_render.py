@@ -266,6 +266,32 @@ class TestRenderDocument:
         assert "Tailored" in result
         assert "Original" not in result
 
+    def test_can_disable_tailored_data_override(self, monkeypatch, tmp_path):
+        """Explicit docs can opt out of data/tailored shadowing."""
+        data_dir = tmp_path / "data"
+        data_dir.mkdir()
+        (data_dir / "meta.yaml").write_text(
+            "templates:\n"
+            "  testdoc:\n"
+            "    template: test.tex.j2\n"
+            "    data: test-data.yaml\n"
+            "    type: cv\n"
+            "    allow_tailored_override: false\n"
+        )
+        (data_dir / "test-data.yaml").write_text("title: Dedicated\n")
+        tailored_dir = data_dir / "tailored"
+        tailored_dir.mkdir()
+        (tailored_dir / "testdoc.yaml").write_text("title: Tailored\n")
+        template_dir = tmp_path / "templates"
+        template_dir.mkdir()
+        (template_dir / "test.tex.j2").write_text("<< title >>")
+
+        monkeypatch.setattr(render, "CONTENT_ROOT", tmp_path)
+
+        result = render.render_document("testdoc", "latex", "draft")
+        assert "Dedicated" in result
+        assert "Tailored" not in result
+
     def test_unknown_format_exits(self, monkeypatch, tmp_path):
         data_dir = tmp_path / "data"
         data_dir.mkdir()
