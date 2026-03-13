@@ -8,6 +8,7 @@ from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
+import yaml
 
 from euxis_publisher.cli import build
 
@@ -275,45 +276,371 @@ class TestBuildDocument:
 class TestCmdBuild:
     @patch("build.build_document", return_value=True)
     @patch("build.check_tools")
-    def test_build_all_documents(self, mock_check, mock_build, capsys):
+    @patch("build._sync_jobs_to_tailored")
+    def test_build_all_documents(self, mock_sync, mock_check, mock_build,
+                                 capsys):
         meta = build.load_meta()
-        args = Namespace(mode="draft", doc=None)
+        args = Namespace(mode="draft", doc=None, jobs_only=False)
         build.cmd_build(args, meta)
+        mock_sync.assert_called_once_with(
+            meta, force=False, selected_output_ids=None
+        )
         output = capsys.readouterr().out
         assert "Building" in output
         assert "ok" in output
 
     @patch("build.build_document", return_value=True)
     @patch("build.check_tools")
-    def test_build_single_document(self, mock_check, mock_build, capsys):
+    @patch("build._sync_jobs_to_tailored")
+    def test_build_single_document(self, mock_sync, mock_check, mock_build,
+                                   capsys):
         meta = build.load_meta()
-        args = Namespace(mode="draft", doc="cv")
+        args = Namespace(mode="draft", doc="cv", jobs_only=False)
         build.cmd_build(args, meta)
+        mock_sync.assert_called_once_with(
+            meta, force=False, selected_output_ids={"cv"}
+        )
         assert mock_build.call_count == 1
 
     @patch("build.check_tools")
-    def test_build_unknown_document_exits(self, mock_check):
+    @patch("build._sync_jobs_to_tailored")
+    def test_build_unknown_document_exits(self, mock_sync, mock_check):
         meta = build.load_meta()
-        args = Namespace(mode="draft", doc="nonexistent_doc")
+        args = Namespace(mode="draft", doc="nonexistent_doc", jobs_only=False)
         with pytest.raises(SystemExit):
             build.cmd_build(args, meta)
 
     @patch("build.build_document", return_value=False)
     @patch("build.check_tools")
-    def test_build_with_failures_exits(self, mock_check, mock_build):
+    @patch("build._sync_jobs_to_tailored")
+    def test_build_with_failures_exits(self, mock_sync, mock_check, mock_build):
         meta = build.load_meta()
-        args = Namespace(mode="draft", doc="cv")
+        args = Namespace(mode="draft", doc="cv", jobs_only=False)
         with pytest.raises(SystemExit):
             build.cmd_build(args, meta)
 
     @patch("build.build_document", return_value=None)
     @patch("build.check_tools")
-    def test_build_with_skipped(self, mock_check, mock_build, capsys):
+    @patch("build._sync_jobs_to_tailored")
+    def test_build_with_skipped(self, mock_sync, mock_check, mock_build,
+                                capsys):
         meta = build.load_meta()
-        args = Namespace(mode="draft", doc="cv")
+        args = Namespace(mode="draft", doc="cv", jobs_only=False)
         build.cmd_build(args, meta)
         output = capsys.readouterr().out
         assert "skipped" in output
+
+    @patch("build.build_document", return_value=True)
+    @patch("build.check_tools")
+    @patch("build._sync_jobs_to_tailored")
+    @patch("build._discover_tailored", return_value={"job-a": {"tailored": True, "src": "x", "class": "pub-cv"}})
+    def test_build_jobs_only_filters_regular_documents(
+        self, mock_discover, mock_sync, mock_check, mock_build
+    ):
+        meta = {
+            "documents": {
+                "cv": {"class": "pub-cv", "src": "src/cvs/cv.tex"},
+                "job-explicit": {
+                    "class": "pub-cv",
+                    "src": "build/.cache/rendered/job-explicit.tex",
+                    "jobs_only": True,
+                },
+            }
+        }
+        args = Namespace(mode="draft", doc=None, jobs_only=True)
+        build.cmd_build(args, meta)
+        mock_sync.assert_called_once_with(
+            meta, force=False, selected_output_ids=None
+        )
+        built_ids = [call.args[0] for call in mock_build.call_args_list]
+        assert built_ids == ["job-explicit", "job-a"]
+
+
+class TestSyncJobsToTailored:
+    def test_infers_job_doc_type_from_parent_folder(self, tmp_path, monkeypatch):
+        jobs_dir = tmp_path / "data" / "jobs"
+        brief = jobs_dir / "patents" / "qaas.md"
+        brief.parent.mkdir(parents=True)
+        brief.write_text("Patent brief")
+
+        monkeypatch.setattr(build, "JOBS_DIR", jobs_dir)
+
+        assert build._infer_job_doc_type(brief) == "patent"
+
+    def test_infers_job_doc_type_from_filename_prefix(self, tmp_path, monkeypatch):
+        jobs_dir = tmp_path / "data" / "jobs"
+        brief = jobs_dir / "whitepaper-open-banking.rtf"
+        brief.parent.mkdir(parents=True)
+        brief.write_text("Whitepaper brief")
+
+        monkeypatch.setattr(build, "JOBS_DIR", jobs_dir)
+
+        assert build._infer_job_doc_type(brief) == "paper"
+
+    def test_generates_supported_missing_brief(self, tmp_path, monkeypatch,
+                                               capsys):
+        jobs_dir = tmp_path / "data" / "jobs"
+        tailored_dir = tmp_path / "data" / "tailored"
+        jobs_dir.mkdir(parents=True)
+        brief = jobs_dir / "pm-role.txt"
+        brief.write_text("Senior PM brief")
+        tailor_mod = MagicMock()
+
+        monkeypatch.setattr(build, "CONTENT_ROOT", tmp_path)
+        monkeypatch.setattr(build, "JOBS_DIR", jobs_dir)
+        monkeypatch.setattr(build, "TAILORED_DIR", tailored_dir)
+        monkeypatch.setattr(build, "_import_tailor_module",
+                            lambda: tailor_mod)
+
+        build._sync_jobs_to_tailored({}, force=False)
+
+        tailor_mod.generate.assert_called_once_with(
+            brief, "cv", "pm-role", None, use_ai=False,
+            output_path=tailored_dir / "pm-role.yaml"
+        )
+        assert "TAILOR pm-role <- data/jobs/pm-role.txt" in capsys.readouterr().out
+
+    def test_generates_nested_job_with_inferred_type(self, tmp_path, monkeypatch):
+        jobs_dir = tmp_path / "data" / "jobs"
+        tailored_dir = tmp_path / "data" / "tailored"
+        brief = jobs_dir / "faqs" / "payments-faq.rtf"
+        brief.parent.mkdir(parents=True)
+        brief.write_text("{\\rtf1 FAQ brief}")
+        tailor_mod = MagicMock()
+
+        monkeypatch.setattr(build, "CONTENT_ROOT", tmp_path)
+        monkeypatch.setattr(build, "JOBS_DIR", jobs_dir)
+        monkeypatch.setattr(build, "TAILORED_DIR", tailored_dir)
+        monkeypatch.setattr(build, "_import_tailor_module",
+                            lambda: tailor_mod)
+
+        build._sync_jobs_to_tailored({}, force=False)
+
+        tailor_mod.generate.assert_called_once_with(
+            brief, "faq", "payments-faq", None, use_ai=False,
+            output_path=tailored_dir / "payments-faq.yaml"
+        )
+
+    def test_skips_fresh_existing_tailored_yaml(self, tmp_path, monkeypatch):
+        jobs_dir = tmp_path / "data" / "jobs"
+        tailored_dir = tmp_path / "data" / "tailored"
+        jobs_dir.mkdir(parents=True)
+        tailored_dir.mkdir(parents=True)
+        brief = jobs_dir / "pm-role.txt"
+        brief.write_text("Senior PM brief")
+        tailored = tailored_dir / "pm-role.yaml"
+        tailored.write_text("title: Existing\n")
+        tailor_mod = MagicMock()
+        tailor_mod._escape_latex_strings.side_effect = lambda value: value
+        tailor_mod._optimise_cv_for_ats.side_effect = lambda value: value
+
+        monkeypatch.setattr(build, "CONTENT_ROOT", tmp_path)
+        monkeypatch.setattr(build, "JOBS_DIR", jobs_dir)
+        monkeypatch.setattr(build, "TAILORED_DIR", tailored_dir)
+        monkeypatch.setattr(build, "_import_tailor_module",
+                            lambda: tailor_mod)
+
+        os.utime(tailored, (brief.stat().st_mtime + 10, brief.stat().st_mtime + 10))
+
+        build._sync_jobs_to_tailored({}, force=False)
+
+        tailor_mod.generate.assert_not_called()
+
+    def test_normalizes_existing_tailored_yaml(self, tmp_path, monkeypatch,
+                                               capsys):
+        jobs_dir = tmp_path / "data" / "jobs"
+        tailored_dir = tmp_path / "data" / "tailored"
+        jobs_dir.mkdir(parents=True)
+        tailored_dir.mkdir(parents=True)
+        brief = jobs_dir / "pm-role.txt"
+        brief.write_text("Senior PM brief")
+        tailored = tailored_dir / "pm-role.yaml"
+        tailored.write_text("role: Payments & Platforms\n")
+        tailor_mod = MagicMock()
+        tailor_mod._escape_latex_strings.side_effect = (
+            lambda value: {"role": r"Payments \& Platforms"}
+        )
+        tailor_mod._optimise_cv_for_ats.side_effect = lambda value: value
+        tailor_mod._clean_cv_language.side_effect = lambda value: value
+
+        monkeypatch.setattr(build, "CONTENT_ROOT", tmp_path)
+        monkeypatch.setattr(build, "JOBS_DIR", jobs_dir)
+        monkeypatch.setattr(build, "TAILORED_DIR", tailored_dir)
+        monkeypatch.setattr(build, "_import_tailor_module",
+                            lambda: tailor_mod)
+
+        os.utime(tailored, (brief.stat().st_mtime + 10, brief.stat().st_mtime + 10))
+
+        build._sync_jobs_to_tailored({}, force=False)
+
+        with open(tailored) as f:
+            content = yaml.safe_load(f)
+        assert content["role"] == r"Payments \& Platforms"
+        tailor_mod.generate.assert_not_called()
+        assert "NORMALIZE pm-role <- data/tailored/pm-role.yaml" in (
+            capsys.readouterr().out
+        )
+
+    def test_regenerates_stale_tailored_yaml(self, tmp_path, monkeypatch):
+        jobs_dir = tmp_path / "data" / "jobs"
+        tailored_dir = tmp_path / "data" / "tailored"
+        jobs_dir.mkdir(parents=True)
+        tailored_dir.mkdir(parents=True)
+        brief = jobs_dir / "pm-role.rtf"
+        brief.write_text("{\\rtf1 test}")
+        tailored = tailored_dir / "pm-role.yaml"
+        tailored.write_text("title: Existing\n")
+        tailor_mod = MagicMock()
+        tailor_mod._escape_latex_strings.side_effect = lambda value: value
+        tailor_mod._optimise_cv_for_ats.side_effect = lambda value: value
+        tailor_mod._clean_cv_language.side_effect = lambda value: value
+
+        monkeypatch.setattr(build, "CONTENT_ROOT", tmp_path)
+        monkeypatch.setattr(build, "JOBS_DIR", jobs_dir)
+        monkeypatch.setattr(build, "TAILORED_DIR", tailored_dir)
+        monkeypatch.setattr(build, "_import_tailor_module",
+                            lambda: tailor_mod)
+
+        os.utime(brief, (tailored.stat().st_mtime + 10, tailored.stat().st_mtime + 10))
+
+        build._sync_jobs_to_tailored({}, force=False)
+
+        tailor_mod.generate.assert_called_once_with(
+            brief, "cv", "pm-role", None, use_ai=False,
+            output_path=tailored_dir / "pm-role.yaml"
+        )
+
+    def test_skips_unsupported_files(self, tmp_path, monkeypatch):
+        jobs_dir = tmp_path / "data" / "jobs"
+        jobs_dir.mkdir(parents=True)
+        (jobs_dir / "ignore.pdf").write_text("binary")
+        tailor_mod = MagicMock()
+
+        monkeypatch.setattr(build, "CONTENT_ROOT", tmp_path)
+        monkeypatch.setattr(build, "JOBS_DIR", jobs_dir)
+        monkeypatch.setattr(build, "TAILORED_DIR", tmp_path / "data" / "tailored")
+        monkeypatch.setattr(build, "_import_tailor_module",
+                            lambda: tailor_mod)
+
+        build._sync_jobs_to_tailored({}, force=False)
+
+        tailor_mod.generate.assert_not_called()
+
+    def test_uses_explicit_template_data_target(self, tmp_path, monkeypatch):
+        jobs_dir = tmp_path / "data" / "jobs"
+        tailored_dir = tmp_path / "data" / "tailored"
+        data_dir = tmp_path / "data"
+        jobs_dir.mkdir(parents=True)
+        tailored_dir.mkdir(parents=True)
+        brief = jobs_dir / "sebastien-rousseau-cv-jpmorgan.rtf"
+        brief.write_text("{\\rtf1 test}")
+        tailor_mod = MagicMock()
+
+        monkeypatch.setattr(build, "CONTENT_ROOT", tmp_path)
+        monkeypatch.setattr(build, "JOBS_DIR", jobs_dir)
+        monkeypatch.setattr(build, "TAILORED_DIR", tailored_dir)
+        monkeypatch.setattr(build, "_import_tailor_module",
+                            lambda: tailor_mod)
+
+        build._sync_jobs_to_tailored({
+            "templates": {
+                "sebastien-rousseau-cv-jpmorgan": {
+                    "data": "sebastien-rousseau-cv-jpmorgan.yaml"
+                }
+            }
+        }, force=False)
+
+        tailor_mod.generate.assert_called_once_with(
+            brief,
+            "cv",
+            "sebastien-rousseau-cv-jpmorgan",
+            None,
+            use_ai=False,
+            output_path=data_dir / "sebastien-rousseau-cv-jpmorgan.yaml",
+        )
+
+    def test_skips_jobs_sync_for_manual_explicit_doc(self, tmp_path, monkeypatch):
+        jobs_dir = tmp_path / "data" / "jobs"
+        tailored_dir = tmp_path / "data" / "tailored"
+        jobs_dir.mkdir(parents=True)
+        tailored_dir.mkdir(parents=True)
+        brief = jobs_dir / "sebastien-rousseau-cv-jpmorgan.rtf"
+        brief.write_text("{\\rtf1 test}")
+        tailor_mod = MagicMock()
+
+        monkeypatch.setattr(build, "CONTENT_ROOT", tmp_path)
+        monkeypatch.setattr(build, "JOBS_DIR", jobs_dir)
+        monkeypatch.setattr(build, "TAILORED_DIR", tailored_dir)
+        monkeypatch.setattr(build, "_import_tailor_module",
+                            lambda: tailor_mod)
+
+        build._sync_jobs_to_tailored({
+            "templates": {
+                "sebastien-rousseau-cv-jpmorgan": {
+                    "data": "sebastien-rousseau-cv-jpmorgan.yaml",
+                    "sync_from_jobs": False,
+                }
+            }
+        }, force=True)
+
+        tailor_mod.generate.assert_not_called()
+
+    def test_force_regenerates_fresh_existing_yaml(self, tmp_path, monkeypatch):
+        jobs_dir = tmp_path / "data" / "jobs"
+        tailored_dir = tmp_path / "data" / "tailored"
+        jobs_dir.mkdir(parents=True)
+        tailored_dir.mkdir(parents=True)
+        brief = jobs_dir / "pm-role.txt"
+        brief.write_text("Senior PM brief")
+        tailored = tailored_dir / "pm-role.yaml"
+        tailored.write_text("title: Existing\n")
+        tailor_mod = MagicMock()
+        tailor_mod._escape_latex_strings.side_effect = lambda value: value
+        tailor_mod._optimise_cv_for_ats.side_effect = lambda value: value
+        tailor_mod._clean_cv_language.side_effect = lambda value: value
+
+        monkeypatch.setattr(build, "CONTENT_ROOT", tmp_path)
+        monkeypatch.setattr(build, "JOBS_DIR", jobs_dir)
+        monkeypatch.setattr(build, "TAILORED_DIR", tailored_dir)
+        monkeypatch.setattr(build, "_import_tailor_module",
+                            lambda: tailor_mod)
+
+        os.utime(tailored, (brief.stat().st_mtime + 10, brief.stat().st_mtime + 10))
+
+        build._sync_jobs_to_tailored({}, force=True)
+
+        tailor_mod.generate.assert_called_once_with(
+            brief, "cv", "pm-role", None, use_ai=False,
+            output_path=tailored_dir / "pm-role.yaml"
+        )
+
+    def test_filters_sync_to_selected_output_ids(self, tmp_path, monkeypatch):
+        jobs_dir = tmp_path / "data" / "jobs"
+        tailored_dir = tmp_path / "data" / "tailored"
+        jobs_dir.mkdir(parents=True)
+        (jobs_dir / "keep-me.rtf").write_text("{\\rtf1 keep}")
+        (jobs_dir / "skip-me.rtf").write_text("{\\rtf1 skip}")
+        tailor_mod = MagicMock()
+
+        monkeypatch.setattr(build, "CONTENT_ROOT", tmp_path)
+        monkeypatch.setattr(build, "JOBS_DIR", jobs_dir)
+        monkeypatch.setattr(build, "TAILORED_DIR", tailored_dir)
+        monkeypatch.setattr(build, "_import_tailor_module", lambda: tailor_mod)
+
+        build._sync_jobs_to_tailored(
+            {},
+            force=False,
+            selected_output_ids={"keep-me"},
+        )
+
+        tailor_mod.generate.assert_called_once_with(
+            jobs_dir / "keep-me.rtf",
+            "cv",
+            "keep-me",
+            None,
+            use_ai=False,
+            output_path=tailored_dir / "keep-me.yaml",
+        )
 
 
 # ── cmd_assets ───────────────────────────────────────────────────────────

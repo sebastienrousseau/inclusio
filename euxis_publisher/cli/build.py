@@ -33,6 +33,9 @@ PROJECT_ROOT = SCRIPT_DIR.parent.parent
 DEFAULT_SUBPROCESS_TIMEOUT = int(
     os.environ.get("EUXIS_SUBPROCESS_TIMEOUT", "300")
 )
+AUTO_TAILOR_USE_AI = os.environ.get("EUXIS_AUTO_TAILOR_AI", "").lower() in {
+    "1", "true", "yes", "on",
+}
 
 # CONTENT_ROOT: where content lives (data/, src/, templates/, build/).
 # Defaults to PROJECT_ROOT; overridden by EUXIS_CONTENT_DIR env var or
@@ -44,6 +47,8 @@ META_FILE = CONTENT_ROOT / "data" / "meta.yaml"
 BUILD_DIR = CONTENT_ROOT / "build"
 CACHE_DIR = BUILD_DIR / ".cache"
 RENDERED_DIR = CACHE_DIR / "rendered"
+JOBS_DIR = CONTENT_ROOT / "data" / "jobs"
+TAILORED_DIR = CONTENT_ROOT / "data" / "tailored"
 
 
 def _resolve_content_paths(root):
@@ -52,12 +57,13 @@ def _resolve_content_paths(root):
     Called when --content-dir is provided on the CLI, after argparse runs.
     """
     global CONTENT_ROOT, META_FILE, BUILD_DIR, CACHE_DIR, RENDERED_DIR
-    global TAILORED_DIR
+    global JOBS_DIR, TAILORED_DIR
     CONTENT_ROOT = Path(root).resolve()
     META_FILE = CONTENT_ROOT / "data" / "meta.yaml"
     BUILD_DIR = CONTENT_ROOT / "build"
     CACHE_DIR = BUILD_DIR / ".cache"
     RENDERED_DIR = CACHE_DIR / "rendered"
+    JOBS_DIR = CONTENT_ROOT / "data" / "jobs"
     TAILORED_DIR = CONTENT_ROOT / "data" / "tailored"
 
 
@@ -285,11 +291,10 @@ def _post_process_pdf(pdf_path, doc_id, doc_config, meta):
         pdf.docinfo["/Creator"] = "LaTeX with hyperref"
         pdf.docinfo["/Producer"] = producer
 
-        # ── 3. PDF/UA accessibility — catalog entries ───────────────
-        # LuaLaTeX + \DocumentMetadata produces these natively; only
-        # add them as fallbacks when the compiler didn't.
-        if "/MarkInfo" not in pdf.Root:
-            pdf.Root["/MarkInfo"] = pikepdf.Dictionary({"/Marked": True})
+        # ── 3. Accessibility catalog entries ────────────────────────
+        # Only advertise logical tagging when a structure tree exists.
+        if "/StructTreeRoot" not in pdf.Root and "/MarkInfo" in pdf.Root:
+            del pdf.Root["/MarkInfo"]
         if "/Lang" not in pdf.Root:
             pdf.Root["/Lang"] = pikepdf.String("en")
         if "/ViewerPreferences" not in pdf.Root:
@@ -298,30 +303,136 @@ def _post_process_pdf(pdf_path, doc_id, doc_config, meta):
             })
 
         # ── 4. Encryption (AES-256) ────────────────────────────────
-        perms = pikepdf.Permissions(
-            print_highres=True,
-            print_lowres=True,
-            extract=False,
-            modify_annotation=False,
-            modify_form=False,
-            modify_assembly=False,
-            modify_other=False,
-            accessibility=True,
+        if doc_config.get("secure_pdf", True):
+            perms = pikepdf.Permissions(
+                print_highres=True,
+                print_lowres=True,
+                extract=False,
+                modify_annotation=False,
+                modify_form=False,
+                modify_assembly=False,
+                modify_other=False,
+                accessibility=True,
+            )
+
+            pdf.save(
+                pdf_path,
+                encryption=pikepdf.Encryption(
+                    owner=content_hash,
+                    user="",
+                    R=6,
+                    allow=perms,
+                    metadata=False,
+                ),
+            )
+        else:
+            pdf.save(pdf_path)
+
+SUPPORTED_BRIEF_EXTENSIONS = {
+    ".txt", ".md", ".markdown", ".rtf", ".doc", ".docx", ".odt", ".html",
+}
+JOB_TYPE_ALIASES = {
+    "cv": "cv",
+    "cvs": "cv",
+    "resume": "cv",
+    "resumes": "cv",
+    "whitepaper": "paper",
+    "whitepapers": "paper",
+    "paper": "paper",
+    "papers": "paper",
+    "patent": "patent",
+    "patents": "patent",
+    "faq": "faq",
+    "faqs": "faq",
+    "guide": "guide",
+    "guides": "guide",
+    "user-guide": "guide",
+    "user-guides": "guide",
+}
+
+
+def _infer_job_doc_type(brief_path):
+    """Infer document type from job folder structure or filename prefix."""
+    rel_parts = [
+        part.lower() for part in brief_path.relative_to(JOBS_DIR).parts[:-1]
+    ]
+    for part in rel_parts:
+        if part in JOB_TYPE_ALIASES:
+            return JOB_TYPE_ALIASES[part]
+
+    stem = brief_path.stem.lower()
+    for prefix, doc_type in JOB_TYPE_ALIASES.items():
+        if stem == prefix or stem.startswith(f"{prefix}-") or stem.startswith(f"{prefix}_"):
+            return doc_type
+
+    return "cv"
+
+
+def _sync_jobs_to_tailored(meta, force=False, selected_output_ids=None):
+    """Generate tailored YAML for supported briefs in data/jobs/."""
+    if not JOBS_DIR.exists():
+        return
+
+    tailor = _import_tailor_module()
+    template_entries = meta.get("templates", {})
+
+    for brief_path in sorted(JOBS_DIR.rglob("*")):
+        if not brief_path.is_file():
+            continue
+        if brief_path.suffix.lower() not in SUPPORTED_BRIEF_EXTENSIONS:
+            continue
+
+        output_id = brief_path.stem
+        if selected_output_ids and output_id not in selected_output_ids:
+            continue
+        doc_type = _infer_job_doc_type(brief_path)
+        template_entry = template_entries.get(output_id, {})
+        if template_entry.get("sync_from_jobs", True) is False:
+            continue
+        target_relpath = template_entry.get("data")
+        if target_relpath:
+            tailored_path = CONTENT_ROOT / "data" / target_relpath
+        else:
+            tailored_path = TAILORED_DIR / f"{output_id}.yaml"
+        if tailored_path.exists():
+            with open(tailored_path) as f:
+                existing = yaml.safe_load(f)
+            normalised = existing
+            if isinstance(existing, dict) and (
+                "experience" in existing or "skills" in existing
+            ):
+                normalised = tailor._optimise_cv_for_ats(normalised)
+                normalised = tailor._clean_cv_language(normalised)
+            normalised = tailor._escape_latex_strings(normalised)
+            if normalised != existing:
+                TAILORED_DIR.mkdir(parents=True, exist_ok=True)
+                with open(tailored_path, "w") as f:
+                    yaml.dump(
+                        normalised,
+                        f,
+                        default_flow_style=False,
+                        allow_unicode=True,
+                        sort_keys=False,
+                    )
+                print(f"  NORMALIZE {output_id} <- data/tailored/{output_id}.yaml")
+
+        is_stale = force or (
+            not tailored_path.exists()
+            or brief_path.stat().st_mtime > tailored_path.stat().st_mtime
         )
+        if not is_stale:
+            continue
 
-        pdf.save(
-            pdf_path,
-            encryption=pikepdf.Encryption(
-                owner=content_hash,
-                user="",
-                R=6,
-                allow=perms,
-                metadata=False,
-            ),
+        TAILORED_DIR.mkdir(parents=True, exist_ok=True)
+        print(f"  TAILOR {output_id} <- {brief_path.relative_to(CONTENT_ROOT)}")
+        tailor.generate(
+            brief_path,
+            doc_type,
+            output_id,
+            None,
+            use_ai=AUTO_TAILOR_USE_AI,
+            output_path=tailored_path,
         )
-
-
-TAILORED_DIR = CONTENT_ROOT / "data" / "tailored"
 
 
 def _artifact_subdir(doc_id, doc_config):
@@ -383,11 +494,14 @@ def _discover_tailored(meta):
         if not data:
             continue
 
-        # Infer document type — look for CV-specific keys
-        if "experience" in data or "skills" in data:
-            doc_type = "cv"
-        else:
-            doc_type = "paper"  # fallback
+        # Prefer explicit type metadata from the tailoring step.
+        metadata = data.get("_publisher", {}) if isinstance(data, dict) else {}
+        doc_type = metadata.get("doc_type")
+        if not doc_type:
+            if "experience" in data or "skills" in data:
+                doc_type = "cv"
+            else:
+                doc_type = "paper"
 
         template_entry = templates.get(doc_type, {})
         template_name = template_entry.get("template", f"{doc_type}.tex.j2")
@@ -451,6 +565,19 @@ def build_document(doc_id, doc_config, mode, meta, force=False):
     """Compile a single document."""
     src_path = CONTENT_ROOT / doc_config["src"]
     original_src_dir = src_path.parent
+
+    if doc_config.get("render_from_template"):
+        try:
+            render_module = _import_render_module()
+            render_module.render_document(
+                doc_id, fmt="latex", build_mode=mode, content_root=CONTENT_ROOT
+            )
+            src_path = RENDERED_DIR / f"{doc_id}.tex"
+            original_src_dir = src_path.parent
+        except ImportError:
+            print("ERROR: Jinja2 not installed. Run: pip install jinja2",
+                  file=sys.stderr)
+            return False
 
     # Use rendered template if available (but not for tailored docs whose
     # source already lives under src/{category}/{doc_id}/).
@@ -516,6 +643,8 @@ def build_document(doc_id, doc_config, mode, meta, force=False):
             "-file-line-error",
             tex_file,
         ]
+        if force:
+            cmd.insert(1, "-g")
     else:
         # Fallback: manual multi-pass
         cmd = [
@@ -569,10 +698,26 @@ def cmd_build(args, meta):
     mode_opt = mode_to_option(mode)
     force = getattr(args, "force", False)
     jobs = getattr(args, "jobs", 1)
+    jobs_only = getattr(args, "jobs_only", False)
     documents = meta.get("documents", {})
+
+    # Promote supported briefs from data/jobs/ into data/tailored/
+    selected_output_ids = {args.doc} if args.doc else None
+    _sync_jobs_to_tailored(
+        meta,
+        force=force,
+        selected_output_ids=selected_output_ids,
+    )
 
     # Discover tailored documents from data/tailored/
     tailored = _discover_tailored(meta)
+    if jobs_only:
+        documents = {
+            doc_id: config
+            for doc_id, config in documents.items()
+            if config.get("jobs_only")
+        }
+
     all_documents = {**documents, **tailored}
 
     if args.doc:
@@ -979,6 +1124,11 @@ Commands:
         "--force",
         action="store_true",
         help="Bypass content cache and rebuild all",
+    )
+    build_parser.add_argument(
+        "--jobs-only",
+        action="store_true",
+        help="Build only tailored or job-specific documents",
     )
 
     # render

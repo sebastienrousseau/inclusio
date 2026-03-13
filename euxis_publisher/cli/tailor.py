@@ -355,6 +355,24 @@ BANNED_PHRASES = [
     "game-changing", "world-class", "utilize",
 ]
 
+PHRASE_REPLACEMENTS = {
+    "robust": "secure",
+    "programs": "programmes",
+    "program ": "programme ",
+    "optimizing": "optimising",
+    "organization": "organisation",
+}
+
+_LEADING_BULLET_REWRITES = [
+    (re.compile(r"^Partnering\b", re.IGNORECASE), "Partnered"),
+    (re.compile(r"^Driving\b", re.IGNORECASE), "Drove"),
+    (re.compile(r"^Leading\b", re.IGNORECASE), "Led"),
+    (re.compile(r"^Coordinating\b", re.IGNORECASE), "Coordinated"),
+    (re.compile(r"^Owning\b", re.IGNORECASE), "Defined"),
+    (re.compile(r"^Presented\b", re.IGNORECASE), "Delivered"),
+    (re.compile(r"^Consulted on and delivered\b", re.IGNORECASE), "Delivered"),
+]
+
 # American -ize spellings that should be -ise in British English
 AMERICAN_IZE_PATTERN = re.compile(
     r"\b(\w*(?:optimi|organi|speciali|recogni|summari|prioriti|standardi|"
@@ -423,7 +441,7 @@ def lint_cv_data(data):
             has_impact_verb = bool(re.search(
                 r"\b(delivered|led|built|designed|orchestrated|streamlined|"
                 r"shaped|established|drove|secured|introduced|expanded|"
-                r"negotiated|coordinated|defined|reduced|increased|"
+                r"negotiated|coordinated|defined|partnered|reduced|increased|"
                 r"achieved|saved|generated|grew|launched|managed)\b",
                 bullet, re.IGNORECASE,
             ))
@@ -435,6 +453,125 @@ def lint_cv_data(data):
                 })
 
     return warnings
+
+
+_LATEX_SPECIAL_CHARS = {
+    "&": r"\&",
+    "%": r"\%",
+    "$": r"\$",
+    "#": r"\#",
+    "_": r"\_",
+    "{": r"\{",
+    "}": r"\}",
+}
+
+
+def _escape_latex_text(text):
+    """Escape raw LaTeX specials without double-escaping existing sequences."""
+    if not isinstance(text, str) or not text:
+        return text
+
+    escaped = []
+    i = 0
+    while i < len(text):
+        char = text[i]
+        if char == "\\":
+            if i + 1 < len(text):
+                escaped.append(char)
+                escaped.append(text[i + 1])
+                i += 2
+                continue
+            escaped.append(char)
+            i += 1
+            continue
+        escaped.append(_LATEX_SPECIAL_CHARS.get(char, char))
+        i += 1
+
+    return "".join(escaped)
+
+
+def _escape_latex_strings(value):
+    """Recursively escape raw LaTeX specials in strings."""
+    if isinstance(value, str):
+        return _escape_latex_text(value)
+    if isinstance(value, list):
+        return [_escape_latex_strings(item) for item in value]
+    if isinstance(value, dict):
+        return {
+            key: _escape_latex_strings(item)
+            for key, item in value.items()
+        }
+    return value
+
+
+def _optimise_cv_for_ats(data):
+    """Trim tailored CV data to a compact ATS-friendly footprint."""
+    if not isinstance(data, dict):
+        return data
+
+    optimised = copy.deepcopy(data)
+    if "experience" in optimised:
+        for item in optimised.get("experience", []):
+            bullets = item.get("bullets", [])
+            if isinstance(bullets, list):
+                item["bullets"] = bullets[:4]
+    if isinstance(optimised.get("prior_experience"), list):
+        optimised["prior_experience"] = optimised["prior_experience"][:4]
+    if isinstance(optimised.get("skills"), list):
+        optimised["skills"] = optimised["skills"][:2]
+    return optimised
+
+
+def _stamp_publisher_metadata(data, doc_type, output_id, brief_path):
+    """Attach stable publisher metadata to generated tailored data."""
+    if not isinstance(data, dict):
+        return data
+
+    stamped = copy.deepcopy(data)
+    stamped["_publisher"] = {
+        "doc_type": doc_type,
+        "output_id": output_id,
+        "source_brief": str(brief_path),
+    }
+    return stamped
+
+
+def _rewrite_bullet_for_impact(text):
+    """Rewrite common weak bullet openings into impact-led statements."""
+    if not isinstance(text, str) or not text:
+        return text
+
+    rewritten = text.strip()
+    for pattern, replacement in _LEADING_BULLET_REWRITES:
+        if pattern.search(rewritten):
+            rewritten = pattern.sub(replacement, rewritten, count=1)
+            break
+
+    return rewritten
+
+
+def _clean_cv_language(value):
+    """Apply deterministic wording cleanup for fallback CV content."""
+    if isinstance(value, str):
+        cleaned = value
+        for source, target in PHRASE_REPLACEMENTS.items():
+            cleaned = re.sub(
+                re.escape(source), target, cleaned, flags=re.IGNORECASE
+            )
+        return cleaned
+    if isinstance(value, list):
+        return [_clean_cv_language(item) for item in value]
+    if isinstance(value, dict):
+        cleaned = {key: _clean_cv_language(item) for key, item in value.items()}
+        if "experience" in cleaned:
+            for exp in cleaned.get("experience", []):
+                bullets = exp.get("bullets", [])
+                if isinstance(bullets, list):
+                    exp["bullets"] = [
+                        _rewrite_bullet_for_impact(bullet) for bullet in bullets
+                    ]
+        return cleaned
+    return value
 
 
 # ── Tailoring engines ────────────────────────────────────────────────────
@@ -586,7 +723,7 @@ def claude_generate(brief_text, doc_type, base_data):
 
 
 def generate(brief_path, doc_type="cv", output_id=None, base_path=None,
-             use_ai=True):
+             use_ai=True, output_path=None):
     """Read brief, tailor data, write YAML, return output path.
 
     1. Read brief from any format
@@ -625,6 +762,14 @@ def generate(brief_path, doc_type="cv", output_id=None, base_path=None,
         else:
             tailored = copy.deepcopy(base_data)
 
+    if doc_type == "cv":
+        tailored = _optimise_cv_for_ats(tailored)
+        tailored = _clean_cv_language(tailored)
+    tailored = _stamp_publisher_metadata(
+        tailored, doc_type, output_id, brief_path
+    )
+    tailored = _escape_latex_strings(tailored)
+
     # Consistency gate — lint before saving
     if doc_type == "cv":
         lint_warnings = lint_cv_data(tailored)
@@ -634,8 +779,12 @@ def generate(brief_path, doc_type="cv", output_id=None, base_path=None,
                 print(f"    [{w['field']}] {w['issue']}", file=sys.stderr)
 
     # Write output
-    TAILORED_DIR.mkdir(parents=True, exist_ok=True)
-    out_path = TAILORED_DIR / f"{output_id}.yaml"
+    if output_path:
+        out_path = Path(output_path)
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+    else:
+        TAILORED_DIR.mkdir(parents=True, exist_ok=True)
+        out_path = TAILORED_DIR / f"{output_id}.yaml"
     with open(out_path, "w") as f:
         yaml.dump(tailored, f, default_flow_style=False, allow_unicode=True,
                   sort_keys=False)

@@ -18,7 +18,7 @@ endif
 # Build Targets
 ###############################################################################
 
-.PHONY: all draft submission final publish assets lint fix render render-md blog tailor sitemap docs setup clean clean-build distclean test coverage validate validate-private list help
+.PHONY: all draft submission final publish publish-jobs assets lint fix render render-md blog tailor sitemap docs setup clean clean-build distclean test coverage validate validate-private list help
 
 all: draft ## Build all documents in draft mode (default)
 
@@ -37,6 +37,13 @@ ifeq ($(CONTENT_DIR),)
 	@exit 1
 endif
 	$(BUILD) build --mode camera-ready
+
+publish-jobs: ## Camera-ready build for tailored/job documents only
+ifeq ($(CONTENT_DIR),)
+	@echo "ERROR: publish-jobs requires EUXIS_CONTENT_DIR or CONTENT_DIR=<path>"
+	@exit 1
+endif
+	$(BUILD) build --mode camera-ready --jobs-only
 
 assets: ## Run asset pipeline (MMD → SVG → PDF/PNG)
 	bash scripts/asset-pipeline.sh
