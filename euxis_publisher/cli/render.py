@@ -102,55 +102,95 @@ def render_markdown(data, doc_type):
 
 
 def _render_cv_markdown(data):
-    """Render CV data to Markdown."""
+    """Render CV data to Workday-friendly Markdown.
+
+    Canonical section headings (Experience / Skills / Education) are used
+    instead of marketing variants so Workday's parser maps directly to its
+    Experience / Skills / Education fields. Handles both competency shapes
+    (flat strings and {title, description} dicts) and optional
+    scope_line / subheadline / innovation / prior_experience blocks.
+    """
     lines = []
     lines.append(f"# {data['name']['first']} {data['name']['last']}")
     lines.append("")
-    lines.append(f"**{data['role']}**")
-    lines.append("")
-    lines.append(f"Phone: {data['contact']['phone']}  ")
-    lines.append(f"Email: {data['contact']['email']}")
+    lines.append(f"**{_strip_markdown_escapes(data['role'])}**")
     lines.append("")
 
+    scope_line = data.get("scope_line")
+    if scope_line:
+        lines.append(f"*{_strip_markdown_escapes(scope_line)}*")
+        lines.append("")
+
+    subheadline = data.get("subheadline")
+    if subheadline:
+        lines.append(_strip_markdown_escapes(subheadline))
+        lines.append("")
+
+    contact = data.get("contact", {})
+    contact_parts = [
+        contact.get("phone"),
+        contact.get("email"),
+        "linkedin.com/in/sebastienrousseau",
+        "sebastienrousseau.com",
+    ]
+    contact_line = " · ".join(p for p in contact_parts if p)
+    if contact_line:
+        lines.append(contact_line)
+        lines.append("")
+
     summary = data.get("executive_profile") or data.get("summary", "")
-    lines.append("## Executive Summary" if data.get("executive_profile") else "## Summary")
-    lines.append("")
-    lines.append(summary)
-    lines.append("")
+    if summary:
+        lines.append(
+            "## Executive Profile" if data.get("executive_profile") else "## Summary"
+        )
+        lines.append("")
+        lines.append(_strip_markdown_escapes(summary))
+        lines.append("")
 
     achievements = data.get("achievements", [])
     if achievements:
         lines.append("## Selected Impact")
         lines.append("")
         for item in achievements:
-            lines.append(f"- {item}")
+            lines.append(f"- {_strip_markdown_escapes(item)}")
         lines.append("")
 
-    lines.append("## Professional Experience")
+    lines.append("## Experience")
     lines.append("")
     for job in data.get("experience", []):
         if job.get("roles"):
-            heading = job["company"]
-            details = " | ".join(
-                part for part in (job.get("location"), job.get("dates")) if part
-            )
-            lines.append(f"### {heading}")
-            if details:
-                lines.append(f"*{details}*")
-            if job.get("context"):
-                lines.append("")
-                lines.append(_strip_markdown_escapes(job["context"]))
-            lines.append("")
             for role_entry in job.get("roles", []):
-                lines.append(f"#### {role_entry['title']}")
+                heading = f"{job['company']} — {role_entry['title']}"
+                lines.append(f"### {_strip_markdown_escapes(heading)}")
+                details = " | ".join(
+                    part
+                    for part in (
+                        job.get("location"),
+                        role_entry.get("dates") or job.get("dates"),
+                    )
+                    if part
+                )
+                if details:
+                    lines.append(_strip_markdown_escapes(details))
                 lines.append("")
+                if job.get("context"):
+                    lines.append(_strip_markdown_escapes(job["context"]))
+                    lines.append("")
                 for item in role_entry.get("bullets", []):
                     lines.append(f"- {_strip_markdown_escapes(item)}")
                 lines.append("")
             continue
 
-        lines.append(f"### {job['title']} — {job['company']}")
-        lines.append(f"*{job['dates']}*")
+        # Flat-shape job entry (single role, no nested roles[])
+        title = job.get("title", "")
+        company = job.get("company", "")
+        heading = f"{company} — {title}" if company and title else (company or title)
+        lines.append(f"### {_strip_markdown_escapes(heading)}")
+        details = " | ".join(
+            part for part in (job.get("location"), job.get("dates")) if part
+        )
+        if details:
+            lines.append(_strip_markdown_escapes(details))
         lines.append("")
         for item in job.get("bullets", []):
             lines.append(f"- {_strip_markdown_escapes(item)}")
@@ -158,18 +198,23 @@ def _render_cv_markdown(data):
 
     prior_experience = data.get("prior_experience", [])
     if prior_experience:
-        lines.append("## Prior Experience")
-        lines.append("")
         for prior in prior_experience:
-            lines.append(
-                f"- **{prior['title']}**, {prior['company']} "
-                f"({prior['dates']})"
+            heading = f"{prior['company']} — {prior['title']}"
+            lines.append(f"### {_strip_markdown_escapes(heading)}")
+            details = " | ".join(
+                part for part in (prior.get("location"), prior.get("dates")) if part
             )
-        lines.append("")
+            if details:
+                lines.append(_strip_markdown_escapes(details))
+            lines.append("")
+            for item in prior.get("bullets", []) or []:
+                lines.append(f"- {_strip_markdown_escapes(item)}")
+            if prior.get("bullets"):
+                lines.append("")
 
     innovation = data.get("innovation", [])
     if innovation:
-        lines.append("## Innovation & Thought Leadership")
+        lines.append("## Patents & Publications")
         lines.append("")
         for item in innovation:
             lines.append(f"- {_strip_markdown_escapes(item)}")
@@ -178,13 +223,22 @@ def _render_cv_markdown(data):
     competencies = data.get("competencies")
     skills = data.get("skills", [])
     if competencies:
-        lines.append("## Core Competencies")
+        lines.append("## Skills")
         lines.append("")
-        for item in competencies:
-            lines.append(
-                f"- **{item['title']}**: {_strip_markdown_escapes(item['description'])}"
-            )
-        lines.append("")
+        # Two supported shapes:
+        #   flat strings  -> single middle-dot separated line
+        #   {title, description} dicts -> bulleted list
+        if competencies and isinstance(competencies[0], str):
+            line = " · ".join(_strip_markdown_escapes(c) for c in competencies)
+            lines.append(line)
+            lines.append("")
+        else:
+            for item in competencies:
+                lines.append(
+                    f"- **{_strip_markdown_escapes(item['title'])}**: "
+                    f"{_strip_markdown_escapes(item['description'])}"
+                )
+            lines.append("")
     elif skills:
         lines.append("## Skills")
         lines.append("")
@@ -201,27 +255,60 @@ def _render_cv_markdown(data):
     lines.append("")
     for edu in data.get("education", []):
         lines.append(
-            f"- **{edu['degree']}**, {edu['institution']} "
-            f"{edu['location']} ({edu['year']})"
+            f"- **{_strip_markdown_escapes(edu['degree'])}** | "
+            f"{_strip_markdown_escapes(edu['institution'])}, "
+            f"{_strip_markdown_escapes(edu['location'])} | "
+            f"{_strip_markdown_escapes(edu['year'])}"
         )
-    lines.append("")
-
-    lines.append("## Languages")
-    lines.append("")
-    lines.append(data.get("languages", ""))
+    languages = data.get("languages")
+    if languages:
+        lines.append(f"- **Languages** | {languages}")
     lines.append("")
 
     return "\n".join(lines)
 
 
 def _strip_markdown_escapes(text):
-    """Remove LaTeX-oriented escapes when emitting Markdown."""
-    return (
-        text.replace("\\$", "$")
+    """Remove LaTeX-oriented markup when emitting Markdown.
+
+    Strips escape sequences (\\$, \\&, \\%, \\_), unwraps \\textbf{...} and
+    \\textit{...} into Markdown emphasis, swaps non-breaking ties (~) and
+    en-dash digraphs (--) for plain text, and substitutes common LaTeX
+    macros (\\textperiodcentered, \\enspace, \\hfill, etc.) with their
+    rendered equivalents.
+    """
+    import re
+
+    if not isinstance(text, str):
+        return text
+    out = text
+    # Unwrap \textbf{...} -> **...**  and \textit{...} -> *...*
+    out = re.sub(r"\\textbf\{([^{}]*)\}", r"**\1**", out)
+    out = re.sub(r"\\textit\{([^{}]*)\}", r"*\1*", out)
+    out = re.sub(r"\\emph\{([^{}]*)\}", r"*\1*", out)
+    # Macro substitutions
+    out = out.replace("\\textperiodcentered{}", "·")
+    out = out.replace("\\textperiodcentered", "·")
+    out = out.replace("\\enspace{}", " ")
+    out = out.replace("\\enspace", " ")
+    out = out.replace("\\hfill", " ")
+    out = out.replace("\\,", " ")
+    out = out.replace("\\ ", " ")
+    # Escape sequences
+    out = (
+        out.replace("\\$", "$")
         .replace("\\&", "&")
         .replace("\\%", "%")
         .replace("\\_", "_")
+        .replace("\\#", "#")
     )
+    # LaTeX non-breaking tie (~) -> plain space
+    out = out.replace("~", " ")
+    # LaTeX en-dash digraph (--) and em-dash digraph (---) -> Unicode equivalents
+    out = out.replace("---", "—").replace("--", "–")
+    # Collapse any leftover double spaces from the substitutions above
+    out = re.sub(r" {2,}", " ", out)
+    return out
 
 
 def _render_generic_markdown(data, doc_type):
@@ -280,20 +367,44 @@ def _generate_xmpdata(doc_id, data, meta, rendered_dir=None):
     """Generate XMP metadata file for PDF/A compliance.
 
     Writes a .xmpdata file alongside the rendered .tex, used by the
-    pdfx package in final (camera-ready) mode.
+    pdfx package in final (camera-ready) mode. Emits the full set of
+    pdfx-supported XMP commands so Adobe's "Description" panel
+    populates Copyright Status / Notice / Info and Publisher, not
+    just the basic Title/Author/Keywords surfaced via hyperref's
+    info dictionary.
     """
     out_dir = rendered_dir if rendered_dir else RENDERED_DIR
-    author_name = meta.get("author", {}).get("name", "")
+    author = meta.get("author", {}) or {}
+    author_name = author.get("name", "")
+    publisher = author.get("publisher", "")
+    copyright_url = author.get("copyright_url", "")
+    # pdfx accepts UTF-8 in xmpdata since v1.5 --- pass the © through
+    # raw rather than substituting \textcopyright{}, which leaks an
+    # empty group into dc:rights ("©{} 2026...").
+    copyright_str = data.get("copyright", "") or ""
+    # Title precedence: data.title (rare in this codebase) >
+    # meta.documents[doc_id].title (the human title set in the
+    # manifest) > doc_id slug. Without this, dc:title degrades to
+    # the slug whenever the data file omits a title key.
+    manifest_title = (
+        meta.get("documents", {}).get(doc_id, {}).get("title", "")
+    )
+    title = data.get("title") or manifest_title or doc_id
     lines = []
-    lines.append(f"\\Title{{{data.get('title', doc_id)}}}")
+    lines.append(f"\\Title{{{title}}}")
     lines.append(f"\\Author{{{author_name}}}")
     lines.append(f"\\Subject{{{data.get('subject', '')}}}")
-    lines.append(f"\\Description{{{data.get('description', '')}}}")
     lines.append(f"\\Keywords{{{data.get('keywords', '')}}}")
-    lines.append(f"\\Copyright{{{data.get('copyright', '')}}}")
-    lines.append("\\Creator{LaTeX with hyperref}")
-    lines.append("\\CreatorTool{Publications Build System}")
-    lines.append("\\Language{en}")
+    if copyright_str:
+        lines.append(f"\\Copyright{{{copyright_str}}}")
+        lines.append("\\Copyrighted{True}")
+    if copyright_url:
+        lines.append(f"\\CopyrightURL{{{copyright_url}}}")
+    if publisher:
+        lines.append(f"\\Publisher{{{publisher}}}")
+    lines.append("\\CreatorTool{Euxis Publications Build System}")
+    lines.append("\\Producer{LuaLaTeX + pdfx}")
+    lines.append(f"\\Language{{{data.get('language', 'en')}}}")
     out_dir.mkdir(parents=True, exist_ok=True)
     xmp_path = out_dir / f"{doc_id}.xmpdata"
     xmp_path.write_text("\n".join(lines) + "\n")
@@ -346,8 +457,18 @@ def render_document(doc_id, fmt="latex", build_mode="draft",
     with open(data_file) as f:
         data = yaml.safe_load(f)
 
-    # Inject build mode
-    data["build_mode"] = build_mode
+    # Inject build mode --- translate the CLI's "camera-ready" to the
+    # LaTeX class option "final" so pub-base's \DeclareOption{final}
+    # fires and pdfx engages. Without this, the unknown
+    # "camera-ready" option is silently swallowed and no XMP packet
+    # is embedded (Adobe's Copyright/Description fields stay empty).
+    _mode_to_class_option = {
+        "draft": "draft",
+        "submission": "submission",
+        "camera-ready": "final",
+        "final": "final",
+    }
+    data["build_mode"] = _mode_to_class_option.get(build_mode, "draft")
 
     # Render
     ext_map = {"latex": "tex", "markdown": "md", "json": "json"}
