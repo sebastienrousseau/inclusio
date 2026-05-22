@@ -34,8 +34,13 @@
 %% Camera-ready → PDF/A-2b via pdfx; draft/submission → plain hyperref (faster)
 \newif\ifpub@pdfa \pub@pdfafalse
 
-%% Allow class to request PDF/A conformance level
-\def\pub@pdfalevel{a-2b}
+%% Allow class to request PDF/A conformance level. Default is a-2u
+%% (Unicode mapping required) rather than a-2b: a-2u guarantees a
+%% ToUnicode CMap is embedded for every glyph, so screen readers
+%% and indexers can extract text reliably. This is a genuine
+%% accessibility win without claiming PDF/UA-1 (which would require
+%% structural tagging we don't yet emit).
+\def\pub@pdfalevel{a-2u}
 \newcommand{\setPdfALevel}[1]{\def\pub@pdfalevel{#1}}
 
 \iffinalmode
