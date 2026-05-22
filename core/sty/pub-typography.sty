@@ -17,13 +17,22 @@
 \DeclareOption{serif}{\pub@seriftrue}
 \ProcessOptions\relax
 
+\RequirePackage{iftex}
+
 \ifpub@serif
-  % Serif stack: Times — for papers and patents
+  % Serif stack: Times --- for papers and patents
   \RequirePackage{times}
   \renewcommand{\rmdefault}{ptm}
   \renewcommand{\sfdefault}{phv}
 \else
-  % Sans-serif stack: Helvetica — for CVs, FAQs, guides
+  % Sans-serif stack: Helvetica (substituted by Nimbus Sans L on
+  % most TeX Live installations) --- for CVs, FAQs, guides. We use
+  % helvet rather than Source Sans 3 / Source Sans Pro because under
+  % LuaLaTeX both load via fontspec and produce CID Type 0C subsets;
+  % some macOS print drivers convert these to PostScript incorrectly
+  % and render garbled glyphs on paper, even though the on-screen
+  % rendering is fine. Helvetica/Nimbus Sans L is loaded as a Type 1
+  % PostScript font that round-trips through every print pipeline.
   \RequirePackage{helvet}
   \renewcommand{\familydefault}{\sfdefault}
   \renewcommand{\sfdefault}{phv}
@@ -31,8 +40,6 @@
 
 %% ── Microtype ───────────────────────────────────────────────────────────
 \RequirePackage[protrusion=true,expansion=true,verbose=silent,patch=none]{microtype}
-
-\RequirePackage{iftex}
 
 \ifPDFTeX
   \microtypesetup{

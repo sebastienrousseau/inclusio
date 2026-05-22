@@ -11,10 +11,18 @@
 \RequirePackage{iftex}
 
 %% ── Mode flags (set by class options in pub-base.cls) ───────────────────
-%% \ifdraftmode, \ifsubmissionmode, \iffinalmode — exactly one should be true
-\newif\ifdraftmode
-\newif\ifsubmissionmode
-\newif\iffinalmode
+%% \ifdraftmode, \ifsubmissionmode, \iffinalmode --- exactly one should be true.
+%%
+%% Guard with \@ifundefined so we don't clobber the value already
+%% set by class option processing in pub-base.cls. \newif always
+%% resets the conditional to false, so a bare \newif\iffinalmode
+%% here would silently undo \DeclareOption{final}{\finalmodetrue}
+%% from pub-base.cls --- which is exactly what was happening:
+%% pdfx never engaged in camera-ready builds, leaving Adobe's
+%% Copyright Notice / Status / URL fields empty.
+\@ifundefined{ifdraftmode}{\newif\ifdraftmode}{}
+\@ifundefined{ifsubmissionmode}{\newif\ifsubmissionmode}{}
+\@ifundefined{iffinalmode}{\newif\iffinalmode}{}
 
 %% Default to draft if nothing is set (checked at begin-document)
 \AtBeginDocument{%
