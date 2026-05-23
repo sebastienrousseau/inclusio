@@ -12,4 +12,7 @@ macro-reference
 usage
 testing-and-ci
 public-private-boundary
+strategy-2026
+implementation-plan-2026
+tagged-pdf
 ```

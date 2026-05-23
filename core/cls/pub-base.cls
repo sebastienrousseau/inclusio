@@ -16,6 +16,20 @@
 \DeclareOption{submission}{\submissionmodetrue}
 \DeclareOption{final}{\finalmodetrue}
 
+%% ── Tagging / accessibility options ─────────────────────────────────────
+%% [tagged] is a contract assertion: the author has called
+%% \DocumentMetadata{...} BEFORE \documentclass, and expects this build
+%% to emit a tagged PDF/UA-2 + PDF/A-4 artefact. If \DocumentMetadata
+%% was not called, the class errors loudly rather than silently
+%% producing an untagged PDF.
+%%
+%% [final-untagged] is the explicit opt-out for documents that haven't
+%% migrated yet. Use it during the Sprint 2 retrofit window only.
+\newif\ifpub@tagged    \pub@taggedfalse
+\newif\ifpub@untagged  \pub@untaggedfalse
+\DeclareOption{tagged}{\pub@taggedtrue}
+\DeclareOption{final-untagged}{\pub@untaggedtrue\finalmodetrue}
+
 %% ── Typography options (forwarded to pub-typography) ────────────────────
 \newif\ifpub@serif \pub@seriffalse
 \DeclareOption{sans}{\pub@seriffalse}
@@ -73,13 +87,41 @@
 \RequirePackage{array}
 \RequirePackage{titlesec}
 
-%% Optional PDF tagging support (non-breaking): if tagpdf is loaded by the
-%% document/toolchain, apply baseline setup.
-\IfFileExists{tagpdf.sty}{%
+%% ── Tagged-PDF contract check ──────────────────────────────────────────
+%% If the author declared [tagged], assert that \DocumentMetadata was
+%% called before \documentclass. \IfDocumentMetadataTF is provided by
+%% the LaTeX kernel since 2022-06-01 (LuaLaTeX hard-required, decision
+%% D3 2026-05-23). Falling through to \ClassError gives a precise,
+%% actionable message rather than a silently untagged PDF.
+\providecommand\IfDocumentMetadataTF[2]{#2}
+\ifpub@tagged
+  \IfDocumentMetadataTF{%
+    %% \DocumentMetadata is engaged: trust the kernel's tagging.
     \AtBeginDocument{%
-    \@ifundefined{tagpdfsetup}{}{\tagpdfsetup{activate,interwordspace=true}}%
+      \@ifundefined{tagpdfsetup}{}{%
+        \tagpdfsetup{activate,interwordspace=true}%
+      }%
+    }%
+  }{%
+    \ClassError{pub-base}{%
+      Class option [tagged] requires \string\DocumentMetadata{...} before
+      \string\documentclass{...}.\MessageBreak
+      Add a preamble such as:\MessageBreak
+      \space\space\string\DocumentMetadata{lang=en-GB, pdfstandard=ua-2,
+        pdfstandard=a-4}\MessageBreak
+      \space\space\string\documentclass[final,tagged]{pub-paper}\MessageBreak
+      Or remove [tagged] and use [final-untagged] during migration.%
+    }{See docs/tagged-pdf.md in the euxis-publisher repository.}%
   }%
-}{}
+\else
+  %% Legacy / non-tagged path. If tagpdf happens to be loaded later by
+  %% the document, still apply baseline setup (non-breaking).
+  \IfFileExists{tagpdf.sty}{%
+    \AtBeginDocument{%
+      \@ifundefined{tagpdfsetup}{}{\tagpdfsetup{activate,interwordspace=true}}%
+    }%
+  }{}%
+\fi
 
 %% ── Common document variables ───────────────────────────────────────────
 \def\@subtitle{}

@@ -8,9 +8,10 @@ import pytest
 
 
 def test_pub_base_smoke_compile(project_root, tmp_path):
-    compiler = shutil.which("pdflatex") or shutil.which("lualatex")
+    # LuaLaTeX is hard-required (decision D3, 2026-05-23).
+    compiler = shutil.which("lualatex")
     if compiler is None:
-        pytest.skip("No TeX compiler found (pdflatex/lualatex)")
+        pytest.skip("LuaLaTeX not found (required since decision D3)")
 
     tex = tmp_path / "smoke.tex"
     tex.write_text(
