@@ -81,12 +81,16 @@ def _build(tmp_path, project_root):
 
     if result.returncode != 0:
         combined = (result.stdout + "\n" + result.stderr).lower()
+        # Only skip on real provisioning issues, not on benign tagpdf
+        # loader lines. "tagpdf.sty not found" or "no writeable cache"
+        # are skip-worthy; "(/.../tagpdf.sty" in a load trace is not.
         infra_markers = [
             "no writeable cache path",
             "font map file",
             "mktexpk",
             "psfonts.map",
-            "tagpdf.sty",
+            "! latex error: file `tagpdf.sty' not found",
+            "! latex error: file `latex-lab",
         ]
         if any(marker in combined for marker in infra_markers):
             pytest.skip(
@@ -229,7 +233,12 @@ def test_final_untagged_escape_hatch(project_root, tmp_path):
     )
     if result.returncode != 0:
         combined = (result.stdout + "\n" + result.stderr).lower()
-        if any(m in combined for m in ["pdfx.sty", "font map file"]):
+        skip_markers = [
+            "! latex error: file `pdfx.sty' not found",
+            "! latex error: file `silence.sty' not found",
+            "font map file",
+        ]
+        if any(m in combined for m in skip_markers):
             pytest.skip("pdfx / fontmap not provisioned on this runner")
     assert result.returncode == 0, (
         result.stdout[-1500:] + "\n" + result.stderr[-1500:]
