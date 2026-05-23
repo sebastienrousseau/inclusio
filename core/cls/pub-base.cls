@@ -30,6 +30,15 @@
 \DeclareOption{tagged}{\pub@taggedtrue}
 \DeclareOption{final-untagged}{\pub@untaggedtrue\finalmodetrue}
 
+%% Snapshot whether \DocumentMetadata was called BEFORE \documentclass.
+%% This must happen as early as possible because pdfx (loaded later by
+%% pub-metadata.sty's legacy branch) internally invokes \DocumentMetadata
+%% as part of its setup, which would flip \IfDocumentMetadataTF from
+%% FALSE to TRUE and silently disarm the [tagged] contract check.
+\providecommand\IfDocumentMetadataTF[2]{#2}
+\newif\ifpub@hadDocumentMetadata \pub@hadDocumentMetadatafalse
+\IfDocumentMetadataTF{\pub@hadDocumentMetadatatrue}{}
+
 %% ── Typography options (forwarded to pub-typography) ────────────────────
 \newif\ifpub@serif \pub@seriffalse
 \DeclareOption{sans}{\pub@seriffalse}
@@ -88,21 +97,20 @@
 \RequirePackage{titlesec}
 
 %% ── Tagged-PDF contract check ──────────────────────────────────────────
-%% If the author declared [tagged], assert that \DocumentMetadata was
-%% called before \documentclass. \IfDocumentMetadataTF is provided by
-%% the LaTeX kernel since 2022-06-01 (LuaLaTeX hard-required, decision
-%% D3 2026-05-23). Falling through to \ClassError gives a precise,
-%% actionable message rather than a silently untagged PDF.
-\providecommand\IfDocumentMetadataTF[2]{#2}
+%% Use the EARLY snapshot (\ifpub@hadDocumentMetadata) taken at option
+%% processing time, not a live re-query of \IfDocumentMetadataTF.
+%% pdfx (loaded by pub-metadata.sty on the legacy branch) calls
+%% \DocumentMetadata internally, which would otherwise mask the missing
+%% explicit-author call.
 \ifpub@tagged
-  \IfDocumentMetadataTF{%
-    %% \DocumentMetadata is engaged: trust the kernel's tagging.
+  \ifpub@hadDocumentMetadata
+    %% Author engaged \DocumentMetadata. Trust the kernel's tagging.
     \AtBeginDocument{%
       \@ifundefined{tagpdfsetup}{}{%
         \tagpdfsetup{activate,interwordspace=true}%
       }%
     }%
-  }{%
+  \else
     \ClassError{pub-base}{%
       Class option [tagged] requires \string\DocumentMetadata{...} before
       \string\documentclass{...}.\MessageBreak
@@ -112,7 +120,7 @@
       \space\space\string\documentclass[final,tagged]{pub-paper}\MessageBreak
       Or remove [tagged] and use [final-untagged] during migration.%
     }{See docs/tagged-pdf.md in the euxis-publisher repository.}%
-  }%
+  \fi
 \else
   %% Legacy / non-tagged path. If tagpdf happens to be loaded later by
   %% the document, still apply baseline setup (non-breaking).
