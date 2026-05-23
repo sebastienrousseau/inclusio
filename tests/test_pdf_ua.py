@@ -54,18 +54,16 @@ def _build(tmp_path, project_root):
     tex = tmp_path / "tagged_smoke.tex"
     tex.write_text(TAGGED_SMOKE_TEX, encoding="utf-8")
 
-    cache = tmp_path / ".texmf-cache"
-    cache.mkdir(exist_ok=True)
-
     env = os.environ.copy()
     env["TEXINPUTS"] = (
         f"{project_root / 'core' / 'cls'}:"
         f"{project_root / 'core' / 'sty'}:"
         f"{tmp_path}:"
     )
-    env["TEXMFCACHE"] = str(cache)
-    env["TEXMFVAR"] = str(cache)
-    env["TEXMFSYSVAR"] = str(cache)
+    # Do NOT override TEXMFCACHE/TEXMFVAR — per-test cache dirs force
+    # lualatex to regenerate the .fmt file on every invocation, which
+    # corrupts stdout (format-dump log replaces the compile log) and
+    # makes return codes meaningless. Let lualatex use its system cache.
 
     result = subprocess.run(
         [
@@ -164,17 +162,12 @@ def test_tagged_without_metadata_errors(project_root, tmp_path):
 """,
         encoding="utf-8",
     )
-    cache = tmp_path / ".texmf-cache"
-    cache.mkdir(exist_ok=True)
     env = os.environ.copy()
     env["TEXINPUTS"] = (
         f"{project_root / 'core' / 'cls'}:"
         f"{project_root / 'core' / 'sty'}:"
         f"{tmp_path}:"
     )
-    env["TEXMFCACHE"] = str(cache)
-    env["TEXMFVAR"] = str(cache)
-    env["TEXMFSYSVAR"] = str(cache)
 
     result = subprocess.run(
         [
@@ -198,6 +191,18 @@ def test_tagged_without_metadata_errors(project_root, tmp_path):
 @pytest.mark.skipif(not _has("lualatex"), reason="lualatex not installed")
 def test_final_untagged_escape_hatch(project_root, tmp_path):
     """[final-untagged] still compiles (legacy pdfx path) without tagging."""
+    # pdfx (loaded on the legacy [final-untagged] path) requires a
+    # \jobname.xmpdata file. Provide a minimal one so the smoke test
+    # actually exercises the escape hatch instead of failing on a
+    # missing-file error.
+    (tmp_path / "untagged.xmpdata").write_text(
+        r"""\Title{Untagged escape}
+\Author{Tester}
+\Subject{Escape hatch smoke}
+\Keywords{smoke, test}
+""",
+        encoding="utf-8",
+    )
     tex = tmp_path / "untagged.tex"
     tex.write_text(
         r"""\documentclass[final-untagged]{pub-base}
@@ -207,17 +212,12 @@ def test_final_untagged_escape_hatch(project_root, tmp_path):
 """,
         encoding="utf-8",
     )
-    cache = tmp_path / ".texmf-cache"
-    cache.mkdir(exist_ok=True)
     env = os.environ.copy()
     env["TEXINPUTS"] = (
         f"{project_root / 'core' / 'cls'}:"
         f"{project_root / 'core' / 'sty'}:"
         f"{tmp_path}:"
     )
-    env["TEXMFCACHE"] = str(cache)
-    env["TEXMFVAR"] = str(cache)
-    env["TEXMFSYSVAR"] = str(cache)
 
     result = subprocess.run(
         ["lualatex", "-interaction=nonstopmode", "untagged.tex"],
