@@ -100,12 +100,17 @@ def check_tool(name):
 
 
 def check_tools():
-    """Verify required build tools are installed."""
-    required = ["pdflatex", "bibtex"]
+    """Verify required build tools are installed.
+
+    LuaLaTeX is hard-required (decision D3, 2026-05-23): tagged-PDF and
+    PDF/UA-2 work depends on tagpdf's LuaLaTeX-only code paths.
+    """
+    required = ["lualatex", "bibtex"]
     missing = [t for t in required if not check_tool(t)]
     if missing:
         print(f"ERROR: Missing tools: {', '.join(missing)}", file=sys.stderr)
-        print("Install TeX Live or use 'nix develop' / Docker.", file=sys.stderr)
+        print("Install TeX Live 2024+ or use 'nix develop' / Docker.",
+              file=sys.stderr)
         sys.exit(1)
 
 
@@ -627,8 +632,9 @@ def build_document(doc_id, doc_config, mode, meta, force=False):
         sep = ":" if os.name != "nt" else ";"
         env["TEXINPUTS"] = fig_dir + sep + env["TEXINPUTS"]
 
-    # Compiler settings from meta
-    compiler = meta.get("build", {}).get("compiler", "pdflatex")
+    # Compiler settings from meta. Default is LuaLaTeX (decision D3,
+    # 2026-05-23): hard-required for tagpdf + PDF/UA-2 reliability.
+    compiler = meta.get("build", {}).get("compiler", "lualatex")
     max_passes = meta.get("build", {}).get("max_passes", 5)
     bib_engine = meta.get("build", {}).get("bib_engine", "bibtex")
 

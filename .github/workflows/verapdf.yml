@@ -1,0 +1,113 @@
+name: veraPDF Audit (Sprint 1+)
+
+# Tagged-PDF / WTPDF-1.0 / PDF/UA-2 conformance gate.
+# Today (Sprint 1): smoke + WARN-only on legacy documents.
+# After Sprint 2: BLOCK on PDF/UA-2 failure for camera-ready artefacts.
+# After Sprint 3: BLOCK on full EAA audit report.
+#
+# References:
+#   docs/strategy-2026.md (Forcing Function #1)
+#   docs/implementation-plan-2026.md (Sprint 1 - 3)
+
+on:
+  push:
+    branches: [ main, develop, 'feat/*' ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  audit:
+    name: veraPDF tagged-PDF audit
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install TeX Live (with tagpdf)
+        uses: zauguin/install-texlive@v4
+        with:
+          # Minimal set to compile the tagged smoke test in tests/test_pdf_ua.py
+          # Expand when the public src/ fixtures need richer dependencies.
+          packages: >
+            scheme-basic latex lualatex hyperref tagpdf pdfx l3packages
+            l3kernel l3backend latex-lab booktabs etoolbox xpatch
+            titlesec geometry microtype babel babel-english listings
+            silence
+
+      - name: Set up Java (veraPDF dep)
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Cache veraPDF installer
+        id: cache-verapdf
+        uses: actions/cache@v4
+        with:
+          path: ~/verapdf
+          key: verapdf-1.30.0
+
+      - name: Install veraPDF
+        if: steps.cache-verapdf.outputs.cache-hit != 'true'
+        run: |
+          set -euo pipefail
+          mkdir -p ~/verapdf-installer && cd ~/verapdf-installer
+          curl -sSL -o installer.zip \
+            https://software.verapdf.org/rel/verapdf-installer.zip
+          unzip -q installer.zip
+          mv verapdf-greenfield-* installer
+          cat > install.xml <<'XML'
+          <?xml version="1.0" encoding="UTF-8" standalone="no"?>
+          <AutomatedInstallation langpack="eng">
+            <com.izforge.izpack.panels.htmlhello.HTMLHelloPanel id="welcome"/>
+            <com.izforge.izpack.panels.target.TargetPanel id="install_dir">
+              <installpath>/home/runner/verapdf</installpath>
+            </com.izforge.izpack.panels.target.TargetPanel>
+            <com.izforge.izpack.panels.packs.PacksPanel id="sdk_pack_select">
+              <pack index="0" name="veraPDF GUI" selected="true"/>
+              <pack index="1" name="veraPDF Mac and *nix Scripts" selected="true"/>
+            </com.izforge.izpack.panels.packs.PacksPanel>
+            <com.izforge.izpack.panels.install.InstallPanel id="install"/>
+            <com.izforge.izpack.panels.finish.FinishPanel id="finish"/>
+          </AutomatedInstallation>
+          XML
+          ./installer/verapdf-install install.xml
+
+      - name: Symlink veraPDF on PATH
+        run: |
+          sudo ln -sf $HOME/verapdf/verapdf /usr/local/bin/verapdf
+          verapdf --version
+
+      - name: Install Python test deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install pyyaml jinja2 pytest pytest-cov
+
+      - name: Run tagged-PDF smoke tests
+        run: |
+          pytest tests/test_pdf_ua.py -v
+
+      # The block below activates once the Sprint 1 smoke is green on CI.
+      # Until then it WARNS only (`|| true`) so we can land the workflow
+      # without breaking unrelated PRs. Remove `|| true` at end of Sprint 2.
+      - name: Build a tagged paper through the publisher CLI (WARN-only)
+        run: |
+          set -e
+          # Smoke: build the public whisper-paper fixture in camera-ready
+          # mode and assert tagged output. Will move to a BLOCK once the
+          # paper sources are migrated to \DocumentMetadata.
+          python -m euxis_publisher.cli.build build --doc whisper-paper --mode camera-ready --force || true
+          for pdf in build/papers/*.pdf 2>/dev/null; do
+            [ -f "$pdf" ] || continue
+            echo "::group::veraPDF $pdf"
+            verapdf --format text --flavour ua2 "$pdf" || true
+            verapdf --format text --flavour wt1a "$pdf" || true
+            echo "::endgroup::"
+          done

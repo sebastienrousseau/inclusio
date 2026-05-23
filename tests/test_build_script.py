@@ -45,7 +45,7 @@ class TestCheckTool:
 
 class TestCheckTools:
     def test_passes_when_tools_available(self):
-        # Should not raise if pdflatex and bibtex are installed
+        # Should not raise if lualatex and bibtex are installed
         build.check_tools()
 
     def test_exits_when_tools_missing(self, monkeypatch):
@@ -168,7 +168,7 @@ class TestBuildDocument:
         monkeypatch.setattr(build, "BUILD_DIR", tmp_path / "build")
         monkeypatch.setattr(build, "RENDERED_DIR", tmp_path / "build" / ".cache" / "rendered")
         monkeypatch.setattr(build, "CACHE_DIR", tmp_path / "build" / ".cache")
-        meta = {"build": {"compiler": "pdflatex", "max_passes": 1, "bib_engine": "bibtex"}}
+        meta = {"build": {"compiler": "lualatex", "max_passes": 1, "bib_engine": "bibtex"}}
         config = {"src": "src/papers/whisper-mps-realtime-asr.tex"}
         build_dir = tmp_path / "build" / ".cache" / "intermediates" / "whisper-paper"
 
@@ -197,7 +197,7 @@ class TestBuildDocument:
         monkeypatch.setattr(build, "BUILD_DIR", tmp_path / "build")
         monkeypatch.setattr(build, "RENDERED_DIR", tmp_path / "build" / ".cache" / "rendered")
         monkeypatch.setattr(build, "CACHE_DIR", tmp_path / "build" / ".cache")
-        meta = {"build": {"compiler": "pdflatex", "max_passes": 1, "bib_engine": "bibtex"}}
+        meta = {"build": {"compiler": "lualatex", "max_passes": 1, "bib_engine": "bibtex"}}
         config = {"src": "src/papers/whisper-mps-realtime-asr.tex"}
         mock_run.return_value = MagicMock(
             returncode=1, stdout="Error on line 1\nBad stuff\n", stderr=""
@@ -215,7 +215,7 @@ class TestBuildDocument:
         monkeypatch.setattr(build, "BUILD_DIR", tmp_path / "build")
         monkeypatch.setattr(build, "RENDERED_DIR", tmp_path / "build" / ".cache" / "rendered")
         monkeypatch.setattr(build, "CACHE_DIR", tmp_path / "build" / ".cache")
-        meta = {"build": {"compiler": "pdflatex"}}
+        meta = {"build": {"compiler": "lualatex"}}
         config = {"src": "src/papers/whisper-mps-realtime-asr.tex"}
         build_dir = tmp_path / "build" / ".cache" / "intermediates" / "whisper-paper"
 
@@ -227,9 +227,10 @@ class TestBuildDocument:
         mock_run.side_effect = fake_compile
         result = build.build_document("whisper-paper", config, "draft", meta, force=True)
         assert result is True
-        # Verify pdflatex was called directly (not latexmk)
+        # Verify lualatex was called directly (not latexmk).
+        # LuaLaTeX is hard-required (decision D3, 2026-05-23).
         cmd = mock_run.call_args[0][0]
-        assert cmd[0] == "pdflatex"
+        assert cmd[0] == "lualatex"
 
     @patch("build.subprocess.run")
     @patch("build.check_tool", return_value=True)
@@ -238,7 +239,7 @@ class TestBuildDocument:
         monkeypatch.setattr(build, "BUILD_DIR", tmp_path / "build")
         monkeypatch.setattr(build, "RENDERED_DIR", tmp_path / "build" / ".cache" / "rendered")
         monkeypatch.setattr(build, "CACHE_DIR", tmp_path / "build" / ".cache")
-        meta = {"build": {"compiler": "pdflatex"}}
+        meta = {"build": {"compiler": "lualatex"}}
         config = {"src": "src/papers/whisper-mps-realtime-asr.tex"}
         mock_run.return_value = MagicMock(returncode=0, stdout="", stderr="")
         # Don't create a PDF — simulate missing output
@@ -253,7 +254,7 @@ class TestBuildDocument:
         monkeypatch.setattr(build, "BUILD_DIR", tmp_path / "build")
         monkeypatch.setattr(build, "RENDERED_DIR", tmp_path / "build" / ".cache" / "rendered")
         monkeypatch.setattr(build, "CACHE_DIR", tmp_path / "build" / ".cache")
-        meta = {"build": {"compiler": "pdflatex"}}
+        meta = {"build": {"compiler": "lualatex"}}
         config = {"src": "src/papers/whisper-mps-realtime-asr.tex"}
         # Pre-place a stale PDF
         build_dir = tmp_path / "build" / ".cache" / "intermediates" / "whisper-paper"
@@ -1405,7 +1406,7 @@ class TestCache:
         cache = tmp_path / "build" / ".cache"
         monkeypatch.setattr(build, "CACHE_DIR", cache)
 
-        meta = {"build": {"compiler": "pdflatex"}}
+        meta = {"build": {"compiler": "lualatex"}}
         config = {"src": "src/papers/whisper-mps-realtime-asr.tex"}
 
         # Pre-populate cache (hashes/ subdirectory)
@@ -1434,7 +1435,7 @@ class TestCache:
         cache = tmp_path / "build" / ".cache"
         monkeypatch.setattr(build, "CACHE_DIR", cache)
 
-        meta = {"build": {"compiler": "pdflatex"}}
+        meta = {"build": {"compiler": "lualatex"}}
         config = {"src": "src/papers/whisper-mps-realtime-asr.tex"}
         build_dir = tmp_path / "build" / ".cache" / "intermediates" / "whisper-paper"
 
@@ -1511,7 +1512,7 @@ class TestRenderedPathFallback:
         rendered_tex = rendered_dir / "cv.tex"
         rendered_tex.write_text(r"\documentclass{pub-cv}\begin{document}\end{document}")
 
-        meta = {"build": {"compiler": "pdflatex"}}
+        meta = {"build": {"compiler": "lualatex"}}
         config = {"src": "src/cvs/cv.tex"}
         build_dir = tmp_path / "build" / ".cache" / "intermediates" / "cv"
 
@@ -1551,7 +1552,7 @@ class TestRenderedPathFallback:
         src_tex = src_dir / "my-job.tex"
         src_tex.write_text("src version")
 
-        meta = {"build": {"compiler": "pdflatex"}}
+        meta = {"build": {"compiler": "lualatex"}}
         config = {
             "src": "src/cvs/my-job/my-job.tex",
             "tailored": True,

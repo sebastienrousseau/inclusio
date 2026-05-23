@@ -22,3 +22,9 @@
 - Stable semantic interfaces: macro contract enforced by tests.
 - Build-mode lifecycle: draft/submission/final behavior controlled centrally.
 - Cross-platform consistency: deterministic scripts and CI checks.
+- **LuaLaTeX hard-required** (decision D3, 2026-05-23). pdfTeX and
+  XeTeX are not supported. Rationale: tagged-PDF / PDF/UA-2 / EAA
+  compliance work depends on `tagpdf`'s LuaLaTeX-only code paths.
+  Cross-engine QA across three families would burn months without
+  buying capability. See `docs/strategy-2026.md` and
+  `docs/implementation-plan-2026.md`.

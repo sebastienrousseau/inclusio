@@ -31,15 +31,26 @@
 \newcommand{\docLanguage}[1]{\def\pub@docLanguage{#1}}
 
 %% ── PDF/A compliance ────────────────────────────────────────────────────
-%% Camera-ready → PDF/A-2b via pdfx; draft/submission → plain hyperref (faster)
+%% Two paths, picked at preamble time:
+%%
+%%   1. **Modern path (Sprint 1+, preferred)**: the document author calls
+%%      \DocumentMetadata{...} BEFORE \documentclass. The LaTeX kernel
+%%      then handles PDF/A and PDF/UA-2 natively via the tagging
+%%      project; pdfx is skipped to avoid double-engagement of PDF/A.
+%%      Required for tagged PDF, PDF/UA-2, PDF/A-4, and WCAG-aligned
+%%      output (EAA enforcement live since 28 Jun 2025).
+%%
+%%   2. **Legacy path**: no \DocumentMetadata — camera-ready falls back
+%%      to pdfx with PDF/A-2u, which produces a valid but un-tagged
+%%      PDF/A. Kept for backwards compatibility with documents that
+%%      haven't migrated to \DocumentMetadata yet.
+%%
+%% Both paths still receive document metadata via \hypersetup at
+%% \AtBeginDocument time.
 \newif\ifpub@pdfa \pub@pdfafalse
 
-%% Allow class to request PDF/A conformance level. Default is a-2u
-%% (Unicode mapping required) rather than a-2b: a-2u guarantees a
-%% ToUnicode CMap is embedded for every glyph, so screen readers
-%% and indexers can extract text reliably. This is a genuine
-%% accessibility win without claiming PDF/UA-1 (which would require
-%% structural tagging we don't yet emit).
+%% Allow class to request PDF/A conformance level (legacy path only).
+%% Modern path uses pdfstandard=a-4 (or a-2u) inside \DocumentMetadata.
 \def\pub@pdfalevel{a-2u}
 \newcommand{\setPdfALevel}[1]{\def\pub@pdfalevel{#1}}
 
@@ -47,11 +58,24 @@
   \pub@pdfatrue
 \fi
 
+%% Detect whether \DocumentMetadata{...} has been used. \IfDocumentMetadataTF
+%% was added to the LaTeX kernel in 2022-06-01. We require LuaLaTeX with
+%% TeX Live 2024+ (decision D3, 2026-05-23), so this is safe.
+\providecommand\IfDocumentMetadataTF[2]{#2}
+
 \ifpub@pdfa
-  \PassOptionsToPackage{hidelinks}{hyperref}
-  \RequirePackage{silence}
-  \WarningFilter{pdfx}{Setting all color commands}
-  \RequirePackage[\pub@pdfalevel]{pdfx}
+  \IfDocumentMetadataTF{%
+    %% Modern path: kernel owns PDF/A + UA. Just load hyperref.
+    \PassOptionsToPackage{hidelinks}{hyperref}%
+    \RequirePackage{hyperref}%
+    \hypersetup{pdfborder={0 0 0}}%
+  }{%
+    %% Legacy path: pdfx owns PDF/A (no UA tagging).
+    \PassOptionsToPackage{hidelinks}{hyperref}%
+    \RequirePackage{silence}%
+    \WarningFilter{pdfx}{Setting all color commands}%
+    \RequirePackage[\pub@pdfalevel]{pdfx}%
+  }%
 \else
   %% Pass 'final' so hyperref never inherits the document-level draft flag.
   %% Do NOT set colorlinks here — individual classes set it in \AtBeginDocument.
