@@ -33,13 +33,17 @@ jobs:
       - name: Install TeX Live (with tagpdf)
         uses: zauguin/install-texlive@v4
         with:
-          # Minimal set to compile the tagged smoke test in tests/test_pdf_ua.py
-          # Expand when the public src/ fixtures need richer dependencies.
+          # scheme-medium covers LuaLaTeX + babel + microtype + booktabs +
+          # hyperref + listings + titlesec + xpatch + etoolbox + silence
+          # in one shot. tagpdf, pdfx, and l3-experimental are not in the
+          # medium scheme yet, so add them explicitly. Names verified
+          # against tlmgr (2025-2026 releases).
           packages: >
-            scheme-basic latex lualatex hyperref tagpdf pdfx l3packages
-            l3kernel l3backend latex-lab booktabs etoolbox xpatch
-            titlesec geometry microtype babel babel-english listings
-            silence
+            scheme-medium
+            tagpdf
+            pdfx
+            l3experimental
+            latex-lab-testphase-firstaid
 
       - name: Set up Java (veraPDF dep)
         uses: actions/setup-java@v4
