@@ -42,6 +42,7 @@ jobs:
             scheme-medium
             tagpdf
             pdfx
+            silence
             l3experimental
             latex-lab
 
