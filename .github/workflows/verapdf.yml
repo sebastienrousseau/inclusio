@@ -43,7 +43,7 @@ jobs:
             tagpdf
             pdfx
             l3experimental
-            latex-lab-testphase-firstaid
+            latex-lab
 
       - name: Set up Java (veraPDF dep)
         uses: actions/setup-java@v4
