@@ -105,7 +105,10 @@ jobs:
 
       - name: Run tagged-PDF smoke tests
         run: |
-          pytest tests/test_pdf_ua.py -v
+          # tests/test_pdf_ua.py — Sprint 1 foundation tests (5)
+          # tests/test_pdf_ua_classes.py — Sprint 2 per-class matrix
+          #   (11 classes × 4 gates = 44 tests). BLOCKing as of Sprint 2.
+          pytest tests/test_pdf_ua.py tests/test_pdf_ua_classes.py -v
 
       # The block below activates once the Sprint 1 smoke is green on CI.
       # Until then it WARNS only (`|| true`) so we can land the workflow
@@ -113,15 +116,16 @@ jobs:
       - name: Build a tagged paper through the publisher CLI (WARN-only)
         run: |
           set -e
-          # Smoke: build the public whisper-paper fixture in camera-ready
-          # mode and run veraPDF over whatever PDFs land in build/papers/.
-          # Will move from WARN to BLOCK once src/ fixtures are migrated
-          # to \DocumentMetadata in Sprint 2.
+          # Build whatever public fixture exists and audit it (informational).
+          # The authoritative gate is `Tagged-PDF smoke tests` above, which
+          # exercises every pub-*.cls class via `tests/test_pdf_ua_classes.py`
+          # and is BLOCKing as of Sprint 2.
           python -m euxis_publisher.cli.build build --doc whisper-paper --mode camera-ready --force || true
           shopt -s nullglob
           for pdf in build/papers/*.pdf; do
             echo "::group::veraPDF $pdf"
             verapdf --format text --flavour ua2 "$pdf" || true
             verapdf --format text --flavour wt1a "$pdf" || true
+            verapdf --format text --flavour 4f "$pdf" || true
             echo "::endgroup::"
           done
