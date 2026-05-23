@@ -66,7 +66,14 @@ jobs:
           curl -sSL -o installer.zip \
             https://software.verapdf.org/rel/verapdf-installer.zip
           unzip -q installer.zip
-          mv verapdf-greenfield-* installer
+          # The installer ships as verapdf-greenfield-<version>/. Resolve
+          # the actual dir so future version bumps don't break this step.
+          INST_DIR=$(ls -d verapdf-greenfield-*/ | head -1)
+          INST_DIR="${INST_DIR%/}"
+          # verapdf-install internally `cd $BASEDIR` (its own dir) before
+          # invoking the izpack jar, so install.xml must live INSIDE the
+          # installer directory (relative-path resolution from there) or
+          # be passed as an absolute path. We use absolute to be safe.
           cat > install.xml <<'XML'
           <?xml version="1.0" encoding="UTF-8" standalone="no"?>
           <AutomatedInstallation langpack="eng">
@@ -82,7 +89,7 @@ jobs:
             <com.izforge.izpack.panels.finish.FinishPanel id="finish"/>
           </AutomatedInstallation>
           XML
-          ./installer/verapdf-install install.xml
+          ./"$INST_DIR"/verapdf-install "$PWD/install.xml"
 
       - name: Symlink veraPDF on PATH
         run: |
