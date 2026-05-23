@@ -114,11 +114,12 @@ jobs:
         run: |
           set -e
           # Smoke: build the public whisper-paper fixture in camera-ready
-          # mode and assert tagged output. Will move to a BLOCK once the
-          # paper sources are migrated to \DocumentMetadata.
+          # mode and run veraPDF over whatever PDFs land in build/papers/.
+          # Will move from WARN to BLOCK once src/ fixtures are migrated
+          # to \DocumentMetadata in Sprint 2.
           python -m euxis_publisher.cli.build build --doc whisper-paper --mode camera-ready --force || true
-          for pdf in build/papers/*.pdf 2>/dev/null; do
-            [ -f "$pdf" ] || continue
+          shopt -s nullglob
+          for pdf in build/papers/*.pdf; do
             echo "::group::veraPDF $pdf"
             verapdf --format text --flavour ua2 "$pdf" || true
             verapdf --format text --flavour wt1a "$pdf" || true
