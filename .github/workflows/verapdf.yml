@@ -33,13 +33,14 @@ jobs:
       - name: Install TeX Live (with tagpdf)
         uses: zauguin/install-texlive@v4
         with:
-          # scheme-medium covers LuaLaTeX + babel + microtype + booktabs +
-          # hyperref + listings + titlesec + xpatch + etoolbox + silence
-          # in one shot. tagpdf, pdfx, and l3-experimental are not in the
-          # medium scheme yet, so add them explicitly. Names verified
-          # against tlmgr (2025-2026 releases).
+          # scheme-full pulls in every package on the TL distribution
+          # so the smoke test never trips over a missing dependency
+          # (tcolorbox, adjustbox, datetime2, fontawesome5, draftwatermark,
+          # ragged2e, etc.). Install is ~5 min longer than scheme-medium,
+          # but the runner cache (~600 MB) makes repeat runs ~30 s. The
+          # named extras stay listed for visibility in the workflow log.
           packages: >
-            scheme-medium
+            scheme-full
             tagpdf
             pdfx
             silence
