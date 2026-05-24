@@ -116,10 +116,47 @@ Every shipped `pub-*.cls` now passes the four-check matrix:
 
 ## CI
 
-The `verapdf.yml` workflow validates the public smoke test in
-`tests/test_pdf_ua.py` on every push. Until the per-class retrofit
-lands (Sprint 2), it is **WARN-only** on the legacy fixture documents
-in `src/`. Move to **BLOCK** at the start of Sprint 3.
+The `verapdf.yml` workflow runs three layers of gates on every push:
+
+1. **Per-class smoke matrix** (`tests/test_pdf_ua_classes.py`) —
+   compiles a minimal document per `pub-*.cls` with `[tagged]` and
+   asserts veraPDF `ua2 + wt1a + 4f` PASS. **BLOCKing** since Sprint 2.
+2. **Sprint-1 foundation tests** (`tests/test_pdf_ua.py`) — assert the
+   `[tagged]` / `[final-untagged]` contract on `pub-base`. BLOCKing.
+3. **Sprint-3 audit CLI tests** (`tests/test_eaa.py`) — unit tests for
+   the `euxis audit` command (mocked veraPDF; no runner deps). BLOCKing.
+4. **Audit step** (`euxis audit --strict`) — runs the real audit
+   against any built public fixtures. WARN-only on public side because
+   public fixtures haven't all migrated to `\DocumentMetadata` yet;
+   the private repo runs the same command **BLOCKing** in its own CI.
+
+## EAA audit CLI
+
+Sprint 3 ships `euxis audit` as a first-class tool. It runs veraPDF
+against every registered document's PDF and produces both JSON and
+Markdown reports under `build/.audit/eaa-<timestamp>.{json,md}`.
+
+```bash
+# audit every registered document
+make audit
+
+# fail the shell on any PDF/UA-2 / WTPDF / PDF/A-4f failure
+make audit-strict
+
+# audit a specific PDF
+python -m euxis_publisher.cli.audit build/papers/foo.pdf
+
+# audit every PDF, including non-registered (e.g. recruiter inputs)
+python -m euxis_publisher.cli.audit --all
+
+# choose flavours
+python -m euxis_publisher.cli.audit --flavours ua2,4f
+```
+
+By default the audit applies a **registry filter**: only PDFs whose
+filename stem matches a `documents:` key in `meta.yaml` are audited.
+This skips input briefs and other PDFs that live in `build/` but
+aren't Euxis-built artefacts. Pass `--all` to bypass.
 
 ## References
 

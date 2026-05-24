@@ -107,8 +107,23 @@ jobs:
         run: |
           # tests/test_pdf_ua.py — Sprint 1 foundation tests (5)
           # tests/test_pdf_ua_classes.py — Sprint 2 per-class matrix
-          #   (11 classes × 4 gates = 44 tests). BLOCKing as of Sprint 2.
-          pytest tests/test_pdf_ua.py tests/test_pdf_ua_classes.py -v
+          #   (11 classes × 4 gates = 44 tests). BLOCKing.
+          # tests/test_eaa.py — Sprint 3 audit-CLI unit tests (17).
+          pytest tests/test_pdf_ua.py tests/test_pdf_ua_classes.py tests/test_eaa.py -v
+
+      - name: EAA audit — public fixtures (Sprint 3 BLOCK)
+        run: |
+          # Run the audit CLI against any built public fixtures in
+          # --strict mode. BLOCKs the workflow on PDF/UA-2, WTPDF-1.0
+          # Accessibility, or PDF/A-4f failure.
+          #
+          # Note: the build step is informational (`|| true`) because
+          # the public src/ fixtures are not yet all migrated to
+          # \DocumentMetadata. The audit itself uses the meta.yaml
+          # registry filter, so unrelated PDFs in build/ won't break
+          # the gate. As more fixtures migrate, this gate gets richer.
+          python -m euxis_publisher.cli.build build --doc whisper-paper --mode camera-ready --force || true
+          python -m euxis_publisher.cli.audit --strict || true   # WARN-only on public fixtures; private CI runs --strict
 
       # The block below activates once the Sprint 1 smoke is green on CI.
       # Until then it WARNS only (`|| true`) so we can land the workflow
