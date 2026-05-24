@@ -18,7 +18,7 @@ endif
 # Build Targets
 ###############################################################################
 
-.PHONY: all draft submission final publish publish-jobs assets lint fix render render-md blog tailor sitemap docs setup clean clean-build distclean test coverage validate validate-private list help
+.PHONY: all draft submission final publish publish-jobs assets lint fix render render-md blog tailor sitemap audit audit-strict docs setup clean clean-build distclean test coverage validate validate-private list help
 
 all: draft ## Build all documents in draft mode (default)
 
@@ -69,6 +69,12 @@ tailor: ## Generate tailored document from a brief
 
 sitemap: ## Generate semantic search metadata (build/site-map.json)
 	$(BUILD) sitemap --pretty
+
+audit: ## Run EAA / accessibility audit (veraPDF UA-2 + WTPDF + PDF/A-4f) on build/
+	$(PYTHON) -m euxis_publisher.cli.audit
+
+audit-strict: ## Audit in CI-strict mode (non-zero exit on blocking FAIL/ERROR)
+	$(PYTHON) -m euxis_publisher.cli.audit --strict
 
 docs: ## Build Sphinx documentation (HTML)
 	@$(PYTHON) -c "import importlib.util,sys;mods=['sphinx','myst_parser','furo'];missing=[m for m in mods if importlib.util.find_spec(m) is None];print('Missing docs deps: ' + ', '.join(missing) + '. Install with: ' + '$(PYTHON) -m pip install --user sphinx myst-parser furo') if missing else None;sys.exit(1 if missing else 0)"
