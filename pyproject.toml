@@ -7,17 +7,37 @@ name = "euxis-publisher"
 version = "0.1.0"
 description = "Professional document publishing engine for the Euxis Agent Framework"
 readme = "README.md"
-requires-python = ">=3.9"
+# 3.11 is the floor: 3.9 EOL'd Oct-2025, 3.10 EOLs Oct-2026.
+# Keeps one-minor gap against the private content repo (>=3.12) so
+# Linux LTS distros that pin 3.11 can still consume the engine.
+requires-python = ">=3.11"
 authors = [
     { name = "Sebastien Rousseau", email = "contact@sebastienrousseau.com" }
 ]
 license = { text = "MIT" }
-keywords = ["latex", "publishing", "euxis", "pdfa", "uspto", "arxiv"]
+keywords = [
+    "latex",
+    "publishing",
+    "euxis",
+    "pdfa",
+    "pdfua",
+    "wtpdf",
+    "accessibility",
+    "eaa",
+    "wcag",
+    "tagged-pdf",
+    "uspto",
+    "arxiv",
+]
 classifiers = [
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
     "Topic :: Text Processing :: Markup :: LaTeX",
+    "Topic :: Software Development :: Documentation",
 ]
 dependencies = [
     "pyyaml>=6.0",
@@ -29,10 +49,31 @@ dependencies = [
 dev = [
     "pytest>=7.0",
     "pytest-cov>=4.0",
+    "ruff>=0.6.0",
     "sphinx>=7.0",
     "myst-parser>=2.0",
     "furo>=2024.0.0",
 ]
+
+[project.urls]
+Homepage = "https://github.com/sebastienrousseau/euxis-publisher"
+Documentation = "https://github.com/sebastienrousseau/euxis-publisher/tree/main/docs"
+Issues = "https://github.com/sebastienrousseau/euxis-publisher/issues"
+Changelog = "https://github.com/sebastienrousseau/euxis-publisher/blob/main/CHANGELOG.md"
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+extend-exclude = [".venv", "build", "docs/_build"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "SIM", "RUF"]
+# Ignore line-too-long inside generated XMP XML helpers in audit.py;
+# they're verbatim XML and wrapping hurts readability more than it helps.
+ignore = ["E501"]
+
+[tool.ruff.format]
+quote-style = "double"
 
 [project.scripts]
 euxis-publisher = "euxis_publisher.cli.build:main"
@@ -46,3 +87,15 @@ testpaths = ["tests"]
 python_files = "test_*.py"
 addopts = "--strict-markers"
 cache_dir = "/tmp/euxis-publisher-pytest-cache"
+
+[tool.coverage.run]
+source = ["euxis_publisher"]
+branch = true
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+]

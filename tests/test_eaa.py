@@ -233,6 +233,16 @@ def test_main_strict_failure_returns_one(tmp_path, monkeypatch):
     assert rc == 1
 
 
+def test_main_strict_without_verapdf_returns_one(tmp_path, monkeypatch):
+    """Strict mode + missing veraPDF binary must exit non-zero with a clear
+    error, never silently pass on a broken runner."""
+    pdf = _make_pdf(tmp_path / "p.pdf")
+    monkeypatch.setattr(audit_mod.shutil, "which", lambda _x: None)
+    monkeypatch.setattr(audit_mod, "DEFAULT_AUDIT_DIR", tmp_path / ".audit")
+    rc = audit_mod.main([str(pdf), "--strict", "--all"])
+    assert rc == 1
+
+
 def test_main_writes_json_and_markdown(tmp_path, monkeypatch):
     pdf = _make_pdf(tmp_path / "p.pdf")
     monkeypatch.setattr(audit_mod.shutil, "which", lambda x: "/usr/bin/verapdf")

@@ -70,11 +70,13 @@ repos:
         args:
           - '-c'
           - |
+            # Honour EUXIS_ASPELL_LANG if exported; default to en_GB
+            # to match the British-English content in the private repo.
+            LANG_CODE="${EUXIS_ASPELL_LANG:-en_GB}"
             for file in "$@"; do
-              echo "Spell checking: $file"
+              echo "Spell checking ($LANG_CODE): $file"
               if command -v aspell >/dev/null 2>&1; then
-                # Extract text content and check spelling
-                if ! aspell --mode=tex --personal=/dev/null list < "$file" | head -10 | grep -q .; then
+                if ! aspell --mode=tex --lang="$LANG_CODE" --personal=/dev/null list < "$file" | head -10 | grep -q .; then
                   echo "✓ Spell check passed: $file"
                 else
                   echo "⚠ Potential spelling issues found in $file (review manually)"
@@ -89,35 +91,60 @@ repos:
 
   # General file hygiene
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.5.0
+    rev: v6.0.0
     hooks:
       - id: trailing-whitespace
-        files: '\.(tex|cls|bib)$'
+        files: '\.(tex|cls|sty|bib|py|md|ya?ml)$'
       - id: end-of-file-fixer
-        files: '\.(tex|cls|bib)$'
+        files: '\.(tex|cls|sty|bib|py|md|ya?ml)$'
+      - id: mixed-line-ending
+        args: [--fix=lf]
       - id: check-merge-conflict
       - id: check-added-large-files
         args: ['--maxkb=2048']
       - id: check-yaml
         files: '\.ya?ml$'
+      - id: check-toml
 
-  # Bibliography validation
+  # Python lint + format (parity with the engine CI's lint-python job).
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.15.12
+    hooks:
+      - id: ruff
+        args: [--fix]
+      - id: ruff-format
+
+  # Bibliography validation — uses `biber --tool --validate-datamodel`
+  # which checks a .bib file directly against biblatex's data model.
+  # Much faster than the previous LaTeX-temp-file approach (~10× on a
+  # small references.bib) and catches biblatex-specific errors the
+  # old hook missed entirely.
   - repo: local
     hooks:
       - id: bibtex-validate
-        name: BibTeX Validation
+        name: BibTeX / Biber Validation
         entry: bash
         args:
           - '-c'
           - |
             for file in "$@"; do
-              echo "Validating BibTeX: $file"
-              if command -v bibtex >/dev/null 2>&1; then
-                # Create temporary LaTeX file to test bibliography
+              echo "Validating bibliography: $file"
+              if command -v biber >/dev/null 2>&1; then
+                # `--tool` mode reads the .bib directly; `--validate-datamodel`
+                # turns biblatex's structural checks into hard errors.
+                if ! biber --tool --validate-datamodel --quiet --output-file=/dev/null "$file"; then
+                  echo "✗ Biber validation failed: $file"
+                  exit 1
+                fi
+                echo "✓ Biber validation passed: $file"
+              elif command -v bibtex >/dev/null 2>&1; then
+                # Fallback to bibtex's smoke test when biber is absent.
+                # Slower but keeps the hook usable on minimal TL installs.
                 temp_tex=$(mktemp --suffix=.tex)
                 cat > "$temp_tex" << 'EOF'
             \documentclass{article}
             \begin{document}
+            \nocite{*}
             \bibliography{BIBFILE}
             \bibliographystyle{plain}
             \end{document}
@@ -125,7 +152,6 @@ repos:
                 sed -i "s/BIBFILE/$(basename "$file" .bib)/" "$temp_tex"
                 temp_dir=$(dirname "$temp_tex")
                 cp "$file" "$temp_dir/"
-
                 if (cd "$temp_dir" && bibtex "$(basename "$temp_tex" .tex)" >/dev/null 2>&1); then
                   echo "✓ BibTeX validation passed: $file"
                 else
@@ -135,7 +161,7 @@ repos:
                 fi
                 rm -f "$temp_tex" "$temp_dir/$(basename "$file")"
               else
-                echo "⚠ bibtex not available, skipping validation for $file"
+                echo "⚠ neither biber nor bibtex available, skipping validation for $file"
               fi
             done
         language: system

@@ -368,12 +368,21 @@ def main(argv=None):
     print(f"JSON: {json_path}")
     print(f"Markdown: {md_path}")
 
+    # Order matters: a missing veraPDF is the root cause for every SKIP
+    # status in the report, so surface it first with a clearer error.
+    # Otherwise `_is_blocking` (which counts only FAIL/ERROR, not SKIP)
+    # returns False on a runner with no verapdf installed, and the gate
+    # silently passes — exactly the opposite of what --strict promises.
+    if args.strict and not report["verapdf_present"]:
+        print(
+            "STRICT MODE: verapdf is required but not installed on PATH. "
+            "Install via `brew install verapdf` on macOS or see "
+            ".github/workflows/verapdf.yml for the Linux installer.",
+            file=sys.stderr,
+        )
+        return 1
     if args.strict and _is_blocking(report):
         print("STRICT MODE: blocking-flavour failures detected.",
-              file=sys.stderr)
-        return 1
-    if args.strict and not report["verapdf_present"]:
-        print("STRICT MODE: verapdf is required but not installed.",
               file=sys.stderr)
         return 1
     return 0

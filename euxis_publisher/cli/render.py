@@ -363,6 +363,195 @@ def render_json(data):
     return json.dumps(data, indent=2, ensure_ascii=False)
 
 
+def render_text(data, doc_type):
+    """Render structured data to ATS-safe plain text.
+
+    Some 2026 ATS pipelines (Workday, Greenhouse, Taleo) still extract
+    text more reliably from a `.txt` artefact than from a LuaLaTeX-
+    generated PDF — particularly when the PDF is tagged with
+    PDF/UA-2 structure trees the ATS parser doesn't understand.
+
+    The plain-text shadow is therefore intentionally minimal: ASCII
+    where practical, Unicode dashes/middle-dots elsewhere, no
+    Markdown emphasis markers, no `*` or `#` decoration. Pre-strips
+    LaTeX backslash escapes so artefacts like `\\&` and `\\_` do not
+    leak through.
+    """
+    if doc_type == "cv":
+        return _render_cv_text(data)
+    return _render_generic_text(data, doc_type)
+
+
+def _render_cv_text(data):
+    """Render CV data to ATS-safe plain text (single canonical layout).
+
+    Section order mirrors the Workday-friendly markdown emitter so the
+    same author content reads consistently across `cv.pdf`, `cv.md`,
+    and `cv.txt`. Headings are unmarked (no `##`) and bullets use a
+    hyphen so naive parsers don't strip them.
+    """
+    lines: list[str] = []
+    name = data.get("name", {}) or {}
+    if name.get("first") or name.get("last"):
+        lines.append(f"{name.get('first', '')} {name.get('last', '')}".strip())
+        lines.append("")
+
+    role = data.get("role")
+    if role:
+        lines.append(_strip_text_markup(role))
+        lines.append("")
+
+    contact = data.get("contact", {}) or {}
+    contact_parts = [contact.get("phone"), contact.get("email")]
+    contact_line = " | ".join(_strip_text_markup(p) for p in contact_parts if p)
+    if contact_line:
+        lines.append(contact_line)
+        lines.append("")
+
+    summary = data.get("executive_profile") or data.get("summary")
+    if summary:
+        label = "Executive Profile" if data.get("executive_profile") else "Summary"
+        lines.append(label)
+        lines.append("-" * len(label))
+        lines.append(_strip_text_markup(summary))
+        lines.append("")
+
+    achievements = data.get("achievements") or []
+    if achievements:
+        lines.append("Selected Impact")
+        lines.append("-" * 15)
+        for item in achievements:
+            lines.append(f"- {_strip_text_markup(item)}")
+        lines.append("")
+
+    experience = data.get("experience") or []
+    if experience:
+        lines.append("Experience")
+        lines.append("-" * 10)
+        for job in experience:
+            for role_entry in job.get("roles") or [job]:
+                title = role_entry.get("title") or job.get("title", "")
+                company = job.get("company", "")
+                heading = f"{company} — {title}" if company and title else (company or title)
+                dates = role_entry.get("dates") or job.get("dates", "")
+                location = job.get("location", "")
+                head_line = _strip_text_markup(heading)
+                if dates:
+                    head_line = f"{head_line} ({_strip_text_markup(dates)})"
+                if location:
+                    head_line = f"{head_line} — {_strip_text_markup(location)}"
+                lines.append(head_line)
+                for item in role_entry.get("bullets") or job.get("bullets") or []:
+                    lines.append(f"  - {_strip_text_markup(item)}")
+                lines.append("")
+
+    competencies = data.get("competencies") or []
+    skills = data.get("skills") or []
+    if competencies or skills:
+        lines.append("Skills")
+        lines.append("-" * 6)
+        if competencies and isinstance(competencies[0], str):
+            lines.append(" · ".join(_strip_text_markup(c) for c in competencies))
+        else:
+            for item in competencies:
+                if isinstance(item, dict):
+                    lines.append(
+                        f"- {_strip_text_markup(item.get('title', ''))}: "
+                        f"{_strip_text_markup(item.get('description', ''))}"
+                    )
+            for skill in skills:
+                if isinstance(skill, dict):
+                    lines.append(
+                        f"- {_strip_text_markup(skill.get('title', ''))}: "
+                        f"{_strip_text_markup(skill.get('description', ''))}"
+                    )
+        lines.append("")
+
+    education = data.get("education") or []
+    if education:
+        lines.append("Education")
+        lines.append("-" * 9)
+        for edu in education:
+            parts = [
+                edu.get("degree"),
+                edu.get("institution"),
+                edu.get("location"),
+                edu.get("year"),
+            ]
+            lines.append(
+                "- " + " | ".join(_strip_text_markup(p) for p in parts if p)
+            )
+        lines.append("")
+
+    languages = data.get("languages")
+    if languages:
+        lines.append("Languages")
+        lines.append("-" * 9)
+        lines.append(_strip_text_markup(str(languages)))
+        lines.append("")
+
+    return "\n".join(lines).rstrip() + "\n"
+
+
+def _render_generic_text(data, doc_type):
+    """Render arbitrary structured data to readable plain text."""
+    title = data.get("title") or data.get("subject") or doc_type.replace("-", " ").title()
+    lines = [_strip_text_markup(str(title)), "=" * max(len(str(title)), 3), ""]
+    for key, value in data.items():
+        if key.startswith("_") or key in {"title", "build_mode"}:
+            continue
+        heading = key.replace("_", " ").title()
+        lines.append(heading)
+        lines.append("-" * len(heading))
+        lines.extend(_plain_text_lines(value, indent=0))
+        lines.append("")
+    return "\n".join(lines).rstrip() + "\n"
+
+
+def _plain_text_lines(value, indent=0):
+    pad = "  " * indent
+    if isinstance(value, dict):
+        out = []
+        for k, v in value.items():
+            label = k.replace("_", " ").title()
+            if isinstance(v, (dict, list)):
+                out.append(f"{pad}{label}:")
+                out.extend(_plain_text_lines(v, indent + 1))
+            else:
+                out.append(f"{pad}{label}: {_strip_text_markup(str(v))}")
+        return out
+    if isinstance(value, list):
+        out = []
+        for item in value:
+            if isinstance(item, (dict, list)):
+                out.extend(_plain_text_lines(item, indent + 1))
+            else:
+                out.append(f"{pad}- {_strip_text_markup(str(item))}")
+        return out
+    if value is None:
+        return [f"{pad}-"]
+    return [f"{pad}{_strip_text_markup(str(value))}"]
+
+
+def _strip_text_markup(text):
+    """Pre-strip LaTeX escapes / markup so plain-text output is ATS-clean.
+
+    Reuses the Markdown stripper's substitution rules but additionally
+    flattens Markdown emphasis (`**…**`, `*…*`) so the resulting `.txt`
+    has zero markup. The output is intentionally lossy: tables, links,
+    and figures are reduced to their text content.
+    """
+    if not isinstance(text, str):
+        return text
+    out = _strip_markdown_escapes(text)
+    # Flatten any Markdown emphasis the data file may have included.
+    out = re.sub(r"\*\*([^*]+)\*\*", r"\1", out)
+    out = re.sub(r"(?<!\*)\*([^*]+)\*(?!\*)", r"\1", out)
+    # Drop residual backticks (inline code), they confuse some parsers.
+    out = out.replace("`", "")
+    return out
+
+
 def _generate_xmpdata(doc_id, data, meta, rendered_dir=None):
     """Generate XMP metadata file for PDF/A compliance.
 
@@ -471,7 +660,7 @@ def render_document(doc_id, fmt="latex", build_mode="draft",
     data["build_mode"] = _mode_to_class_option.get(build_mode, "draft")
 
     # Render
-    ext_map = {"latex": "tex", "markdown": "md", "json": "json"}
+    ext_map = {"latex": "tex", "markdown": "md", "json": "json", "text": "txt"}
     ext = ext_map.get(fmt, "tex")
 
     if fmt == "latex":
@@ -482,6 +671,8 @@ def render_document(doc_id, fmt="latex", build_mode="draft",
         output = render_markdown(data, doc_type)
     elif fmt == "json":
         output = render_json(data)
+    elif fmt == "text":
+        output = render_text(data, doc_type)
     else:
         print(f"ERROR: Unknown format '{fmt}'", file=sys.stderr)
         sys.exit(1)
@@ -590,9 +781,12 @@ def main(argv=None):
     )
     parser.add_argument(
         "--format",
-        choices=["latex", "markdown", "json"],
+        choices=["latex", "markdown", "json", "text"],
         default="latex",
-        help="Output format (default: latex)",
+        help=(
+            "Output format. `text` emits an ATS-safe plain-text shadow "
+            "(e.g. for Workday/Greenhouse pipelines). Default: latex."
+        ),
     )
     parser.add_argument(
         "--mode",
