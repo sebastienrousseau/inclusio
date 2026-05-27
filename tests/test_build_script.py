@@ -1684,11 +1684,16 @@ class TestPostProcessPdf:
             assert vp is not None
             assert bool(vp.get("/DisplayDocTitle")) is True
 
-    def test_encryption_applied(self, tmp_path):
-        """PDF must be encrypted with AES-256 and correct permissions."""
+    def test_encryption_applied_when_opted_in(self, tmp_path):
+        """PDF must be encrypted with AES-256 when secure_pdf=True is opted into.
+
+        Sprint 5 (S5.4): `secure_pdf` defaults to False because AES-256
+        is incompatible with PDF/A-4f and PDF/UA-2. Opt-in is required.
+        """
         import pikepdf
         pdf_path = self._make_pdf(tmp_path)
-        build._post_process_pdf(pdf_path, "test-doc", self._config(), self._meta())
+        config = {**self._config(), "secure_pdf": True}
+        build._post_process_pdf(pdf_path, "test-doc", config, self._meta())
 
         with pikepdf.open(pdf_path) as pdf:
             assert pdf.is_encrypted
@@ -1697,11 +1702,21 @@ class TestPostProcessPdf:
             assert pdf.allow.modify_other is False
             assert pdf.allow.accessibility is True
 
-    def test_opens_without_password(self, tmp_path):
-        """Encrypted PDF must open without a password."""
+    def test_unencrypted_by_default(self, tmp_path):
+        """Sprint 5: PDF is NOT encrypted by default (tagged-PDF compatibility)."""
         import pikepdf
         pdf_path = self._make_pdf(tmp_path)
         build._post_process_pdf(pdf_path, "test-doc", self._config(), self._meta())
+
+        with pikepdf.open(pdf_path) as pdf:
+            assert not pdf.is_encrypted
+
+    def test_opens_without_password(self, tmp_path):
+        """Encrypted PDF must open without a password when opted in."""
+        import pikepdf
+        pdf_path = self._make_pdf(tmp_path)
+        config = {**self._config(), "secure_pdf": True}
+        build._post_process_pdf(pdf_path, "test-doc", config, self._meta())
 
         # Should not raise PasswordError
         with pikepdf.open(pdf_path) as pdf:
