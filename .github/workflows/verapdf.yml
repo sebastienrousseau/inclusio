@@ -119,19 +119,19 @@ jobs:
           # tests/test_eaa.py — Sprint 3 audit-CLI unit tests (17).
           pytest tests/test_pdf_ua.py tests/test_pdf_ua_classes.py tests/test_eaa.py -v
 
-      - name: EAA audit — public fixtures (Sprint 3 BLOCK)
+      - name: EAA audit — public fixtures (Sprint 5 STRICT)
         run: |
-          # Run the audit CLI against any built public fixtures in
-          # --strict mode. BLOCKs the workflow on PDF/UA-2, WTPDF-1.0
-          # Accessibility, or PDF/A-4f failure.
+          # Sprint 5 (S5.5): every public fixture is now migrated to
+          # \DocumentMetadata + [tagged] (S5.4), so the audit gate
+          # flips from WARN-only to BLOCKing. Any PDF/UA-2, WTPDF-1.0
+          # Accessibility, or PDF/A-4f regression on a build/-resident
+          # registered artefact fails this workflow.
           #
-          # Note: the build step is informational (`|| true`) because
-          # the public src/ fixtures are not yet all migrated to
-          # \DocumentMetadata. The audit itself uses the meta.yaml
-          # registry filter, so unrelated PDFs in build/ won't break
-          # the gate. As more fixtures migrate, this gate gets richer.
-          python -m euxis_publisher.cli.build build --doc whisper-paper --mode camera-ready --force || true
-          python -m euxis_publisher.cli.audit --strict || true   # WARN-only on public fixtures; private CI runs --strict
+          # The build step is allowed to fail individual docs (one
+          # malformed fixture shouldn't deny the audit of the others);
+          # the authoritative gate is the audit CLI in --strict mode.
+          python -m euxis_publisher.cli.build build --mode camera-ready --force || echo "::warning::build step had failures; audit gate is authoritative"
+          python -m euxis_publisher.cli.audit --strict
 
       # The block below activates once the Sprint 1 smoke is green on CI.
       # Until then it WARNS only (`|| true`) so we can land the workflow
