@@ -29,9 +29,18 @@ def test_entrypoint_files_exist():
 
 
 def test_entrypoints_use_expected_classes():
+    # Sprint 5 migration (S5.4): public fixtures now declare class
+    # options for tagged-PDF emission, so the bare `\documentclass{X}`
+    # form is no longer the only acceptable shape. Accept both:
+    #   \documentclass{X}
+    #   \documentclass[final,tagged]{X}        (Sprint 5 canonical)
+    #   \documentclass[final-untagged]{X}      (legacy escape hatch)
+    import re
+
     for rel, expected_cls in ENTRYPOINTS.items():
         content = (PROJECT_ROOT / rel).read_text(encoding="utf-8", errors="replace")
-        assert f"\\documentclass{{{expected_cls}}}" in content, (
+        pattern = rf"\\documentclass(?:\[[^\]]*\])?{{{re.escape(expected_cls)}}}"
+        assert re.search(pattern, content), (
             f"{rel} does not declare expected class {expected_cls}"
         )
 

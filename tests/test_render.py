@@ -347,18 +347,35 @@ class TestRenderMain:
 class TestCVRegression:
     def test_rendered_cv_matches_source(self):
         """Rendered CV from YAML+template matches src/cvs/cv.tex
-        after whitespace normalization."""
+        after whitespace normalization.
+
+        This is a content-drift detection test: the test fails when the
+        Jinja2 template (`templates/cv.tex.j2` + `data/cv-data.yaml`)
+        diverges from what `src/cvs/cv.tex` actually contains. It is
+        meaningful in the **private content repo** where `src/cvs/cv.tex`
+        IS the rendered output. In the **public engine repo**,
+        `src/cvs/cv.tex` is a Sprint-5 minimal smoke fixture (see
+        `docs/audit-2026-05.md` §S5.4) — comparing against it produces
+        a false positive on every push. Skip on that signal.
+        """
         import yaml as pyyaml
 
         data_path = render.PROJECT_ROOT / "data" / "cv-data.yaml"
+        source_path = render.PROJECT_ROOT / "src" / "cvs" / "cv.tex"
         if not data_path.exists():
             pytest.skip("cv-data.yaml not found")
+
+        source = source_path.read_text()
+        if "Sprint 5" in source and len(source) < 800:
+            pytest.skip(
+                "src/cvs/cv.tex is the public-engine smoke fixture; "
+                "the content-drift test lives in the private content repo."
+            )
 
         with open(data_path) as f:
             data = pyyaml.safe_load(f)
 
         rendered = render.render_latex("cv.tex.j2", data)
-        source = (render.PROJECT_ROOT / "src" / "cvs" / "cv.tex").read_text()
 
         def normalize(text):
             """Normalize whitespace for comparison."""
