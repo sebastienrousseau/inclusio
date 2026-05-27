@@ -1587,22 +1587,29 @@ class TestRenderedPathFallback:
 class TestPostProcessPdf:
     """Comprehensive tests for the consolidated post-processing function."""
 
-    def _make_pdf(self, tmp_path):
+    def _make_pdf(self, tmp_path, tagged=False):
+        """Synthetic blank PDF.
+
+        - tagged=False (default): no /StructTreeRoot. `_post_process_pdf`
+          takes the LEGACY path — writes XMP, docinfo, /MarkInfo (after
+          the strip-on-mismatch guard), /Lang, /ViewerPreferences. Most
+          TestPostProcessPdf tests exercise this path.
+        - tagged=True: minimal /StructTreeRoot + /MarkInfo so
+          `_post_process_pdf` takes the Sprint 5 (S5.4) TAGGED path —
+          preserves the kernel's metadata and only applies encryption
+          if opted in. Use for `test_mark_info_and_lang` and any other
+          test that needs the tagged-PDF behaviour.
+        """
         import pikepdf
         pdf_path = tmp_path / "test.pdf"
         pdf = pikepdf.Pdf.new()
         pdf.add_blank_page(page_size=(612, 792))
-        # Sprint 2 retrofit (_post_process_pdf) strips /MarkInfo when
-        # /StructTreeRoot is absent, since advertising MarkInfo without
-        # a structure tree produces an invalid tagged PDF. The synthetic
-        # fixtures here need a minimal /StructTreeRoot + /MarkInfo pair
-        # so the tagged-PDF assertions (test_mark_info_and_lang etc) see
-        # the post-processed state, not the strip-on-mismatch fallback.
-        struct_root = pdf.make_indirect(
-            pikepdf.Dictionary({"/Type": pikepdf.Name("/StructTreeRoot")})
-        )
-        pdf.Root["/StructTreeRoot"] = struct_root
-        pdf.Root["/MarkInfo"] = pikepdf.Dictionary({"/Marked": True})
+        if tagged:
+            struct_root = pdf.make_indirect(
+                pikepdf.Dictionary({"/Type": pikepdf.Name("/StructTreeRoot")})
+            )
+            pdf.Root["/StructTreeRoot"] = struct_root
+            pdf.Root["/MarkInfo"] = pikepdf.Dictionary({"/Marked": True})
         pdf.save(pdf_path)
         return pdf_path
 
@@ -1662,16 +1669,49 @@ class TestPostProcessPdf:
             assert str(pdf.docinfo.get("/Producer")) == "Test Publisher"
 
     def test_mark_info_and_lang(self, tmp_path):
-        """PDF/UA: /MarkInfo and /Lang must be set."""
+        """Legacy untagged path: PDF/UA /MarkInfo and /Lang must be set.
+
+        Sprint 5 (S5.4) added a tagged-PDF early-return that preserves
+        the kernel's metadata. The legacy XMP-writing path still applies
+        when /StructTreeRoot is absent — this test covers that path,
+        which is what untagged PDFs (e.g. pre-Sprint-2 fixtures the
+        engine still has to handle) go through.
+        """
         import pikepdf
-        pdf_path = self._make_pdf(tmp_path)
+        pdf_path = self._make_pdf(tmp_path)  # untagged: legacy path
         build._post_process_pdf(pdf_path, "test-doc", self._config(), self._meta())
 
         with pikepdf.open(pdf_path) as pdf:
             mark_info = pdf.Root.get("/MarkInfo")
-            assert mark_info is not None
-            assert bool(mark_info.get("/Marked")) is True
+            # The legacy path strips /MarkInfo on synthetic PDFs that
+            # lack /StructTreeRoot (the strip-on-mismatch guard); after
+            # post-processing, /MarkInfo is therefore absent here.
+            # /Lang however is unconditionally set.
+            assert mark_info is None
             assert str(pdf.Root.get("/Lang")) == "en"
+
+    def test_tagged_pdf_kernel_metadata_preserved(self, tmp_path):
+        """Sprint 5 tagged path: /StructTreeRoot signals the LaTeX kernel
+        owns metadata; _post_process_pdf must not overwrite it."""
+        import pikepdf
+        pdf_path = self._make_pdf(tmp_path, tagged=True)
+        # Stamp a marker BEFORE post-processing so we can prove the
+        # tagged path didn't rewrite the metadata stream.
+        with pikepdf.open(pdf_path, allow_overwriting_input=True) as pdf:
+            pdf.Root["/Metadata"] = pdf.make_indirect(
+                pikepdf.Stream(pdf, b"<KERNEL_OWNED_MARKER/>")
+            )
+            pdf.save(pdf_path)
+
+        build._post_process_pdf(pdf_path, "test-doc", self._config(), self._meta())
+
+        with pikepdf.open(pdf_path) as pdf:
+            # Kernel marker survived → tagged path took the early return.
+            assert b"KERNEL_OWNED_MARKER" in pdf.Root["/Metadata"].read_bytes()
+            # /StructTreeRoot still present.
+            assert "/StructTreeRoot" in pdf.Root
+            # /MarkInfo /Marked still True (kernel-written).
+            assert bool(pdf.Root["/MarkInfo"]["/Marked"]) is True
 
     def test_viewer_preferences(self, tmp_path):
         """/ViewerPreferences with /DisplayDocTitle must be set."""
