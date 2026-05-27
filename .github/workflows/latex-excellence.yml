@@ -120,6 +120,12 @@ jobs:
       - name: Install system dependencies
         run: |
           apt-get update
+          # `latexindent`, `checkcites`, `chktex`, and the `texlive-*`
+          # packages all ship inside the texlive/texlive:TL2024-historic
+          # base image already — apt-get can't find them as Debian
+          # packages on this image, and asking for them returns
+          # "E: Unable to locate package" which exits 100.
+          # Keep only the system tools the image doesn't bundle.
           apt-get install -y \
             git \
             make \
@@ -134,14 +140,6 @@ jobs:
             poppler-utils \
             aspell \
             aspell-en \
-            chktex \
-            latexindent \
-            checkcites \
-            texlive-latex-extra \
-            texlive-fonts-recommended \
-            texlive-fonts-extra \
-            texlive-bibtex-extra \
-            texlive-science \
             fonts-liberation
 
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4
