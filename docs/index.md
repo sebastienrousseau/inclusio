@@ -17,5 +17,6 @@ implementation-plan-2026
 audit-2026-05
 mcp-server
 multi-format
+judges
 tagged-pdf
 ```

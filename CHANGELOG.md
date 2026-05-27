@@ -8,6 +8,24 @@ and [Conventional Commits](https://www.conventionalcommits.org/).
 
 ### Added
 
+- **Sprint 7 (S7.3) — ATS-scoring judge (2026-05-28)**:
+  - `euxis_publisher/judge/ats.py` — Workday / Greenhouse / Lever
+    heuristic scoring for CV variants. Local, deterministic, sub-ms.
+    Closes Forcing Function #5 on the deterministic surface.
+  - 9 checks: canonical headings, contact info, length bands,
+    bullet density, date consistency, killer phrases (each tunable
+    via module-level constants).
+  - 0-100 score + A/B/C/D/F grade derivation; `JudgeReport.to_dict()`
+    for JSON serialisation.
+  - CLI: `python -m euxis_publisher.cli.build judge --doc cv
+    --judge ats [--json path] [--strict]`. Renders the CV via
+    `render --format text` then scores the plain-text output.
+  - `make judge DOC=cv` shortcut.
+  - `tests/test_judge_ats.py` — 23 tests covering every check, grade
+    boundaries, JSON round-trip, and the score-clamp-to-0 invariant.
+  - `docs/judges.md` — heuristic table, CLI examples, Python API,
+    Sprint 7.5+ roadmap (llama.cpp, citation grounding).
+
 - **Sprint 7 — emit CLI wiring (2026-05-28)**:
   - `python -m euxis_publisher.cli.build emit [--doc X] [--formats html,jats] [--strict]`
     is now first-class. Defaults to `html,jats`; `--strict` exits 1 on

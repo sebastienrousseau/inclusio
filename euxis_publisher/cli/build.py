@@ -1063,6 +1063,65 @@ def cmd_list(args, meta):
         print(f"{doc_id:<20} {config['class']:<15} {src:<55} {desc}")
 
 
+def cmd_judge(args, meta):
+    """Run an LLM/heuristic judge against a rendered document (Sprint 7).
+
+    Today the only registered judge is `ats` — Workday/Greenhouse/Lever
+    conformance scoring for CV variants. It runs against the
+    `render_text` plain-text shadow, so the same content path that
+    feeds ATS pipelines is scored.
+
+    Future judges (citations via ScholarCopilot pattern, local llama.cpp
+    re-score) plug into the same dispatch table.
+    """
+    if args.judge != "ats":
+        print(f"ERROR: unknown judge {args.judge!r} (expected: ats)", file=sys.stderr)
+        sys.exit(2)
+
+    from euxis_publisher.cli import render as render_module
+    from euxis_publisher.judge import ats as ats_judge
+
+    doc_id = args.doc
+    templates = meta.get("templates", {}) or {}
+    if doc_id not in templates:
+        print(
+            f"ERROR: {doc_id} is not a registered template (see `templates:` in meta.yaml)",
+            file=sys.stderr,
+        )
+        sys.exit(2)
+    doc_type = templates[doc_id].get("type", doc_id)
+    if doc_type != "cv":
+        print(
+            f"ERROR: ats judge only scores CVs; {doc_id} has type {doc_type!r}",
+            file=sys.stderr,
+        )
+        sys.exit(2)
+
+    try:
+        render_module.render_document(
+            doc_id, fmt="text", build_mode="draft", content_root=CONTENT_ROOT
+        )
+    except SystemExit:
+        raise
+    out_path = CONTENT_ROOT / "build" / ".cache" / "rendered" / f"{doc_id}.txt"
+    if not out_path.exists():
+        print(f"ERROR: render produced no {out_path}", file=sys.stderr)
+        sys.exit(1)
+
+    report = ats_judge.score_cv(out_path.read_text(encoding="utf-8"))
+    print(f"ATS Score: {report.score}/100  Grade: {report.grade}\n")
+    for f in report.findings:
+        marker = {"block": "✗", "warn": "⚠", "info": "ℹ"}.get(f.severity, "•")
+        print(f"  {marker} [{f.severity}] {f.check}: {f.message}  (-{f.deduction})")
+    if args.json:
+        import json as _json
+
+        Path(args.json).write_text(_json.dumps(report.to_dict(), indent=2), encoding="utf-8")
+        print(f"\nJSON report: {args.json}")
+    if args.strict and report.grade in ("D", "F"):
+        sys.exit(1)
+
+
 def cmd_emit(args, meta):
     """Emit HTML / JATS XML from registered documents (Sprint 6 wiring).
 
@@ -1341,6 +1400,25 @@ Commands:
     )
 
     # assets
+    judge_parser = subparsers.add_parser(
+        "judge",
+        help="Score a registered document against an LLM/heuristic judge (S7.x)",
+    )
+    judge_parser.add_argument(
+        "--doc", required=True, help="Registered template id (must be type=cv for ats)."
+    )
+    judge_parser.add_argument(
+        "--judge", default="ats", choices=["ats"], help="Which judge to run (default: ats)."
+    )
+    judge_parser.add_argument(
+        "--json", default=None, help="Optional path to write the JSON report to."
+    )
+    judge_parser.add_argument(
+        "--strict",
+        action="store_true",
+        help="Exit 1 if the grade is D or F (CI gate).",
+    )
+
     emit_parser = subparsers.add_parser(
         "emit",
         help="Emit HTML5 / JATS XML for registered documents (S6.2 + S6.3)",
@@ -1400,6 +1478,7 @@ Commands:
         "distclean": cmd_distclean,
         "list": cmd_list,
         "emit": cmd_emit,
+        "judge": cmd_judge,
     }
 
     commands[args.command](args, meta)
