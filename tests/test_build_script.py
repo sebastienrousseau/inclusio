@@ -1690,27 +1690,31 @@ class TestPostProcessPdf:
             assert mark_info is None
             assert str(pdf.Root.get("/Lang")) == "en"
 
-    def test_tagged_pdf_kernel_metadata_preserved(self, tmp_path):
-        """Sprint 5 tagged path: /StructTreeRoot signals the LaTeX kernel
-        owns metadata; _post_process_pdf must not overwrite it."""
+    def test_tagged_pdf_structure_preserved(self, tmp_path):
+        """Sprint 5 tagged path: when /StructTreeRoot is present the
+        post-processor must skip XMP/docinfo overwrites and leave the
+        structure intact. We verify the structural markers survive
+        rather than asserting on the XMP stream (pikepdf re-normalises
+        XMP on save, so a content-equality test is brittle)."""
         import pikepdf
         pdf_path = self._make_pdf(tmp_path, tagged=True)
-        # Stamp a marker BEFORE post-processing so we can prove the
-        # tagged path didn't rewrite the metadata stream.
+
+        # Stamp a non-XMP marker in docinfo that the LEGACY path would
+        # overwrite. If the tagged early-return fires, this survives.
         with pikepdf.open(pdf_path, allow_overwriting_input=True) as pdf:
-            pdf.Root["/Metadata"] = pdf.make_indirect(
-                pikepdf.Stream(pdf, b"<KERNEL_OWNED_MARKER/>")
-            )
+            pdf.docinfo["/Title"] = "KERNEL-OWNED-DOCINFO"
             pdf.save(pdf_path)
 
         build._post_process_pdf(pdf_path, "test-doc", self._config(), self._meta())
 
         with pikepdf.open(pdf_path) as pdf:
-            # Kernel marker survived → tagged path took the early return.
-            assert b"KERNEL_OWNED_MARKER" in pdf.Root["/Metadata"].read_bytes()
+            # /Title untouched → legacy path did NOT run.
+            # (Legacy path would have set "Test Title" from _config.)
+            assert str(pdf.docinfo.get("/Title")) == "KERNEL-OWNED-DOCINFO"
             # /StructTreeRoot still present.
             assert "/StructTreeRoot" in pdf.Root
-            # /MarkInfo /Marked still True (kernel-written).
+            # /MarkInfo /Marked still True (we stamped it; the tagged
+            # path didn't strip it).
             assert bool(pdf.Root["/MarkInfo"]["/Marked"]) is True
 
     def test_viewer_preferences(self, tmp_path):
