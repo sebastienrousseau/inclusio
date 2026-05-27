@@ -70,6 +70,15 @@ tailor: ## Generate tailored document from a brief
 sitemap: ## Generate semantic search metadata (build/site-map.json)
 	$(BUILD) sitemap --pretty
 
+emit: ## Emit HTML5 + JATS XML for every registered document (Sprint 6/7)
+	$(BUILD) emit
+
+emit-html: ## Emit HTML5 only
+	$(BUILD) emit --formats html
+
+emit-jats: ## Emit JATS XML only
+	$(BUILD) emit --formats jats
+
 audit: ## Run EAA / accessibility audit (veraPDF UA-2 + WTPDF + PDF/A-4f) on build/
 	$(PYTHON) -m euxis_publisher.cli.audit
 

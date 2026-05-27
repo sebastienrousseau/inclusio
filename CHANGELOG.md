@@ -8,6 +8,22 @@ and [Conventional Commits](https://www.conventionalcommits.org/).
 
 ### Added
 
+- **Sprint 7 — emit CLI wiring (2026-05-28)**:
+  - `python -m euxis_publisher.cli.build emit [--doc X] [--formats html,jats] [--strict]`
+    is now first-class. Defaults to `html,jats`; `--strict` exits 1 on
+    any pandoc failure (CI gate).
+  - Make targets: `make emit`, `make emit-html`, `make emit-jats`.
+  - Registry filter shared with `audit` — only `documents:` entries
+    get emitted, `note: This is an input file used by another`
+    entries skipped.
+  - Title pulled from `meta.documents.<id>.title` by default.
+  - `tests/test_cmd_emit.py` — 11 tests covering dispatch (all docs,
+    single-doc, format-subset), error paths (invalid format → exit 2,
+    pandoc missing → exit 1, pandoc failure → counted not fatal),
+    strict-mode failure (→ exit 1), help registration, title
+    propagation.
+  - Closes Sprint 6's CLI wiring deliverable (S6.3.CLI).
+
 - **Sprint 6 (S6.2 + S6.3) — HTML5 + JATS XML emitters (2026-05-27)**:
   - `euxis_publisher/emit/pandoc.py` — Pandoc-wrapping emitters with
     `emit_html`, `emit_jats`, and `emit_all` API surface. Optional

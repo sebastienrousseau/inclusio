@@ -1063,6 +1063,68 @@ def cmd_list(args, meta):
         print(f"{doc_id:<20} {config['class']:<15} {src:<55} {desc}")
 
 
+def cmd_emit(args, meta):
+    """Emit HTML / JATS XML from registered documents (Sprint 6 wiring).
+
+    Wraps `euxis_publisher.emit.pandoc.emit_all` with the registry
+    filter that the build CLI already uses for `build` / `audit` —
+    only documents listed in `data/meta.yaml` `documents:` get emitted.
+    """
+    try:
+        from euxis_publisher.emit import pandoc as emit_pandoc
+    except ImportError as exc:  # pragma: no cover - defensive
+        print(f"ERROR: emit module unavailable: {exc}", file=sys.stderr)
+        sys.exit(1)
+
+    documents = meta.get("documents", {})
+    selected = {args.doc: documents[args.doc]} if args.doc else documents
+    formats = [f.strip() for f in args.formats.split(",") if f.strip()]
+    invalid = [f for f in formats if f not in emit_pandoc.SUPPORTED_FORMATS]
+    if invalid:
+        print(
+            f"ERROR: unsupported format(s) {invalid}; expected one of "
+            f"{list(emit_pandoc.SUPPORTED_FORMATS)}",
+            file=sys.stderr,
+        )
+        sys.exit(2)
+
+    failures = 0
+    for doc_id, cfg in selected.items():
+        if not isinstance(cfg, dict):
+            continue
+        if cfg.get("note", "").startswith("This is an input file"):
+            print(f"  SKIP {doc_id}: input fragment")
+            continue
+        src_rel = cfg.get("src", "")
+        if not src_rel:
+            print(f"  SKIP {doc_id}: no src in meta.yaml")
+            continue
+        tex = CONTENT_ROOT / src_rel
+        if not tex.exists():
+            print(f"  SKIP {doc_id}: {tex} not found")
+            continue
+        out_dir = BUILD_DIR / _artifact_subdir(doc_id, cfg)
+        title = cfg.get("title", doc_id)
+        try:
+            results = emit_pandoc.emit_all(tex, out_dir, doc_id, formats=formats, title=title)
+        except emit_pandoc.PandocMissing as exc:
+            print(f"ERROR: {exc}", file=sys.stderr)
+            sys.exit(1)
+        except subprocess.CalledProcessError as exc:
+            failures += 1
+            stderr = (exc.stderr or "").strip()
+            print(f"  FAIL {doc_id}: pandoc exit {exc.returncode}")
+            if stderr:
+                print(f"    | {stderr[:300]}", file=sys.stderr)
+            continue
+        for r in results:
+            print(f"  OK   {doc_id} [{r.format}] → {r.output_path}")
+
+    print(f"\nResults: {len(selected) - failures} ok, {failures} failed")
+    if failures and getattr(args, "strict", False):
+        sys.exit(1)
+
+
 def cmd_tailor(args, meta):
     """Generate a tailored document from a brief."""
     try:
@@ -1279,6 +1341,26 @@ Commands:
     )
 
     # assets
+    emit_parser = subparsers.add_parser(
+        "emit",
+        help="Emit HTML5 / JATS XML for registered documents (S6.2 + S6.3)",
+    )
+    emit_parser.add_argument(
+        "--doc",
+        default=None,
+        help="Limit to one document id (default: all registered).",
+    )
+    emit_parser.add_argument(
+        "--formats",
+        default="html,jats",
+        help="Comma-separated subset of {html, jats}. Default: both.",
+    )
+    emit_parser.add_argument(
+        "--strict",
+        action="store_true",
+        help="Exit non-zero if any emit fails (CI gate).",
+    )
+
     subparsers.add_parser("assets", help="Run asset pipeline")
 
     # lint
@@ -1317,6 +1399,7 @@ Commands:
         "clean": cmd_clean,
         "distclean": cmd_distclean,
         "list": cmd_list,
+        "emit": cmd_emit,
     }
 
     commands[args.command](args, meta)
