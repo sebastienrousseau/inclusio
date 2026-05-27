@@ -36,10 +36,10 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
 
       - name: Set up uv
-        uses: astral-sh/setup-uv@8d55fbecc275b1c35dbe060458839f8d30439ccf  # v3
+        uses: astral-sh/setup-uv@caf0cab7a618c569241d31dcd442f54681755d39  # v3
         with:
           enable-cache: true
           cache-dependency-glob: pyproject.toml
@@ -58,7 +58,7 @@ jobs:
         # scheme-full matches verapdf.yml so pub-base.cls's full
         # dependency tree (tcolorbox, adjustbox, datetime2, ...) resolves.
         # The runner cache (~600 MB) makes repeat runs ~30 s.
-        uses: zauguin/install-texlive@f5e7d0b117035fff797d4392ea94131747e03d60  # v4
+        uses: zauguin/install-texlive@6671d0c62046c7e349fe154d5208fe746b07e037  # v4.4.0
         with:
           packages: >
             scheme-full
@@ -108,14 +108,14 @@ jobs:
         run: python3 -m euxis_publisher.cli.build blog
 
       - name: Upload PDF artifacts
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
         with:
           name: pdfs-${{ matrix.mode }}
           path: build/**/*.pdf
           if-no-files-found: warn
 
       - name: Upload blog artifacts
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
         with:
           name: blog-${{ matrix.mode }}
           path: build/blog/*.md
@@ -126,10 +126,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
 
       - name: Set up uv
-        uses: astral-sh/setup-uv@8d55fbecc275b1c35dbe060458839f8d30439ccf  # v3
+        uses: astral-sh/setup-uv@caf0cab7a618c569241d31dcd442f54681755d39  # v3
         with:
           enable-cache: true
           cache-dependency-glob: pyproject.toml
