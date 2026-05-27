@@ -1,0 +1,91 @@
+#!/usr/bin/env bash
+# bin/setup — Bootstrap script for Euxis Publisher development.
+#
+# Checks for required tools and surfaces install hints. Intentionally
+# non-mutating: this script does NOT install anything. It is safe to
+# run multiple times, in CI, or on a locked-down machine.
+#
+# Exit codes:
+#   0 — all required tools present (or only optional ones missing)
+#   1 — at least one REQUIRED tool missing; install hint printed
+
+set -euo pipefail
+
+ok=0
+warn=0
+fail=0
+
+check_required() {
+  local name="$1" hint="$2"
+  if command -v "$name" >/dev/null 2>&1; then
+    printf "  ok    %-12s %s\n" "$name" "$($name --version 2>&1 | head -1 || echo '')"
+    ok=$((ok + 1))
+  else
+    printf "  MISS  %-12s required — %s\n" "$name" "$hint"
+    fail=$((fail + 1))
+  fi
+}
+
+check_optional() {
+  local name="$1" hint="$2"
+  if command -v "$name" >/dev/null 2>&1; then
+    printf "  ok    %-12s %s\n" "$name" "$($name --version 2>&1 | head -1 || echo '')"
+    ok=$((ok + 1))
+  else
+    printf "  warn  %-12s optional — %s\n" "$name" "$hint"
+    warn=$((warn + 1))
+  fi
+}
+
+echo "Euxis Publisher — bootstrap check"
+echo
+
+echo "Required:"
+check_required python3   "https://www.python.org/ (>=3.11)"
+check_required git       "https://git-scm.com/"
+check_required make      "GNU Make 4.0+"
+
+echo
+echo "TeX toolchain (required to build PDFs):"
+check_required lualatex  "TeX Live 2024+ — https://tug.org/texlive/"
+check_required bibtex    "ships with TeX Live"
+
+echo
+echo "Optional (improves the dev loop):"
+check_optional uv        "https://docs.astral.sh/uv/ — Python installer"
+check_optional verapdf   "https://verapdf.org/ — PDF/UA-2 audit (make audit)"
+check_optional chktex    "ships with TeX Live — LaTeX linter"
+check_optional latexindent "ships with TeX Live — LaTeX formatter"
+check_optional vale      "https://vale.sh/ — prose linter"
+check_optional pandoc    "https://pandoc.org/ — needed for blog conversion"
+check_optional ruff      "https://docs.astral.sh/ruff/ — Python linter (>=0.6)"
+
+# tagpdf is bundled with modern TeX Live but worth surfacing
+if command -v kpsewhich >/dev/null 2>&1; then
+  if kpsewhich tagpdf.sty >/dev/null 2>&1; then
+    printf "  ok    %-12s %s\n" "tagpdf.sty" "available (PDF/UA-2 tagging)"
+    ok=$((ok + 1))
+  else
+    printf "  warn  %-12s optional — install via \`tlmgr install tagpdf\` for PDF/UA-2\n" "tagpdf.sty"
+    warn=$((warn + 1))
+  fi
+fi
+
+echo
+echo "Summary: $ok ok, $warn warn, $fail missing-required"
+
+if [ "$fail" -gt 0 ]; then
+  echo
+  echo "Install the missing required tools above, then re-run \`./bin/setup\`."
+  exit 1
+fi
+
+cat <<'NEXT'
+
+Next steps:
+  make test                            — run the public engine test suite
+  make coverage                        — measure coverage (>=95%)
+  make docs                            — build the Sphinx docs
+  make audit                           — run veraPDF EAA/PDF-UA gate (needs `verapdf` on PATH)
+  make publish CONTENT_DIR=/path/to/   — build PDFs from a content repo
+NEXT
