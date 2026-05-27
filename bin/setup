@@ -46,9 +46,14 @@ check_required git       "https://git-scm.com/"
 check_required make      "GNU Make 4.0+"
 
 echo
-echo "TeX toolchain (required to build PDFs):"
-check_required lualatex  "TeX Live 2024+ — https://tug.org/texlive/"
-check_required bibtex    "ships with TeX Live"
+echo "TeX toolchain (required to build PDFs; optional for the Python-only test path):"
+# lualatex + bibtex are required to PRODUCE PDFs, but the Python test
+# suite (`make test`) only smoke-compiles a single .tex when LuaLaTeX
+# is present (test_engine_smoke.py) and skips otherwise. CI installs
+# them on the verapdf.yml + build.yml jobs; engine-validation.yml is
+# Python-only so they remain warn-level here.
+check_optional lualatex  "TeX Live 2024+ — https://tug.org/texlive/"
+check_optional bibtex    "ships with TeX Live"
 
 echo
 echo "Optional (improves the dev loop):"
