@@ -8,6 +8,31 @@ and [Conventional Commits](https://www.conventionalcommits.org/).
 
 ### Added
 
+- **Sprint 6 (S6.2 + S6.3) — HTML5 + JATS XML emitters (2026-05-27)**:
+  - `euxis_publisher/emit/pandoc.py` — Pandoc-wrapping emitters with
+    `emit_html`, `emit_jats`, and `emit_all` API surface. Optional
+    runtime dep (pandoc); `PandocMissing` raised with install hint
+    when absent.
+  - **HTML5**: `--to html5 --standalone --section-divs --mathjax`
+    with idempotent post-processing that injects a skip-to-main
+    link (WCAG 2.4.1), an `<html lang>` attribute (WCAG 3.1.1),
+    and a generator-provenance comment. Default `lang=en-GB`,
+    overridable per call.
+  - **JATS XML**: `--to jats_archiving` (JATS 1.3 archiving DTD,
+    accepted by Crossref / PMC / preprint servers).
+  - `tests/test_emit_pandoc.py` — 15 tests covering pandoc-missing
+    paths, argv composition, post-process idempotency, error
+    propagation on pandoc failure, multi-format orchestration, plus
+    2 real-pandoc integration tests that skip when pandoc isn't
+    installed.
+  - `docs/multi-format.md` — install + API + WCAG specifics +
+    Sprint 7 CLI-wiring roadmap.
+
+  Closes Forcing Function #3 (single-source multi-format) on the
+  Python API surface; Sprint 7 wires the CLI (`euxis-publisher emit
+  --doc … --formats html,jats`) and adds JATS4R validation + EPUB-A
+  emitter.
+
 - **Sprint 6 (S6.4 + S6.5) — MCP server + Claude skill + Cursor rule (2026-05-27)**:
   - `euxis_publisher/mcp/server.py` — FastMCP-based MCP server exposing
     the engine's read + audit surface:
