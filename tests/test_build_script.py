@@ -1755,7 +1755,10 @@ class TestPostProcessPdf:
             # Producer falls back to empty author name when no meta
             meta_stream = pdf.Root.get("/Metadata")
             assert meta_stream is not None
-            assert pdf.is_encrypted
+            # Sprint 5 (S5.4): secure_pdf defaults to False, so an
+            # empty config produces an unencrypted PDF (PDF/A-4f
+            # and PDF/UA-2 compatible).
+            assert not pdf.is_encrypted
 
     def test_no_copyright_url_skips_web_statement(self, tmp_path):
         """When copyright_url is empty, xmpRights:WebStatement is not set."""
