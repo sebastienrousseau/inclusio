@@ -21,9 +21,7 @@ ROOT = Path(__file__).resolve().parent.parent
 CFF_PATH = ROOT / "CITATION.cff"
 
 CFF_VERSION_PATTERN = re.compile(r"^1\.2\.\d+$")
-ORCID_URI_PATTERN = re.compile(
-    r"^https://orcid\.org/[0-9]{4}-[0-9]{4}-[0-9]{4}-[0-9]{3}[0-9X]$"
-)
+ORCID_URI_PATTERN = re.compile(r"^https://orcid\.org/[0-9]{4}-[0-9]{4}-[0-9]{4}-[0-9]{3}[0-9X]$")
 
 
 @pytest.fixture(scope="module")
@@ -66,15 +64,12 @@ def test_citation_cff_orcid_well_formed_if_present(cff: dict):
 def test_citation_cff_type_is_software(cff: dict):
     # The engine is published as software; if we later split it
     # into a dataset + software pair, relax this.
-    assert cff["type"] == "software", (
-        f"Expected type=software, got {cff['type']!r}"
-    )
+    assert cff["type"] == "software", f"Expected type=software, got {cff['type']!r}"
 
 
 def test_citation_cff_repository_code_is_https_github(cff: dict):
     # Optional field, but if present must point at the canonical repo.
     if "repository-code" in cff:
         assert cff["repository-code"].startswith("https://github.com/"), (
-            f"repository-code should be an HTTPS GitHub URL: "
-            f"{cff['repository-code']!r}"
+            f"repository-code should be an HTTPS GitHub URL: {cff['repository-code']!r}"
         )

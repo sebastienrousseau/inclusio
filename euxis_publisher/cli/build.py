@@ -26,15 +26,15 @@ from pathlib import Path
 
 import yaml
 
-
 # ── Paths ────────────────────────────────────────────────────────────────
 SCRIPT_DIR = Path(__file__).resolve().parent
 PROJECT_ROOT = SCRIPT_DIR.parent.parent
-DEFAULT_SUBPROCESS_TIMEOUT = int(
-    os.environ.get("EUXIS_SUBPROCESS_TIMEOUT", "300")
-)
+DEFAULT_SUBPROCESS_TIMEOUT = int(os.environ.get("EUXIS_SUBPROCESS_TIMEOUT", "300"))
 AUTO_TAILOR_USE_AI = os.environ.get("EUXIS_AUTO_TAILOR_AI", "").lower() in {
-    "1", "true", "yes", "on",
+    "1",
+    "true",
+    "yes",
+    "on",
 }
 
 # CONTENT_ROOT: where content lives (data/, src/, templates/, build/).
@@ -82,6 +82,7 @@ def _import_render_module():
         return __import__("render")
     except ModuleNotFoundError:
         from euxis_publisher.cli import render as render_module
+
         return render_module
 
 
@@ -91,6 +92,7 @@ def _import_tailor_module():
         return __import__("tailor")
     except ModuleNotFoundError:
         from euxis_publisher.cli import tailor as tailor_module
+
         return tailor_module
 
 
@@ -109,8 +111,7 @@ def check_tools():
     missing = [t for t in required if not check_tool(t)]
     if missing:
         print(f"ERROR: Missing tools: {', '.join(missing)}", file=sys.stderr)
-        print("Install TeX Live 2024+ or use 'nix develop' / Docker.",
-              file=sys.stderr)
+        print("Install TeX Live 2024+ or use 'nix develop' / Docker.", file=sys.stderr)
         sys.exit(1)
 
 
@@ -166,8 +167,17 @@ def _write_cache(doc_id, tex_path):
     (hash_dir / f"{doc_id}.sha256").write_text(_content_hash(tex_path))
 
 
-def _build_xmp_xml(title, author_name, subject, description, keywords,
-                   copyright_text, copyright_url, author_role, producer):
+def _build_xmp_xml(
+    title,
+    author_name,
+    subject,
+    description,
+    keywords,
+    copyright_text,
+    copyright_url,
+    author_role,
+    producer,
+):
     """Build a properly formatted XMP XML packet for Adobe compatibility.
 
     Uses explicit namespace declarations on rdf:Description and proper
@@ -187,65 +197,63 @@ def _build_xmp_xml(title, author_name, subject, description, keywords,
     ar = escape(author_role)
     p = escape(producer)
 
-    web_stmt = (f"      <xmpRights:WebStatement>{cu}"
-                f"</xmpRights:WebStatement>\n") if cu else ""
+    web_stmt = (f"      <xmpRights:WebStatement>{cu}</xmpRights:WebStatement>\n") if cu else ""
 
     xmp = (
         '<?xpacket begin="\xef\xbb\xbf" '
         'id="W5M0MpCehiHzreSzNTczkc9d"?>\n'
         '<x:xmpmeta xmlns:x="adobe:ns:meta/">\n'
-        '  <rdf:RDF xmlns:rdf='
+        "  <rdf:RDF xmlns:rdf="
         '"http://www.w3.org/1999/02/22-rdf-syntax-ns#">\n'
         '    <rdf:Description rdf:about=""\n'
         '        xmlns:dc="http://purl.org/dc/elements/1.1/"\n'
         '        xmlns:pdf="http://ns.adobe.com/pdf/1.3/"\n'
         '        xmlns:xmp="http://ns.adobe.com/xap/1.0/"\n'
-        '        xmlns:xmpRights='
+        "        xmlns:xmpRights="
         '"http://ns.adobe.com/xap/1.0/rights/"\n'
-        '        xmlns:photoshop='
+        "        xmlns:photoshop="
         '"http://ns.adobe.com/photoshop/1.0/"\n'
-        '        xmlns:pdfuaid='
+        "        xmlns:pdfuaid="
         '"http://www.aiim.org/pdfua/ns/id/">\n'
-        '      <dc:title>\n'
-        '        <rdf:Alt>\n'
+        "      <dc:title>\n"
+        "        <rdf:Alt>\n"
         f'          <rdf:li xml:lang="x-default">{t}</rdf:li>\n'
-        '        </rdf:Alt>\n'
-        '      </dc:title>\n'
-        '      <dc:creator>\n'
-        '        <rdf:Seq>\n'
-        f'          <rdf:li>{a}</rdf:li>\n'
-        '        </rdf:Seq>\n'
-        '      </dc:creator>\n'
-        '      <dc:subject>\n'
-        '        <rdf:Bag>\n'
-        f'          <rdf:li>{s}</rdf:li>\n'
-        '        </rdf:Bag>\n'
-        '      </dc:subject>\n'
-        '      <dc:description>\n'
-        '        <rdf:Alt>\n'
+        "        </rdf:Alt>\n"
+        "      </dc:title>\n"
+        "      <dc:creator>\n"
+        "        <rdf:Seq>\n"
+        f"          <rdf:li>{a}</rdf:li>\n"
+        "        </rdf:Seq>\n"
+        "      </dc:creator>\n"
+        "      <dc:subject>\n"
+        "        <rdf:Bag>\n"
+        f"          <rdf:li>{s}</rdf:li>\n"
+        "        </rdf:Bag>\n"
+        "      </dc:subject>\n"
+        "      <dc:description>\n"
+        "        <rdf:Alt>\n"
         f'          <rdf:li xml:lang="x-default">{d}</rdf:li>\n'
-        '        </rdf:Alt>\n'
-        '      </dc:description>\n'
-        '      <dc:rights>\n'
-        '        <rdf:Alt>\n'
+        "        </rdf:Alt>\n"
+        "      </dc:description>\n"
+        "      <dc:rights>\n"
+        "        <rdf:Alt>\n"
         f'          <rdf:li xml:lang="x-default">{cr}</rdf:li>\n'
-        '        </rdf:Alt>\n'
-        '      </dc:rights>\n'
-        f'      <pdf:Keywords>{k}</pdf:Keywords>\n'
-        f'      <pdf:Producer>{p}</pdf:Producer>\n'
-        '      <xmp:CreatorTool>LaTeX with hyperref'
-        '</xmp:CreatorTool>\n'
-        '      <xmpRights:Marked>True</xmpRights:Marked>\n'
-        f'{web_stmt}'
-        f'      <photoshop:AuthorsPosition>{ar}'
-        f'</photoshop:AuthorsPosition>\n'
-        f'      <photoshop:CaptionWriter>{a}'
-        f'</photoshop:CaptionWriter>\n'
-        '      <pdfuaid:part>1</pdfuaid:part>\n'
-        '    </rdf:Description>\n'
-        '  </rdf:RDF>\n'
-        '</x:xmpmeta>\n'
-        + ' ' * 2048 + '\n'
+        "        </rdf:Alt>\n"
+        "      </dc:rights>\n"
+        f"      <pdf:Keywords>{k}</pdf:Keywords>\n"
+        f"      <pdf:Producer>{p}</pdf:Producer>\n"
+        "      <xmp:CreatorTool>LaTeX with hyperref"
+        "</xmp:CreatorTool>\n"
+        "      <xmpRights:Marked>True</xmpRights:Marked>\n"
+        f"{web_stmt}"
+        f"      <photoshop:AuthorsPosition>{ar}"
+        f"</photoshop:AuthorsPosition>\n"
+        f"      <photoshop:CaptionWriter>{a}"
+        f"</photoshop:CaptionWriter>\n"
+        "      <pdfuaid:part>1</pdfuaid:part>\n"
+        "    </rdf:Description>\n"
+        "  </rdf:RDF>\n"
+        "</x:xmpmeta>\n" + " " * 2048 + "\n"
         '<?xpacket end="w"?>'
     )
     return xmp
@@ -279,8 +287,15 @@ def _post_process_pdf(pdf_path, doc_id, doc_config, meta):
     with pikepdf.open(pdf_path, allow_overwriting_input=True) as pdf:
         # ── 1. XMP metadata as hand-crafted XML ──────────────────────
         xmp_xml = _build_xmp_xml(
-            title, author_name, subject, description, keywords,
-            copyright_text, copyright_url, author_role, producer,
+            title,
+            author_name,
+            subject,
+            description,
+            keywords,
+            copyright_text,
+            copyright_url,
+            author_role,
+            producer,
         )
         pdf.Root["/Metadata"] = pdf.make_indirect(
             pikepdf.Stream(pdf, xmp_xml.encode("utf-8")),
@@ -303,9 +318,11 @@ def _post_process_pdf(pdf_path, doc_id, doc_config, meta):
         if "/Lang" not in pdf.Root:
             pdf.Root["/Lang"] = pikepdf.String("en")
         if "/ViewerPreferences" not in pdf.Root:
-            pdf.Root["/ViewerPreferences"] = pikepdf.Dictionary({
-                "/DisplayDocTitle": True,
-            })
+            pdf.Root["/ViewerPreferences"] = pikepdf.Dictionary(
+                {
+                    "/DisplayDocTitle": True,
+                }
+            )
 
         # ── 4. Encryption (AES-256) ────────────────────────────────
         if doc_config.get("secure_pdf", True):
@@ -333,8 +350,16 @@ def _post_process_pdf(pdf_path, doc_id, doc_config, meta):
         else:
             pdf.save(pdf_path)
 
+
 SUPPORTED_BRIEF_EXTENSIONS = {
-    ".txt", ".md", ".markdown", ".rtf", ".doc", ".docx", ".odt", ".html",
+    ".txt",
+    ".md",
+    ".markdown",
+    ".rtf",
+    ".doc",
+    ".docx",
+    ".odt",
+    ".html",
 }
 JOB_TYPE_ALIASES = {
     "cv": "cv",
@@ -358,9 +383,7 @@ JOB_TYPE_ALIASES = {
 
 def _infer_job_doc_type(brief_path):
     """Infer document type from job folder structure or filename prefix."""
-    rel_parts = [
-        part.lower() for part in brief_path.relative_to(JOBS_DIR).parts[:-1]
-    ]
+    rel_parts = [part.lower() for part in brief_path.relative_to(JOBS_DIR).parts[:-1]]
     for part in rel_parts:
         if part in JOB_TYPE_ALIASES:
             return JOB_TYPE_ALIASES[part]
@@ -403,9 +426,7 @@ def _sync_jobs_to_tailored(meta, force=False, selected_output_ids=None):
             with open(tailored_path) as f:
                 existing = yaml.safe_load(f)
             normalised = existing
-            if isinstance(existing, dict) and (
-                "experience" in existing or "skills" in existing
-            ):
+            if isinstance(existing, dict) and ("experience" in existing or "skills" in existing):
                 normalised = tailor._optimise_cv_for_ats(normalised)
                 normalised = tailor._clean_cv_language(normalised)
             normalised = tailor._escape_latex_strings(normalised)
@@ -422,8 +443,7 @@ def _sync_jobs_to_tailored(meta, force=False, selected_output_ids=None):
                 print(f"  NORMALIZE {output_id} <- data/tailored/{output_id}.yaml")
 
         is_stale = force or (
-            not tailored_path.exists()
-            or brief_path.stat().st_mtime > tailored_path.stat().st_mtime
+            not tailored_path.exists() or brief_path.stat().st_mtime > tailored_path.stat().st_mtime
         )
         if not is_stale:
             continue
@@ -516,7 +536,6 @@ def _discover_tailored(meta):
             render_module = _import_render_module()
             render_latex = render_module.render_latex
             _generate_xmpdata = render_module._generate_xmpdata
-            TEMPLATE_DIR = render_module.TEMPLATE_DIR
             data["build_mode"] = data.get("build_mode", "draft")
             output = render_latex(template_name, data)
             RENDERED_DIR.mkdir(parents=True, exist_ok=True)
@@ -524,8 +543,7 @@ def _discover_tailored(meta):
             rendered_path.write_text(output, encoding="utf-8")
             _generate_xmpdata(doc_id, data, meta)
         except Exception as exc:
-            print(f"  WARN: Could not render tailored {doc_id}: {exc}",
-                  file=sys.stderr)
+            print(f"  WARN: Could not render tailored {doc_id}: {exc}", file=sys.stderr)
             continue
 
         # Copy rendered .tex, .xmpdata, and shared figures into
@@ -538,8 +556,7 @@ def _discover_tailored(meta):
         src_tex.write_text(output, encoding="utf-8")
         xmpdata_rendered = RENDERED_DIR / f"{doc_id}.xmpdata"
         if xmpdata_rendered.exists():
-            shutil.copy2(xmpdata_rendered,
-                         src_subdir / f"{doc_id}.xmpdata")
+            shutil.copy2(xmpdata_rendered, src_subdir / f"{doc_id}.xmpdata")
 
         # Copy shared figures from parent category directory
         figures_dir = CONTENT_ROOT / "src" / category / "figures"
@@ -580,8 +597,7 @@ def build_document(doc_id, doc_config, mode, meta, force=False):
             src_path = RENDERED_DIR / f"{doc_id}.tex"
             original_src_dir = src_path.parent
         except ImportError:
-            print("ERROR: Jinja2 not installed. Run: pip install jinja2",
-                  file=sys.stderr)
+            print("ERROR: Jinja2 not installed. Run: pip install jinja2", file=sys.stderr)
             return False
 
     # Use rendered template if available (but not for tailored docs whose
@@ -634,9 +650,10 @@ def build_document(doc_id, doc_config, mode, meta, force=False):
 
     # Compiler settings from meta. Default is LuaLaTeX (decision D3,
     # 2026-05-23): hard-required for tagpdf + PDF/UA-2 reliability.
+    # `max_passes` and `bib_engine` are read by the latexmk path below
+    # via a fresh meta.get(...) lookup; pre-binding them here is dead
+    # code from a pre-2026 prototype.
     compiler = meta.get("build", {}).get("compiler", "lualatex")
-    max_passes = meta.get("build", {}).get("max_passes", 5)
-    bib_engine = meta.get("build", {}).get("bib_engine", "bibtex")
 
     # Use latexmk for multi-pass compilation
     if check_tool("latexmk"):
@@ -701,7 +718,8 @@ def cmd_build(args, meta):
     """Build documents."""
     check_tools()
     mode = args.mode
-    mode_opt = mode_to_option(mode)
+    # `mode_to_option(mode)` is computed inside `build_document` for
+    # each doc; pre-binding it here was dead code.
     force = getattr(args, "force", False)
     jobs = getattr(args, "jobs", 1)
     jobs_only = getattr(args, "jobs_only", False)
@@ -719,9 +737,7 @@ def cmd_build(args, meta):
     tailored = _discover_tailored(meta)
     if jobs_only:
         documents = {
-            doc_id: config
-            for doc_id, config in documents.items()
-            if config.get("jobs_only")
+            doc_id: config for doc_id, config in documents.items() if config.get("jobs_only")
         }
 
     all_documents = {**documents, **tailored}
@@ -729,15 +745,13 @@ def cmd_build(args, meta):
     if args.doc:
         if args.doc not in all_documents:
             print(f"ERROR: Unknown document '{args.doc}'", file=sys.stderr)
-            print(f"Available: {', '.join(all_documents.keys())}",
-                  file=sys.stderr)
+            print(f"Available: {', '.join(all_documents.keys())}", file=sys.stderr)
             sys.exit(1)
         docs_to_build = {args.doc: all_documents[args.doc]}
     else:
         docs_to_build = all_documents
 
-    print(f"Building {len(docs_to_build)} document(s) in {mode} mode"
-          f" (jobs={jobs})...\n")
+    print(f"Building {len(docs_to_build)} document(s) in {mode} mode (jobs={jobs})...\n")
 
     success = 0
     fail = 0
@@ -757,9 +771,7 @@ def cmd_build(args, meta):
         # Parallel build
         with ThreadPoolExecutor(max_workers=jobs) as pool:
             futures = {
-                pool.submit(
-                    build_document, doc_id, config, mode, meta, force
-                ): doc_id
+                pool.submit(build_document, doc_id, config, mode, meta, force): doc_id
                 for doc_id, config in docs_to_build.items()
             }
             for future in as_completed(futures):
@@ -828,8 +840,7 @@ def cmd_lint(args, meta):
                     timeout=DEFAULT_SUBPROCESS_TIMEOUT,
                 )
                 if result.stdout.strip():
-                    print(f"  {tex_file.relative_to(CONTENT_ROOT)}: "
-                          f"warnings found")
+                    print(f"  {tex_file.relative_to(CONTENT_ROOT)}: warnings found")
                     errors += 1
     else:
         print("  SKIP: chktex not installed")
@@ -862,15 +873,13 @@ def cmd_render(args, meta):
     try:
         render_module = _import_render_module()
     except ImportError:
-        print("ERROR: Jinja2 not installed. Run: pip install jinja2",
-              file=sys.stderr)
+        print("ERROR: Jinja2 not installed. Run: pip install jinja2", file=sys.stderr)
         sys.exit(1)
 
     doc_id = args.doc
     fmt = getattr(args, "format", "latex")
     mode = getattr(args, "mode", "draft")
-    render_module.render_document(doc_id, fmt, mode,
-                                  content_root=CONTENT_ROOT)
+    render_module.render_document(doc_id, fmt, mode, content_root=CONTENT_ROOT)
 
 
 def cmd_fix(args, meta):
@@ -921,8 +930,7 @@ def cmd_blog(args, meta):
     try:
         render_module = _import_render_module()
     except ImportError:
-        print("ERROR: Jinja2 not installed. Run: pip install jinja2",
-              file=sys.stderr)
+        print("ERROR: Jinja2 not installed. Run: pip install jinja2", file=sys.stderr)
         sys.exit(1)
 
     blog_entries = meta.get("blog", {})
@@ -933,21 +941,20 @@ def cmd_blog(args, meta):
     if args.doc:
         if args.doc not in blog_entries:
             print(f"ERROR: Unknown blog post '{args.doc}'", file=sys.stderr)
-            print(f"Available: {', '.join(blog_entries.keys())}",
-                  file=sys.stderr)
+            print(f"Available: {', '.join(blog_entries.keys())}", file=sys.stderr)
             sys.exit(1)
         entries = {args.doc: blog_entries[args.doc]}
     else:
         entries = blog_entries
 
     # Check pandoc availability only if convert-type entries exist
-    convert_entries = {k: v for k, v in entries.items()
-                       if v.get("type") == "convert"}
+    convert_entries = {k: v for k, v in entries.items() if v.get("type") == "convert"}
     if convert_entries and not check_tool("pandoc"):
-        print("ERROR: pandoc is required for 'convert' blog posts but "
-              "is not installed.", file=sys.stderr)
-        print("Install pandoc or use only type: jinja2 posts.",
-              file=sys.stderr)
+        print(
+            "ERROR: pandoc is required for 'convert' blog posts but is not installed.",
+            file=sys.stderr,
+        )
+        print("Install pandoc or use only type: jinja2 posts.", file=sys.stderr)
         sys.exit(1)
 
     print(f"Rendering {len(entries)} blog post(s)...\n")
@@ -1015,8 +1022,7 @@ def cmd_tailor(args, meta):
 
     # Generate tailored YAML
     use_ai = not getattr(args, "no_ai", False)
-    yaml_path = tailor.generate(brief_path, doc_type, output_id, base_path,
-                                use_ai)
+    yaml_path = tailor.generate(brief_path, doc_type, output_id, base_path, use_ai)
     print(f"  TAILOR {output_id} -> {yaml_path}")
 
     if args.render or args.build:
@@ -1034,9 +1040,9 @@ def cmd_tailor(args, meta):
             if output_id != doc_type:
                 shutil.copy2(yaml_path, type_link)
 
-            render_module.render_document(doc_type, fmt="latex",
-                                          build_mode=mode,
-                                          content_root=CONTENT_ROOT)
+            render_module.render_document(
+                doc_type, fmt="latex", build_mode=mode, content_root=CONTENT_ROOT
+            )
 
             # Rename the rendered file to the output_id
             rendered_dir = RENDERED_DIR
@@ -1045,8 +1051,7 @@ def cmd_tailor(args, meta):
             if src_tex.exists() and output_id != doc_type:
                 shutil.copy2(src_tex, dst_tex)
         except ImportError:
-            print("ERROR: Jinja2 not installed. Run: pip install jinja2",
-                  file=sys.stderr)
+            print("ERROR: Jinja2 not installed. Run: pip install jinja2", file=sys.stderr)
             sys.exit(1)
 
     if args.build:
@@ -1121,7 +1126,8 @@ Commands:
         help="Build a specific document by ID (see 'list' command)",
     )
     build_parser.add_argument(
-        "--jobs", "-j",
+        "--jobs",
+        "-j",
         type=int,
         default=1,
         help="Number of parallel build jobs (default: 1)",
@@ -1138,9 +1144,7 @@ Commands:
     )
 
     # render
-    render_parser = subparsers.add_parser(
-        "render", help="Render Jinja2 templates"
-    )
+    render_parser = subparsers.add_parser("render", help="Render Jinja2 templates")
     render_parser.add_argument(
         "--doc",
         required=True,
@@ -1160,9 +1164,7 @@ Commands:
     )
 
     # fix
-    fix_parser = subparsers.add_parser(
-        "fix", help="Auto-fix semantic violations"
-    )
+    fix_parser = subparsers.add_parser("fix", help="Auto-fix semantic violations")
     fix_parser.add_argument(
         "--dry-run",
         action="store_true",
@@ -1175,44 +1177,28 @@ Commands:
     )
 
     # sitemap
-    sitemap_parser = subparsers.add_parser(
-        "sitemap", help="Generate semantic search metadata"
-    )
-    sitemap_parser.add_argument(
-        "--pretty", action="store_true", help="Pretty-print JSON"
-    )
-    sitemap_parser.add_argument(
-        "--stdout", action="store_true", help="Print to stdout"
-    )
+    sitemap_parser = subparsers.add_parser("sitemap", help="Generate semantic search metadata")
+    sitemap_parser.add_argument("--pretty", action="store_true", help="Pretty-print JSON")
+    sitemap_parser.add_argument("--stdout", action="store_true", help="Print to stdout")
 
     # blog
-    blog_parser = subparsers.add_parser(
-        "blog", help="Render blog posts to Markdown"
-    )
+    blog_parser = subparsers.add_parser("blog", help="Render blog posts to Markdown")
     blog_parser.add_argument(
         "--doc",
         help="Render a specific blog post by ID",
     )
 
     # tailor
-    tailor_parser = subparsers.add_parser(
-        "tailor", help="Generate tailored document from brief"
-    )
-    tailor_parser.add_argument(
-        "brief", help="Path to brief/job description file"
-    )
+    tailor_parser = subparsers.add_parser("tailor", help="Generate tailored document from brief")
+    tailor_parser.add_argument("brief", help="Path to brief/job description file")
     tailor_parser.add_argument(
         "--type",
         default="cv",
         choices=["cv", "paper", "patent", "faq", "guide"],
         help="Document type (default: cv)",
     )
-    tailor_parser.add_argument(
-        "--id", help="Output document ID"
-    )
-    tailor_parser.add_argument(
-        "--base", type=Path, help="Base data file"
-    )
+    tailor_parser.add_argument("--id", help="Output document ID")
+    tailor_parser.add_argument("--base", type=Path, help="Base data file")
     tailor_parser.add_argument(
         "--render",
         action="store_true",

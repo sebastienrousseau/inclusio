@@ -30,9 +30,7 @@ from jinja2 import Environment, FileSystemLoader, StrictUndefined
 # ── Paths ────────────────────────────────────────────────────────────────
 SCRIPT_DIR = Path(__file__).resolve().parent
 PROJECT_ROOT = SCRIPT_DIR.parent.parent
-DEFAULT_SUBPROCESS_TIMEOUT = int(
-    os.environ.get("EUXIS_SUBPROCESS_TIMEOUT", "300")
-)
+DEFAULT_SUBPROCESS_TIMEOUT = int(os.environ.get("EUXIS_SUBPROCESS_TIMEOUT", "300"))
 
 # CONTENT_ROOT: where content lives (data/, templates/, build/).
 # Defaults to PROJECT_ROOT; overridden by EUXIS_CONTENT_DIR env var.
@@ -52,9 +50,9 @@ def slugify(title):
     → 'bug-discovered-in-quantum-algorithm-for-lattice-based-crypto'
     """
     slug = title.lower()
-    slug = re.sub(r"[^\w\s-]", "", slug)   # strip non-word chars except -
-    slug = re.sub(r"[\s_]+", "-", slug)     # spaces/underscores → hyphens
-    slug = re.sub(r"-{2,}", "-", slug)      # collapse multiple hyphens
+    slug = re.sub(r"[^\w\s-]", "", slug)  # strip non-word chars except -
+    slug = re.sub(r"[\s_]+", "-", slug)  # spaces/underscores → hyphens
+    slug = re.sub(r"-{2,}", "-", slug)  # collapse multiple hyphens
     return slug.strip("-")
 
 
@@ -140,9 +138,7 @@ def _render_cv_markdown(data):
 
     summary = data.get("executive_profile") or data.get("summary", "")
     if summary:
-        lines.append(
-            "## Executive Profile" if data.get("executive_profile") else "## Summary"
-        )
+        lines.append("## Executive Profile" if data.get("executive_profile") else "## Summary")
         lines.append("")
         lines.append(_strip_markdown_escapes(summary))
         lines.append("")
@@ -186,9 +182,7 @@ def _render_cv_markdown(data):
         company = job.get("company", "")
         heading = f"{company} — {title}" if company and title else (company or title)
         lines.append(f"### {_strip_markdown_escapes(heading)}")
-        details = " | ".join(
-            part for part in (job.get("location"), job.get("dates")) if part
-        )
+        details = " | ".join(part for part in (job.get("location"), job.get("dates")) if part)
         if details:
             lines.append(_strip_markdown_escapes(details))
         lines.append("")
@@ -243,9 +237,7 @@ def _render_cv_markdown(data):
         lines.append("## Skills")
         lines.append("")
         for skill in skills:
-            desc = _strip_markdown_escapes(skill["description"]).replace(
-                "\\hbox{-}", "-"
-            )
+            desc = _strip_markdown_escapes(skill["description"]).replace("\\hbox{-}", "-")
             lines.append(f"### {skill['title']}")
             lines.append("")
             lines.append(desc)
@@ -478,9 +470,7 @@ def _render_cv_text(data):
                 edu.get("location"),
                 edu.get("year"),
             ]
-            lines.append(
-                "- " + " | ".join(_strip_text_markup(p) for p in parts if p)
-            )
+            lines.append("- " + " | ".join(_strip_text_markup(p) for p in parts if p))
         lines.append("")
 
     languages = data.get("languages")
@@ -575,9 +565,7 @@ def _generate_xmpdata(doc_id, data, meta, rendered_dir=None):
     # meta.documents[doc_id].title (the human title set in the
     # manifest) > doc_id slug. Without this, dc:title degrades to
     # the slug whenever the data file omits a title key.
-    manifest_title = (
-        meta.get("documents", {}).get(doc_id, {}).get("title", "")
-    )
+    manifest_title = meta.get("documents", {}).get(doc_id, {}).get("title", "")
     title = data.get("title") or manifest_title or doc_id
     lines = []
     lines.append(f"\\Title{{{title}}}")
@@ -600,8 +588,7 @@ def _generate_xmpdata(doc_id, data, meta, rendered_dir=None):
     return xmp_path
 
 
-def render_document(doc_id, fmt="latex", build_mode="draft",
-                    content_root=None):
+def render_document(doc_id, fmt="latex", build_mode="draft", content_root=None):
     """Look up a template in meta.yaml and render it.
 
     Writes output to build/rendered/{doc_id}.{ext}
@@ -624,8 +611,7 @@ def render_document(doc_id, fmt="latex", build_mode="draft",
     templates = meta.get("templates", {})
     if doc_id not in templates:
         print(f"ERROR: No template registered for '{doc_id}'", file=sys.stderr)
-        print(f"Available: {', '.join(templates.keys()) or 'none'}",
-              file=sys.stderr)
+        print(f"Available: {', '.join(templates.keys()) or 'none'}", file=sys.stderr)
         sys.exit(1)
 
     entry = templates[doc_id]
@@ -710,9 +696,7 @@ def convert_latex_to_blog(tex_path, meta_entry, content_root=None):
         timeout=DEFAULT_SUBPROCESS_TIMEOUT,
     )
     if result.returncode != 0:
-        raise RuntimeError(
-            f"pandoc conversion failed for {tex_path}: {result.stderr}"
-        )
+        raise RuntimeError(f"pandoc conversion failed for {tex_path}: {result.stderr}")
 
     # Build Shokunin SSG frontmatter from meta_entry
     fm_lines = ["---", ""]
@@ -755,9 +739,7 @@ def render_blog(blog_id, blog_config, content_root=None):
         template_dir = root / "templates"
         output = render_blog_markdown(data, template_name, template_dir)
     elif blog_type == "convert":
-        output = convert_latex_to_blog(
-            blog_config["src"], blog_config, root
-        )
+        output = convert_latex_to_blog(blog_config["src"], blog_config, root)
     else:
         raise ValueError(f"Unknown blog type: {blog_type}")
 
@@ -771,9 +753,7 @@ def render_blog(blog_id, blog_config, content_root=None):
 
 
 def main(argv=None):
-    parser = argparse.ArgumentParser(
-        description="Render Jinja2 templates to LaTeX/Markdown/JSON"
-    )
+    parser = argparse.ArgumentParser(description="Render Jinja2 templates to LaTeX/Markdown/JSON")
     parser.add_argument(
         "--doc",
         required=True,

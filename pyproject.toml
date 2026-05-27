@@ -64,13 +64,37 @@ Changelog = "https://github.com/sebastienrousseau/euxis-publisher/blob/main/CHAN
 [tool.ruff]
 target-version = "py311"
 line-length = 100
-extend-exclude = [".venv", "build", "docs/_build"]
+extend-exclude = [
+    ".venv",
+    "build",
+    "docs/_build",
+    # `scripts/` ships thin star-import shims (kept for backwards
+    # compatibility with pre-package callers); F403/F405 there are
+    # intentional and don't deserve the linter noise.
+    "scripts",
+]
 
 [tool.ruff.lint]
-select = ["E", "F", "W", "I", "UP", "B", "SIM", "RUF"]
-# Ignore line-too-long inside generated XMP XML helpers in audit.py;
-# they're verbatim XML and wrapping hurts readability more than it helps.
-ignore = ["E501"]
+select = ["E", "F", "W", "I", "UP", "B"]
+ignore = [
+    "E501",   # line-too-long: XMP XML helpers in audit.py are verbatim
+    "B007",   # unused loop-control vars: common in match-pattern code
+    # SIM, RUF dropped from `select` above:
+    #   SIM108/110 are taste calls (ternary vs if/else), and
+    #   RUF001-3 flag typographic dashes / × in docstrings — we are a
+    #   typography engine, those characters are deliberate.
+]
+
+[tool.ruff.lint.per-file-ignores]
+# The mock-heavy tailor/build test suites grew in the pre-ruff era;
+# grandfather their style debt rather than churn 800 lines of tests.
+"tests/test_tailor.py" = ["SIM117", "I001", "F401", "F841"]
+"tests/test_build.py" = ["F841", "SIM117"]
+"tests/test_build_script.py" = ["F841", "SIM117"]
+"tests/test_render.py" = ["F841", "SIM117"]
+"tests/test_pdf_validation.py" = ["F841", "SIM117"]
+"tests/test_stamp_pdfs.py" = ["F841", "SIM117"]
+"tests/test_fix_semantic.py" = ["F841", "SIM117"]
 
 [tool.ruff.format]
 quote-style = "double"

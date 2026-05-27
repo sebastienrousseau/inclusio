@@ -19,35 +19,36 @@ import re
 import sys
 from pathlib import Path
 
-
 # ── Replacement rules ─────────────────────────────────────────────────────
 # Each rule: (compiled regex, replacement string or callable, description)
+
 
 def _brace_pattern(cmd):
     r"""Build a regex matching \cmd{...} with balanced braces (one level)."""
     # Matches \cmd{content} where content may contain nested {…} one level deep
     escaped = re.escape(cmd)
-    return re.compile(
-        escaped + r'\{((?:[^{}]|\{[^{}]*\})*)\}'
-    )
+    return re.compile(escaped + r"\{((?:[^{}]|\{[^{}]*\})*)\}")
 
 
 RULES = [
     # \textbf{...} → \keyterm{...}
-    (_brace_pattern(r'\textbf'), r'\\keyterm{\1}', r'\textbf → \keyterm'),
+    (_brace_pattern(r"\textbf"), r"\\keyterm{\1}", r"\textbf → \keyterm"),
     # \textit{...} → \emph{...}
-    (_brace_pattern(r'\textit'), r'\\emph{\1}', r'\textit → \emph'),
+    (_brace_pattern(r"\textit"), r"\\emph{\1}", r"\textit → \emph"),
     # \vspace{...} → removed (whole match deleted)
-    (_brace_pattern(r'\vspace'), '', r'\vspace → removed'),
+    (_brace_pattern(r"\vspace"), "", r"\vspace → removed"),
     # \hspace{...} → removed
-    (_brace_pattern(r'\hspace'), '', r'\hspace → removed'),
+    (_brace_pattern(r"\hspace"), "", r"\hspace → removed"),
     # \fontsize{...}{...} → removed (two brace groups)
-    (re.compile(r'\\fontsize\{[^}]*\}\{[^}]*\}'), '', r'\fontsize → removed'),
+    (re.compile(r"\\fontsize\{[^}]*\}\{[^}]*\}"), "", r"\fontsize → removed"),
     # \color{...}{...} → keep content, remove wrapper
-    (re.compile(r'\\color\{[^}]*\}\{((?:[^{}]|\{[^{}]*\})*)\}'), r'\1',
-     r'\color{..}{..} → content'),
+    (
+        re.compile(r"\\color\{[^}]*\}\{((?:[^{}]|\{[^{}]*\})*)\}"),
+        r"\1",
+        r"\color{..}{..} → content",
+    ),
     # \centering → removed
-    (re.compile(r'\\centering\b'), '', r'\centering → removed'),
+    (re.compile(r"\\centering\b"), "", r"\centering → removed"),
 ]
 
 

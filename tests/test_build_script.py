@@ -1,7 +1,6 @@
 """test_build_script.py — Full coverage tests for scripts/build.py."""
 
 import os
-import subprocess
 import sys
 from argparse import Namespace
 from pathlib import Path
@@ -122,16 +121,16 @@ class TestResolveContentPaths:
         }
         try:
             build._resolve_content_paths(tmp_path)
-            assert build.CONTENT_ROOT == tmp_path.resolve()
-            assert build.META_FILE == tmp_path.resolve() / "data" / "meta.yaml"
-            assert build.BUILD_DIR == tmp_path.resolve() / "build"
-            assert build.CACHE_DIR == tmp_path.resolve() / "build" / ".cache"
-            assert build.RENDERED_DIR == (
+            assert tmp_path.resolve() == build.CONTENT_ROOT
+            assert tmp_path.resolve() / "data" / "meta.yaml" == build.META_FILE
+            assert tmp_path.resolve() / "build" == build.BUILD_DIR
+            assert tmp_path.resolve() / "build" / ".cache" == build.CACHE_DIR
+            assert (
                 tmp_path.resolve() / "build" / ".cache" / "rendered"
-            )
-            assert build.TAILORED_DIR == (
+            ) == build.RENDERED_DIR
+            assert (
                 tmp_path.resolve() / "data" / "tailored"
-            )
+            ) == build.TAILORED_DIR
         finally:
             for attr, val in orig.items():
                 setattr(build, attr, val)
@@ -941,6 +940,7 @@ class TestCmdRender:
 
     def test_import_render_module_falls_back_to_package(self, monkeypatch):
         import builtins
+
         from euxis_publisher.cli import render as package_render
 
         real_import = builtins.__import__
@@ -1276,6 +1276,7 @@ class TestCmdTailor:
 
     def test_import_tailor_module_falls_back_to_package(self, monkeypatch):
         import builtins
+
         from euxis_publisher.cli import tailor as package_tailor
 
         real_import = builtins.__import__

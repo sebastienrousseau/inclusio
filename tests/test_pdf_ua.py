@@ -21,7 +21,6 @@ import subprocess
 
 import pytest
 
-
 TAGGED_SMOKE_TEX = r"""\DocumentMetadata{
   pdfversion   = 2.0,
   pdfstandard  = ua-2,

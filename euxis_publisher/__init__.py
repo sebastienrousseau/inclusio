@@ -1,2 +1,1 @@
 """Euxis Publisher package."""
-

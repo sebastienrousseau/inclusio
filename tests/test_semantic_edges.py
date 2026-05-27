@@ -1,7 +1,6 @@
 """test_semantic_edges.py — Edge-case tests for semantic enforcement error paths."""
 
 import pytest
-
 from test_semantic import (
     find_tex_files,
     test_all_documents_have_source,

@@ -34,7 +34,9 @@ def get_git_hash():
     try:
         result = subprocess.run(
             ["git", "rev-parse", "--short", "HEAD"],
-            capture_output=True, text=True, check=True,
+            capture_output=True,
+            text=True,
+            check=True,
             timeout=DEFAULT_SUBPROCESS_TIMEOUT,
         )
         return result.stdout.strip()
@@ -47,7 +49,9 @@ def get_git_branch():
     try:
         result = subprocess.run(
             ["git", "rev-parse", "--abbrev-ref", "HEAD"],
-            capture_output=True, text=True, check=True,
+            capture_output=True,
+            text=True,
+            check=True,
             timeout=DEFAULT_SUBPROCESS_TIMEOUT,
         )
         return result.stdout.strip()
@@ -64,7 +68,7 @@ def _build_watermark_xobject(pdf, text, page_width, page_height):
     import pikepdf
 
     # Font size scales with page diagonal so the stamp fills the page
-    diagonal = math.sqrt(page_width ** 2 + page_height ** 2)
+    diagonal = math.sqrt(page_width**2 + page_height**2)
     font_size = min(diagonal / max(len(text), 1) * 1.2, 120)
     angle_rad = math.atan2(page_height, page_width)
     cos_a = math.cos(angle_rad)
@@ -100,24 +104,30 @@ def _build_watermark_xobject(pdf, text, page_width, page_height):
     )
 
     # Create the transparency graphics state
-    gs = pikepdf.Dictionary({
-        "/Type": pikepdf.Name("/ExtGState"),
-        "/ca": 0.15,       # fill opacity
-        "/CA": 0.15,       # stroke opacity
-    })
+    gs = pikepdf.Dictionary(
+        {
+            "/Type": pikepdf.Name("/ExtGState"),
+            "/ca": 0.15,  # fill opacity
+            "/CA": 0.15,  # stroke opacity
+        }
+    )
 
     # Create the Helvetica-Bold font reference (standard Type1 — no embed)
-    font = pikepdf.Dictionary({
-        "/Type": pikepdf.Name("/Font"),
-        "/Subtype": pikepdf.Name("/Type1"),
-        "/BaseFont": pikepdf.Name("/Helvetica-Bold"),
-    })
+    font = pikepdf.Dictionary(
+        {
+            "/Type": pikepdf.Name("/Font"),
+            "/Subtype": pikepdf.Name("/Type1"),
+            "/BaseFont": pikepdf.Name("/Helvetica-Bold"),
+        }
+    )
 
     # Wrap as a Form XObject so we can overlay without touching page content
-    resources = pikepdf.Dictionary({
-        "/ExtGState": pikepdf.Dictionary({"/GS1": pdf.make_indirect(gs)}),
-        "/Font": pikepdf.Dictionary({"/F1": pdf.make_indirect(font)}),
-    })
+    resources = pikepdf.Dictionary(
+        {
+            "/ExtGState": pikepdf.Dictionary({"/GS1": pdf.make_indirect(gs)}),
+            "/Font": pikepdf.Dictionary({"/F1": pdf.make_indirect(font)}),
+        }
+    )
 
     xobj = pikepdf.Stream(pdf, stream.encode())
     xobj["/Type"] = pikepdf.Name("/XObject")
@@ -155,9 +165,12 @@ def watermark_pdf(pdf_path, text):
             if isinstance(page["/Contents"], pikepdf.Array):
                 page["/Contents"].append(pdf.make_indirect(overlay))
             else:
-                page["/Contents"] = pikepdf.Array([
-                    page["/Contents"], pdf.make_indirect(overlay),
-                ])
+                page["/Contents"] = pikepdf.Array(
+                    [
+                        page["/Contents"],
+                        pdf.make_indirect(overlay),
+                    ]
+                )
 
         pdf.save(pdf_path)
 
@@ -204,13 +217,9 @@ def stamp_pdf(pdf_path, commit_hash, build_date):
     with pikepdf.open(pdf_path, allow_overwriting_input=True) as pdf:
         with pdf.open_metadata(set_pikepdf_as_editor=False) as meta:
             # Dublin Core description — visible in "Properties" dialog
-            meta["dc:description"] = (
-                f"Built from commit {commit_hash} on {build_date}"
-            )
+            meta["dc:description"] = f"Built from commit {commit_hash} on {build_date}"
             # Custom XMP field for machine-readable provenance
-            meta["pdf:Producer"] = (
-                f"Publications build.py | {commit_hash} | {build_date}"
-            )
+            meta["pdf:Producer"] = f"Publications build.py | {commit_hash} | {build_date}"
         pdf.save(pdf_path)
 
 
@@ -245,9 +254,7 @@ def main(argv=None):
         sys.exit(1)
 
     commit_hash = get_git_hash()
-    build_date = datetime.datetime.now(datetime.timezone.utc).strftime(
-        "%Y-%m-%dT%H:%M:%SZ"
-    )
+    build_date = datetime.datetime.now(datetime.UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
 
     pdfs = sorted(args.directory.glob("*.pdf"))
     if not pdfs:

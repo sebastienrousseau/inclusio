@@ -25,7 +25,6 @@ from pathlib import Path
 
 import yaml
 
-
 SCRIPT_DIR = Path(__file__).resolve().parent
 PROJECT_ROOT = SCRIPT_DIR.parent.parent
 
@@ -87,20 +86,22 @@ def _blog_entries(meta):
     entries = []
     for blog_id, config in blog.items():
         title = config.get("title", blog_id)
-        entries.append({
-            "id": blog_id,
-            "title": title,
-            "class": "blog",
-            "domain": "blog",
-            "src": config.get("data", config.get("src", "")),
-            "version": "",
-            "description": config.get("description", ""),
-            "source_exists": True,
-            "standalone": True,
-            "type": config.get("type", "jinja2"),
-            "slug": _slugify(title),
-            "date": config.get("date", ""),
-        })
+        entries.append(
+            {
+                "id": blog_id,
+                "title": title,
+                "class": "blog",
+                "domain": "blog",
+                "src": config.get("data", config.get("src", "")),
+                "version": "",
+                "description": config.get("description", ""),
+                "source_exists": True,
+                "standalone": True,
+                "type": config.get("type", "jinja2"),
+                "slug": _slugify(title),
+                "date": config.get("date", ""),
+            }
+        )
     return entries
 
 
@@ -119,9 +120,7 @@ def generate_sitemap(meta, project_root=None):
             "src": config.get("src", ""),
             "version": config.get("version", ""),
             "description": config.get("description", ""),
-            "source_exists": _source_exists(
-                config.get("src", ""), project_root
-            ),
+            "source_exists": _source_exists(config.get("src", ""), project_root),
         }
 
         # Optional fields — only include if present
@@ -139,9 +138,7 @@ def generate_sitemap(meta, project_root=None):
             entry["assets"] = config["assets"]
         if config.get("note"):
             entry["note"] = config["note"]
-            entry["standalone"] = not config["note"].startswith(
-                "This is an input file"
-            )
+            entry["standalone"] = not config["note"].startswith("This is an input file")
         else:
             entry["standalone"] = True
 
@@ -181,20 +178,14 @@ def write_sitemap(sitemap, output_path=None, pretty=False, stdout=False):
 
 
 def main(argv=None):
-    parser = argparse.ArgumentParser(
-        description="Generate semantic search metadata from meta.yaml"
-    )
-    parser.add_argument(
-        "--pretty", action="store_true", help="Pretty-print JSON output"
-    )
+    parser = argparse.ArgumentParser(description="Generate semantic search metadata from meta.yaml")
+    parser.add_argument("--pretty", action="store_true", help="Pretty-print JSON output")
     parser.add_argument(
         "--stdout",
         action="store_true",
         help="Print to stdout instead of file",
     )
-    parser.add_argument(
-        "--output", "-o", help="Custom output path (default: build/site-map.json)"
-    )
+    parser.add_argument("--output", "-o", help="Custom output path (default: build/site-map.json)")
 
     args = parser.parse_args(argv)
 

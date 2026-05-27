@@ -180,9 +180,7 @@ def test_format_text_maps_to_txt_extension(monkeypatch, tmp_path):
             }
         )
     )
-    (tmp_path / "data" / "cv-data.yaml").write_text(
-        yaml.safe_dump(_make_cv_data())
-    )
+    (tmp_path / "data" / "cv-data.yaml").write_text(yaml.safe_dump(_make_cv_data()))
     (tmp_path / "templates" / "cv.tex.j2").write_text(r"\documentclass{article}")
 
     render.render_document("cv", fmt="text", content_root=tmp_path)
