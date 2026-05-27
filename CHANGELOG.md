@@ -8,6 +8,26 @@ and [Conventional Commits](https://www.conventionalcommits.org/).
 
 ### Added
 
+- **Sprint 5 — public fixtures migrated to tagged-PDF; veraPDF gate strict (2026-05-27)**:
+  - All 9 public fixtures (`whisper-mps-realtime-asr`, `arxiv-paper`,
+    `preprint-paper`, `prime-paper`, `patent`, `cv`, `bio`, `faqs`,
+    `user-guide`) now ship with the canonical Sprint-2 preamble:
+    `\DocumentMetadata{pdfversion=2.0, pdfstandard=ua-2,
+    pdfstandard=a-4f, lang=en-GB, testphase={phase-III, table, math,
+    sec-latex}}` immediately before `\documentclass[final,tagged]{pub-…}`.
+  - `patent-paper.tex` left alone — flagged as `note: input file` in
+    `meta.yaml`, parent doc carries the metadata.
+  - Local veraPDF check on the migrated `whisper-paper` PDF returns
+    PASS on `ua2`, `wt1a`, and `4f` flavours (3/3).
+  - `.github/workflows/verapdf.yml` EAA-audit step flipped from
+    `|| true` WARN-only to **BLOCKing**. Any UA-2 / WTPDF / PDF/A-4f
+    regression on a registered artefact now fails the workflow.
+  - Build step retains a graceful warning so one malformed fixture
+    doesn't deny audit of the others; the authoritative gate is
+    `audit --strict` against the produced PDFs.
+
+### Added (earlier in Sprint 5 prep)
+
 - **Sprint 5 prep — coverage + AI-disclosure + audit edges (2026-05-27)**:
   - `ai_disclosure` field accepted at both `meta.ai_disclosure` (project
     default) and `meta.documents.<id>.ai_disclosure` (per-doc override,

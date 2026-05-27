@@ -1,4 +1,22 @@
-\documentclass{pub-paper}
+% Sprint 5 (S5.4) — tagged-PDF migration, 2026-05-27.
+% \DocumentMetadata must precede \documentclass for the LaTeX tagging
+% project to activate. PDF/UA-2 + PDF/A-4f + WTPDF-1.0 conformance is
+% the EAA / WCAG 2.2 AA archival target. See docs/tagged-pdf.md.
+\DocumentMetadata{
+  pdfversion   = 2.0,
+  pdfstandard  = ua-2,
+  pdfstandard  = a-4f,
+  lang         = en-GB,
+  testphase    = {phase-III, table, math, sec-latex},
+}
+
+\documentclass[final,tagged]{pub-paper}
+\title{Real-Time ASR with Whisper + MPS on macOS}
+\author{Euxis Publisher}
+\date{\today}
 \begin{document}
+\maketitle
+
+\section{Introduction}
 Realtime ASR paper content.
 \end{document}
