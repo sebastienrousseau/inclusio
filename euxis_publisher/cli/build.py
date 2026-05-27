@@ -341,7 +341,15 @@ def _post_process_pdf(pdf_path, doc_id, doc_config, meta):
             )
 
         # ── 4. Encryption (AES-256) ────────────────────────────────
-        if doc_config.get("secure_pdf", True):
+        # Default changed from True → False in Sprint 5 (S5.4): AES-256
+        # encryption is incompatible with PDF/A-4f and PDF/UA-2 (the
+        # archival standards forbid /Encrypt in the trailer), so the
+        # tagged-PDF gate fails on every encrypted artefact. Documents
+        # that genuinely need encryption (internal-only patents,
+        # protected drafts) must opt in via `secure_pdf: true` in
+        # meta.documents.<id>. The private content repo already sets
+        # this explicitly on every doc that needs it.
+        if doc_config.get("secure_pdf", False):
             perms = pikepdf.Permissions(
                 print_highres=True,
                 print_lowres=True,
