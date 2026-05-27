@@ -70,6 +70,10 @@ tailor: ## Generate tailored document from a brief
 sitemap: ## Generate semantic search metadata (build/site-map.json)
 	$(BUILD) sitemap --pretty
 
+judge: ## Score a CV against the ATS judge — `make judge DOC=cv`
+	@if [ -z "$(DOC)" ]; then echo "ERROR: make judge DOC=<cv-id>"; exit 2; fi
+	$(BUILD) judge --doc $(DOC) --judge ats
+
 emit: ## Emit HTML5 + JATS XML for every registered document (Sprint 6/7)
 	$(BUILD) emit
 
