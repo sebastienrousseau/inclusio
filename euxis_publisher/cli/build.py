@@ -300,7 +300,27 @@ def _post_process_pdf(pdf_path, doc_id, doc_config, meta):
     content_hash = hashlib.sha256(pdf_path.read_bytes()).hexdigest()[:16]
 
     with pikepdf.open(pdf_path, allow_overwriting_input=True) as pdf:
-        # ── 1. XMP metadata as hand-crafted XML ──────────────────────
+        # Sprint 5 (S5.4): when the PDF is structurally tagged (i.e. the
+        # LaTeX kernel's tagging project ran via \DocumentMetadata), the
+        # kernel already wrote a fully PDF/UA-2 + PDF/A-4f compliant XMP
+        # packet. Overwriting it with our Sprint-1-era _build_xmp_xml()
+        # strips the kernel's pdfaid:part=4 + pdfuaid:part=2 markers and
+        # the audit fails on every flavour. Detect this case and skip
+        # the XMP + docinfo overwrites entirely — the kernel owns
+        # metadata in the tagged path.
+        is_tagged_pdf = "/StructTreeRoot" in pdf.Root
+
+        # ── 1. XMP metadata as hand-crafted XML (legacy path only) ────
+        if is_tagged_pdf:
+            # Tagged path: trust the kernel's XMP + docinfo. We still
+            # apply AES-256 if explicitly opted in, but skip every other
+            # write so the PDF/UA-2 + PDF/A-4f conformance survives.
+            if doc_config.get("secure_pdf", False):
+                _apply_encryption(pdf, pdf_path, content_hash)
+            else:
+                pdf.save(pdf_path)
+            return
+
         xmp_xml = _build_xmp_xml(
             title,
             author_name,
@@ -350,29 +370,42 @@ def _post_process_pdf(pdf_path, doc_id, doc_config, meta):
         # meta.documents.<id>. The private content repo already sets
         # this explicitly on every doc that needs it.
         if doc_config.get("secure_pdf", False):
-            perms = pikepdf.Permissions(
-                print_highres=True,
-                print_lowres=True,
-                extract=False,
-                modify_annotation=False,
-                modify_form=False,
-                modify_assembly=False,
-                modify_other=False,
-                accessibility=True,
-            )
-
-            pdf.save(
-                pdf_path,
-                encryption=pikepdf.Encryption(
-                    owner=content_hash,
-                    user="",
-                    R=6,
-                    allow=perms,
-                    metadata=False,
-                ),
-            )
+            _apply_encryption(pdf, pdf_path, content_hash)
         else:
             pdf.save(pdf_path)
+
+
+def _apply_encryption(pdf, pdf_path, content_hash):
+    """Save *pdf* with AES-256 encryption + standard accessibility perms.
+
+    Extracted from `_post_process_pdf` so the tagged-PDF early-return
+    path can share the encryption logic. Permissions are tuned for
+    a published archival doc: highres + lowres print allowed, extract
+    + modify denied, accessibility allowed (so screen readers can
+    still read the document text).
+    """
+    import pikepdf  # local import keeps the module pikepdf-optional
+
+    perms = pikepdf.Permissions(
+        print_highres=True,
+        print_lowres=True,
+        extract=False,
+        modify_annotation=False,
+        modify_form=False,
+        modify_assembly=False,
+        modify_other=False,
+        accessibility=True,
+    )
+    pdf.save(
+        pdf_path,
+        encryption=pikepdf.Encryption(
+            owner=content_hash,
+            user="",
+            R=6,
+            allow=perms,
+            metadata=False,
+        ),
+    )
 
 
 SUPPORTED_BRIEF_EXTENSIONS = {
