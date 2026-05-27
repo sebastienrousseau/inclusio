@@ -177,6 +177,7 @@ def _build_xmp_xml(
     copyright_url,
     author_role,
     producer,
+    ai_disclosure="",
 ):
     """Build a properly formatted XMP XML packet for Adobe compatibility.
 
@@ -184,12 +185,22 @@ def _build_xmp_xml(
     RDF containers (rdf:Alt for language alternatives, rdf:Seq for
     ordered lists, rdf:Bag for unordered sets) so that Adobe Acrobat
     reads every field correctly.
+
+    Sprint 5 (S5.1): when *ai_disclosure* is non-empty, it is appended
+    to the dc:description text after a separator, per the STM Sept-2025
+    Generative-AI Disclosure classification. STM portals expected to
+    enforce this 2026-Q4 onward — emitting the field early gives papers
+    a smooth migration path without re-stamping the PDF.
     """
     from xml.sax.saxutils import escape
 
     t = escape(title)
     a = escape(author_name)
     s = escape(subject)
+    # Append AI disclosure to description when present. Separator chosen
+    # so Adobe's Description panel renders both lines cleanly.
+    if ai_disclosure:
+        description = f"{description}\n\nAI disclosure: {ai_disclosure}".strip()
     d = escape(description)
     k = escape(keywords)
     cr = escape(copyright_text)
@@ -281,6 +292,10 @@ def _post_process_pdf(pdf_path, doc_id, doc_config, meta):
     subject = doc_config.get("subject", "")
     description = doc_config.get("description", "")
     keywords = doc_config.get("keywords", "")
+    # Sprint 5 (S5.1): optional AI-disclosure metadata per STM Sept-2025.
+    # Accepted at doc-config OR meta level (per-doc wins). Empty string
+    # is the silent default — no AI assistance to declare.
+    ai_disclosure = doc_config.get("ai_disclosure") or meta.get("ai_disclosure") or ""
 
     content_hash = hashlib.sha256(pdf_path.read_bytes()).hexdigest()[:16]
 
@@ -296,6 +311,7 @@ def _post_process_pdf(pdf_path, doc_id, doc_config, meta):
             copyright_url,
             author_role,
             producer,
+            ai_disclosure=ai_disclosure,
         )
         pdf.Root["/Metadata"] = pdf.make_indirect(
             pikepdf.Stream(pdf, xmp_xml.encode("utf-8")),

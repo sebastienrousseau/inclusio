@@ -8,6 +8,29 @@ and [Conventional Commits](https://www.conventionalcommits.org/).
 
 ### Added
 
+- **Sprint 5 prep — coverage + AI-disclosure + audit edges (2026-05-27)**:
+  - `ai_disclosure` field accepted at both `meta.ai_disclosure` (project
+    default) and `meta.documents.<id>.ai_disclosure` (per-doc override,
+    wins on conflict). Propagated to PDF XMP `<dc:description>` so Adobe
+    surfaces it in the Description panel — per STM Sept-2025 Generative-AI
+    Disclosure classification; portals expected to begin enforcement
+    2026-Q4 onward.
+  - `tests/test_render_coverage.py` — 26 targeted tests covering
+    `_render_cv_markdown` scope_line / subheadline / nested-roles /
+    prior_experience / innovation / competencies-as-dict / skills-fallback;
+    `_markdown_lines` dict / list / None / scalar paths;
+    `_render_cv_text` + `_render_generic_text` branches. Pushes
+    `euxis_publisher/cli/render.py` coverage 76% → 96%.
+  - `tests/test_audit_edges.py` — 8 edge-case tests for the audit CLI:
+    malformed veraPDF output, empty stdout, `_registry_stems` boundary
+    YAML shapes, --flavours subset, --timeout propagation, custom
+    --json / --markdown paths.
+  - `tests/test_ai_disclosure.py` — 7 tests covering both the
+    `_build_xmp_xml` `ai_disclosure=` kwarg and the meta / doc-config
+    resolution order through `_post_process_pdf`.
+  - Coverage threshold in `Makefile` raised back to 95% (was
+    temporarily 90 in Sprint 4 to land the operational-hygiene PR).
+
 - **Sprint 4 — operational hygiene (2026-05-27)**:
   - `CITATION.cff` (CFF 1.2.0) with ORCID — engine is now scholarly-citable.
   - `SECURITY.md` — engine-scoped vulnerability disclosure path.
