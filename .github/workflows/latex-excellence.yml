@@ -89,8 +89,16 @@ jobs:
               '.include += [{"directory": $dir, "type": $type, "version": $version}]')
           done
 
-          echo "matrix=$matrix" >> $GITHUB_OUTPUT
-          echo "Generated matrix: $matrix"
+          # GHA rejects multi-line values via `key=value` syntax — must
+          # use the heredoc form for any value containing newlines (jq's
+          # output is pretty-printed by default). See:
+          # https://docs.github.com/en/actions/using-workflows/workflow-commands-for-github-actions#multiline-strings
+          # Two safe options: (a) `jq -c` to compact onto one line, or
+          # (b) heredoc. We use jq -c — simpler and avoids the EOF
+          # collision risk in heredocs.
+          matrix_compact=$(echo "$matrix" | jq -c .)
+          echo "matrix=$matrix_compact" >> "$GITHUB_OUTPUT"
+          echo "Generated matrix: $matrix_compact"
 
   latex-quality-gates:
     name: LaTeX Quality Gates (${{ matrix.type }})
