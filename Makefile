@@ -95,8 +95,8 @@ distclean: ## Remove build output + dev artifacts (.coverage, .pytest_cache)
 test: ## Run public engine tests
 	$(PYTHON) -m pytest -q tests/test_assets.py tests/test_build.py tests/test_engine_smoke.py tests/test_macro_contract.py
 
-coverage: ## Measure Python logic coverage (>=90% required; target 95% in Sprint 5)
-	COVERAGE_FILE=/tmp/euxis-publisher.coverage $(PYTHON) -m pytest --cov=euxis_publisher --cov-report=term-missing --cov-fail-under=90 tests/
+coverage: ## Measure Python logic coverage (>=95% required)
+	COVERAGE_FILE=/tmp/euxis-publisher.coverage $(PYTHON) -m pytest --cov=euxis_publisher --cov-report=term-missing --cov-fail-under=95 tests/
 
 validate: ## Run full local validation (tests, coverage, docs)
 	$(MAKE) test PYTHON=$(PYTHON)
