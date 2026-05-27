@@ -15,5 +15,6 @@ public-private-boundary
 strategy-2026
 implementation-plan-2026
 audit-2026-05
+mcp-server
 tagged-pdf
 ```

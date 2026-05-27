@@ -54,6 +54,13 @@ dev = [
     "myst-parser>=2.0",
     "furo>=2024.0.0",
 ]
+# Sprint 6 (S6.4): MCP server. `mcp[cli]` is the official Python SDK
+# from modelcontextprotocol/python-sdk and includes FastMCP +
+# inspector. Optional so `pip install euxis-publisher` stays minimal
+# for callers that only want the CLI + audit gate.
+mcp = [
+    "mcp[cli]>=1.27.0",
+]
 
 [project.urls]
 Homepage = "https://github.com/sebastienrousseau/euxis-publisher"
@@ -101,10 +108,12 @@ quote-style = "double"
 
 [project.scripts]
 euxis-publisher = "euxis_publisher.cli.build:main"
+euxis-mcp = "euxis_publisher.mcp.server:main"
 
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["euxis_publisher*"]
+exclude = ["tests*", ".claude*", ".cursor*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
