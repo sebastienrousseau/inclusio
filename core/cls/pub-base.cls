@@ -96,6 +96,31 @@
 \RequirePackage{array}
 \RequirePackage{titlesec}
 
+%% ── tagpdf version advisory ────────────────────────────────────────────
+%% tagpdf v1.0b (2026-04-24) is the first non-beta candidate release; it
+%% gates ~1000 extension packages as accessibility-tested. Earlier 0.x
+%% releases have known bugs in PDF/UA-2 structure trees that surface as
+%% silent FAILs in veraPDF.
+%%
+%% We do NOT \RequirePackage{tagpdf} here: tagpdf must only be loaded
+%% by \DocumentMetadata (kernel-engaged path), otherwise it errors with
+%% "PDF resource management is no active". Instead, this AtBeginDocument
+%% hook emits a clear warning when an old tagpdf rev was engaged by
+%% \DocumentMetadata. The veraPDF audit (`make audit --strict`) is the
+%% authoritative gate; the warning here is a developer-time canary.
+\AtBeginDocument{%
+  \ifpub@tagged
+    \@ifpackagelater{tagpdf}{2026/04/24}{}{%
+      \PackageWarning{pub-base}{%
+        Outdated tagpdf detected. Sprint-3 PDF/UA-2 gate expects
+        tagpdf v1.0 (2026-04-24) or later.\MessageBreak
+        Upgrade via `tlmgr update tagpdf` to avoid silent veraPDF
+        FAILs on structure-tree edge cases%
+      }%
+    }%
+  \fi
+}
+
 %% ── Tagged-PDF contract check ──────────────────────────────────────────
 %% Use the EARLY snapshot (\ifpub@hadDocumentMetadata) taken at option
 %% processing time, not a live re-query of \IfDocumentMetadataTF.

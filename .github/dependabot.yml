@@ -1,0 +1,50 @@
+# Dependabot configuration — weekly grouped updates.
+#
+# Three ecosystems:
+#   1. pip          — Python dependencies in pyproject.toml.
+#   2. github-actions — pin and update Actions referenced by SHA.
+#   3. docker        — base image for the engine's Dockerfile.
+#
+# All groups open at most 5 PRs/week per ecosystem, on Monday, so
+# the maintainer sees a single batched cycle. Commit prefixes match
+# our conventional-commits style and pass the repo's commit-lint.
+
+version: 2
+updates:
+  - package-ecosystem: pip
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: build
+      include: scope
+    groups:
+      python:
+        patterns:
+          - "*"
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: ci
+      include: scope
+    groups:
+      actions:
+        patterns:
+          - "*"
+
+  - package-ecosystem: docker
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 3
+    commit-message:
+      prefix: build
+      include: scope

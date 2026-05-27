@@ -1,0 +1,40 @@
+# CITATION.cff — Citation File Format (cff-version 1.2.0)
+# https://citation-file-format.github.io/
+#
+# Describes how to cite the Euxis Publisher engine as a whole. GitHub
+# renders this as a "Cite this repository" button on the repo page,
+# and DataCite / Zenodo forward citation credit to the author ORCID.
+#
+# When the first tagged release lands (`v0.1.0`), add a `doi:` field
+# pointing at the Zenodo DOI minted by the GitHub→Zenodo webhook.
+
+cff-version: 1.2.0
+message: "If you use Euxis Publisher in your research or workflow, please cite it as below."
+title: "Euxis Publisher"
+abstract: >-
+  Public LaTeX-first document publishing engine packaged as a Python
+  CLI. Produces tagged PDF/UA-2, PDF/A-4f, and WTPDF-1.0 archival
+  output for CVs, research papers, whitepapers, patents, FAQs, and
+  user guides, with a Jinja2 templating layer and a veraPDF-based
+  accessibility audit (EAA / WCAG 2.2 AA).
+type: software
+authors:
+  - family-names: Rousseau
+    given-names: Sebastien
+    email: contact@sebastienrousseau.com
+    affiliation: Independent Researcher
+    orcid: "https://orcid.org/0009-0005-1434-284X"
+repository-code: "https://github.com/sebastienrousseau/euxis-publisher"
+url: "https://github.com/sebastienrousseau/euxis-publisher"
+license: MIT
+keywords:
+  - latex
+  - publishing
+  - pdf-a
+  - pdf-ua
+  - wtpdf
+  - accessibility
+  - eaa
+  - wcag
+  - tagged-pdf
+  - euxis

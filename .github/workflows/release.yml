@@ -1,0 +1,77 @@
+name: Release
+
+# Triggered by pushing a `v*` tag. Builds the sdist + wheel, runs
+# the public engine test suite once more on the tagged commit,
+# attests the artefacts (SLSA L3 build provenance via
+# actions/attest-build-provenance), and publishes a GitHub Release
+# with auto-generated release notes derived from conventional
+# commits since the previous tag.
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write          # create release, upload artefacts
+  id-token: write          # sigstore / attest-build-provenance OIDC
+  attestations: write      # attest-build-provenance writes here
+
+jobs:
+  release:
+    name: Build, attest, release
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4
+        with:
+          fetch-depth: 0   # full history for release-notes generator
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@8d55fbecc275b1c35dbe060458839f8d30439ccf  # v3
+        with:
+          enable-cache: true
+          python-version: "3.12"
+
+      - name: Install build dependencies
+        run: |
+          uv venv
+          uv pip install --upgrade pip build pyyaml jinja2 pikepdf pytest pytest-cov
+          echo "$PWD/.venv/bin" >> "$GITHUB_PATH"
+
+      - name: Run public engine test suite
+        run: make test
+
+      - name: Build sdist + wheel
+        run: python -m build
+
+      - name: Attest build provenance (SLSA L3)
+        uses: actions/attest-build-provenance@96b4a1ef7235a096b17240c259729fdd70c83d45  # v2
+        with:
+          subject-path: |
+            dist/*.tar.gz
+            dist/*.whl
+
+      - name: Verify signed commits since previous tag
+        env:
+          REF_NAME: ${{ github.ref_name }}
+        run: |
+          previous=$(git describe --tags --abbrev=0 "${REF_NAME}^" 2>/dev/null || echo "")
+          if [ -n "$previous" ]; then
+            unsigned=$(git log --format='%H %G?' "${previous}..${REF_NAME}" | grep ' N$' || true)
+            if [ -n "$unsigned" ]; then
+              echo "::error::Unsigned commits between ${previous} and ${REF_NAME}:"
+              echo "$unsigned"
+              exit 1
+            fi
+          fi
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65  # v2
+        with:
+          generate_release_notes: true
+          files: |
+            dist/*.tar.gz
+            dist/*.whl

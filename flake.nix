@@ -2,7 +2,10 @@
   description = "Euxis Publisher — Public document publishing engine";
 
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.05";
+    # Bumped from nixos-24.05 (May-2024) on 2026-05-27.
+    # texliveFull on 25.05 ships tagpdf >=1.0 (released 2026-04-24);
+    # the shellHook below verifies availability either way.
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.05";
     flake-utils.url = "github:numtide/flake-utils";
   };
 

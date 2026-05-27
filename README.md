@@ -10,8 +10,9 @@
 
 <p align="center">
   <a href="https://github.com/sebastienrousseau/euxis-publisher/actions/workflows/engine-validation.yml"><img src="https://img.shields.io/github/actions/workflow/status/sebastienrousseau/euxis-publisher/engine-validation.yml?style=for-the-badge&logo=github" alt="Engine Validation" /></a>
-  <a href="https://github.com/sebastienrousseau/euxis-publisher"><img src="https://img.shields.io/badge/Coverage-100%25-blue?style=for-the-badge" alt="Coverage" /></a>
-  <a href="https://github.com/sebastienrousseau/euxis-publisher"><img src="https://img.shields.io/badge/Python-%3E%3D3.9-3776AB?style=for-the-badge&logo=python&logoColor=white" alt="Python >= 3.9" /></a>
+  <a href="https://github.com/sebastienrousseau/euxis-publisher/actions/workflows/verapdf.yml"><img src="https://img.shields.io/github/actions/workflow/status/sebastienrousseau/euxis-publisher/verapdf.yml?style=for-the-badge&logo=github&label=veraPDF" alt="veraPDF Audit" /></a>
+  <a href="https://github.com/sebastienrousseau/euxis-publisher"><img src="https://img.shields.io/badge/Python-%3E%3D3.11-3776AB?style=for-the-badge&logo=python&logoColor=white" alt="Python >= 3.11" /></a>
+  <a href="https://github.com/sebastienrousseau/euxis-publisher"><img src="https://img.shields.io/badge/PDF%2FUA--2%20%7C%20WTPDF%20%7C%20PDF%2FA--4f-blue?style=for-the-badge" alt="PDF/UA-2 | WTPDF | PDF/A-4f" /></a>
   <a href="https://github.com/sebastienrousseau/euxis-publisher/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-MIT-black?style=for-the-badge" alt="License" /></a>
 </p>
 

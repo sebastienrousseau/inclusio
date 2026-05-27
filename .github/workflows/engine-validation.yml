@@ -1,52 +1,134 @@
 name: Engine Validation
 
+# Public engine quality gate. Runs on push to main/develop/feat/* and
+# on PRs to main. Three jobs:
+#
+#   1. lint-python   — ruff check + ruff format --check
+#   2. validate      — test suite, coverage, docs, doc-id registry
+#   3. signed-commits — PR only; rejects unsigned commits in the diff
+#
+# All GitHub Actions are SHA-pinned (per docs/audit-2026-05.md
+# action P-6); Dependabot rewrites SHAs on the weekly cycle.
+
 on:
   push:
     branches: [ main, develop, 'feat/*' ]
   pull_request:
     branches: [ main ]
 
+permissions:
+  contents: read
+
 jobs:
-  validate:
-    name: Public Engine Checks
+  lint-python:
+    name: Lint (ruff)
     runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@8d55fbecc275b1c35dbe060458839f8d30439ccf  # v3
+        with:
+          enable-cache: true
+          cache-dependency-glob: pyproject.toml
+          python-version: "3.12"
+
+      - name: Install ruff
+        run: |
+          uv venv
+          uv pip install "ruff>=0.6.0"
+          echo "$PWD/.venv/bin" >> "$GITHUB_PATH"
+
+      - name: ruff check
+        run: ruff check .
+
+      - name: ruff format --check
+        run: ruff format --check .
+
+  validate:
+    name: Public Engine Checks (py${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12", "3.13"]
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - name: Set up uv (with Python ${{ matrix.python-version }})
+        uses: astral-sh/setup-uv@8d55fbecc275b1c35dbe060458839f8d30439ccf  # v3
         with:
-          python-version: '3.12'
-
-      - name: Show Python Interpreter
-        run: |
-          which python
-          python --version
-          which python3
-          python3 --version
+          enable-cache: true
+          cache-dependency-glob: pyproject.toml
+          python-version: ${{ matrix.python-version }}
 
       - name: Install test dependencies
         run: |
-          python -m pip install --upgrade pip
-          pip install pyyaml jinja2 pytest pytest-cov sphinx myst-parser furo
+          uv venv
+          uv pip install pyyaml jinja2 pikepdf pytest pytest-cov sphinx myst-parser furo
+          echo "$PWD/.venv/bin" >> "$GITHUB_PATH"
+
+      - name: Show Python interpreter
+        run: |
+          which python
+          python --version
 
       - name: Validate setup script guidance
         run: ./bin/setup
 
       - name: Run public engine test suite
-        run: make test
+        run: make test PYTHON=python
 
-      - name: Measure coverage
-        run: make coverage
+      - name: Measure coverage (3.12 only)
+        if: matrix.python-version == '3.12'
+        run: make coverage PYTHON=python
 
-      - name: Build documentation with Sphinx
-        run: make docs
+      - name: Build documentation with Sphinx (3.12 only)
+        if: matrix.python-version == '3.12'
+        run: make docs PYTHON=python
 
-      - name: Verify expected doc IDs
+      - name: Verify expected doc IDs (3.12 only)
+        if: matrix.python-version == '3.12'
         run: |
           python scripts/build.py list | tee /tmp/euxis-doc-list.txt
           for id in cv whisper-paper patent-paper patent-application faq user-guide-doc bio arxiv-paper preprint-paper prime-paper; do
             grep -q "${id}" /tmp/euxis-doc-list.txt || { echo "Missing expected doc id: ${id}"; exit 1; }
           done
+
+  signed-commits:
+    name: Signed-commit gate (PR only)
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4
+        with:
+          fetch-depth: 0
+
+      - name: Reject unsigned commits in the PR diff
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          # `%G?` is one of:
+          #   G  good signature
+          #   B  bad signature
+          #   U  good signature with unknown validity
+          #   X  good signature but expired
+          #   Y  good signature with expired key
+          #   R  good signature with revoked key
+          #   E  signature can't be checked (e.g. missing key)
+          #   N  no signature
+          # We only fail on `N` — missing keys (E) are tolerated because
+          # the runner doesn't import the author's public key.
+          unsigned=$(git log --format='%H %G?' "origin/${BASE_REF}..HEAD" | grep ' N$' || true)
+          if [ -n "$unsigned" ]; then
+            echo "::error::Unsigned commits detected in this PR:"
+            echo "$unsigned"
+            echo ""
+            echo "See CONTRIBUTING.md for GPG / SSH signing setup."
+            exit 1
+          fi
+          echo "All commits in this PR are signed."

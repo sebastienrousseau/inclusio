@@ -10,3 +10,32 @@ end_of_line = lf
 charset = utf-8
 trim_trailing_whitespace = false
 insert_final_newline = false
+
+# LaTeX sources, classes, style packages, and bibliographies use a
+# 2-space indent throughout the codebase; latexindent enforces this.
+[*.{tex,cls,sty,bib}]
+indent_size = 2
+trim_trailing_whitespace = true
+insert_final_newline = true
+
+# YAML (data files, manifests, CI workflows) and Markdown use 2-space
+# indents and require a trailing newline.
+[*.{yml,yaml,md,json}]
+indent_size = 2
+trim_trailing_whitespace = true
+insert_final_newline = true
+
+# Python — 4-space indent, final newline, trim trailing.
+[*.py]
+indent_size = 4
+trim_trailing_whitespace = true
+insert_final_newline = true
+
+# Shell, Makefile — tabs for Makefile, 2 spaces for shell.
+[*.sh]
+indent_size = 2
+trim_trailing_whitespace = true
+insert_final_newline = true
+
+[Makefile]
+indent_style = tab

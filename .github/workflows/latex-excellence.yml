@@ -36,12 +36,12 @@ jobs:
       has_changes: ${{ steps.changes.outputs.latex }}
       matrix: ${{ steps.generate-matrix.outputs.matrix }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4
         with:
           fetch-depth: 0
 
       - name: Detect LaTeX changes
-        uses: dorny/paths-filter@v3
+        uses: dorny/paths-filter@6852f92c20ea7fd3b0c25de3b5112db3a98da050  # v3
         id: changes
         with:
           filters: |
@@ -132,7 +132,7 @@ jobs:
             texlive-science \
             fonts-liberation
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4
 
       - name: Install Mermaid CLI
         run: |
@@ -323,7 +323,7 @@ jobs:
           echo "✓ Auxiliary files cleaned"
 
       - name: Archive build artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4
         with:
           name: latex-build-${{ matrix.type }}-${{ github.run_id }}
           path: |
@@ -378,7 +378,7 @@ jobs:
           tlmgr update --list >> package-update-summary.md || echo "No updates available" >> package-update-summary.md
 
       - name: Upload package summary
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4
         with:
           name: texlive-package-summary
           path: package-update-summary.md
