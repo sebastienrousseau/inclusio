@@ -43,8 +43,11 @@ class TestCheckTool:
 
 
 class TestCheckTools:
-    def test_passes_when_tools_available(self):
-        # Should not raise if lualatex and bibtex are installed
+    def test_passes_when_tools_available(self, monkeypatch):
+        # Stub `check_tool` so the test doesn't depend on whether the CI
+        # runner has lualatex/bibtex installed (engine-validation.yml is
+        # the Python-only path; build.yml + verapdf.yml install LaTeX).
+        monkeypatch.setattr(build, "check_tool", lambda _name: True)
         build.check_tools()
 
     def test_exits_when_tools_missing(self, monkeypatch):
@@ -1589,6 +1592,17 @@ class TestPostProcessPdf:
         pdf_path = tmp_path / "test.pdf"
         pdf = pikepdf.Pdf.new()
         pdf.add_blank_page(page_size=(612, 792))
+        # Sprint 2 retrofit (_post_process_pdf) strips /MarkInfo when
+        # /StructTreeRoot is absent, since advertising MarkInfo without
+        # a structure tree produces an invalid tagged PDF. The synthetic
+        # fixtures here need a minimal /StructTreeRoot + /MarkInfo pair
+        # so the tagged-PDF assertions (test_mark_info_and_lang etc) see
+        # the post-processed state, not the strip-on-mismatch fallback.
+        struct_root = pdf.make_indirect(
+            pikepdf.Dictionary({"/Type": pikepdf.Name("/StructTreeRoot")})
+        )
+        pdf.Root["/StructTreeRoot"] = struct_root
+        pdf.Root["/MarkInfo"] = pikepdf.Dictionary({"/Marked": True})
         pdf.save(pdf_path)
         return pdf_path
 
