@@ -1,0 +1,247 @@
+# Copyright (c) 2026 Sebastien Rousseau
+# Licensed under the MIT License
+# See LICENSE file for details
+"""Sprint 6 (S6.2 + S6.3): tests for the Pandoc-based emitters.
+
+The emitter wraps `pandoc` as a subprocess. Tests use `monkeypatch`
+to stub `subprocess.run` so they:
+  - run on any machine (no pandoc required)
+  - exercise the argv composition, output-path resolution, and
+    post-processing logic deterministically.
+
+A small integration block runs the real pandoc binary when it's
+available (skipped otherwise), giving us at least one end-to-end
+check per format.
+"""
+
+from __future__ import annotations
+
+import shutil
+import subprocess
+import sys
+from pathlib import Path
+from unittest import mock
+
+import pytest
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
+from euxis_publisher.emit import pandoc as emit_pandoc
+
+# ── _require_pandoc ────────────────────────────────────────────────────
+
+
+def test_require_pandoc_raises_when_missing(monkeypatch):
+    monkeypatch.setattr(emit_pandoc.shutil, "which", lambda _x: None)
+    with pytest.raises(emit_pandoc.PandocMissing, match="pandoc is required"):
+        emit_pandoc._require_pandoc()
+
+
+def test_require_pandoc_returns_path_when_present(monkeypatch):
+    monkeypatch.setattr(emit_pandoc.shutil, "which", lambda _x: "/fake/pandoc")
+    monkeypatch.setattr(
+        emit_pandoc.subprocess,
+        "run",
+        lambda *a, **k: mock.MagicMock(returncode=0),
+    )
+    assert emit_pandoc._require_pandoc() == "/fake/pandoc"
+
+
+def test_require_pandoc_raises_when_binary_broken(monkeypatch):
+    monkeypatch.setattr(emit_pandoc.shutil, "which", lambda _x: "/fake/pandoc")
+
+    def raise_called(*_a, **_k):
+        raise subprocess.CalledProcessError(127, ["pandoc", "--version"])
+
+    monkeypatch.setattr(emit_pandoc.subprocess, "run", raise_called)
+    with pytest.raises(emit_pandoc.PandocMissing, match="failed to run"):
+        emit_pandoc._require_pandoc()
+
+
+# ── emit_html: argv composition ────────────────────────────────────────
+
+
+@pytest.fixture
+def stub_pandoc(monkeypatch):
+    """Stub pandoc + subprocess.run; return the captured argv list."""
+    captured = {"argv": None, "title_inserted": False}
+
+    def fake_which(_x):
+        return "/fake/pandoc"
+
+    def fake_run(argv, capture_output=False, text=False, timeout=None, check=False):
+        captured["argv"] = list(argv)
+        # Honour --output by writing a minimal valid file so the
+        # post-process step + .stat() calls work.
+        out = next(
+            (a.split("=", 1)[1] for a in argv if a.startswith("--output=")),
+            None,
+        )
+        if out:
+            Path(out).parent.mkdir(parents=True, exist_ok=True)
+            Path(out).write_text(
+                "<!DOCTYPE html>\n<html><body><h1>x</h1></body></html>\n",
+                encoding="utf-8",
+            )
+        return mock.MagicMock(returncode=0, stdout="", stderr="")
+
+    monkeypatch.setattr(emit_pandoc.shutil, "which", fake_which)
+    monkeypatch.setattr(emit_pandoc.subprocess, "run", fake_run)
+    return captured
+
+
+def test_emit_html_invokes_pandoc_with_expected_flags(stub_pandoc, tmp_path):
+    tex = tmp_path / "x.tex"
+    tex.write_text(r"\documentclass{article}\begin{document}hi\end{document}")
+    result = emit_pandoc.emit_html(tex, tmp_path / "out", doc_id="x", title="Hi")
+    argv = stub_pandoc["argv"]
+    assert argv[0] == "/fake/pandoc"
+    assert "--from=latex" in argv
+    assert "--to=html5" in argv
+    assert "--standalone" in argv
+    assert "--section-divs" in argv
+    assert "--mathjax" in argv
+    assert "--metadata=lang:en-GB" in argv
+    assert "--metadata=title:Hi" in argv
+    assert result.format == "html"
+    assert result.output_path == tmp_path / "out" / "x.html"
+    assert result.output_path.exists()
+
+
+def test_emit_html_lang_override(stub_pandoc, tmp_path):
+    tex = tmp_path / "x.tex"
+    tex.write_text(r"\documentclass{article}\begin{document}hi\end{document}")
+    emit_pandoc.emit_html(tex, tmp_path / "out", doc_id="x", lang="fr-FR")
+    assert "--metadata=lang:fr-FR" in stub_pandoc["argv"]
+
+
+def test_emit_html_omits_title_metadata_when_blank(stub_pandoc, tmp_path):
+    tex = tmp_path / "x.tex"
+    tex.write_text(r"\documentclass{article}\begin{document}hi\end{document}")
+    emit_pandoc.emit_html(tex, tmp_path / "out", doc_id="x")
+    argv = stub_pandoc["argv"]
+    assert not any(a.startswith("--metadata=title:") for a in argv)
+
+
+# ── emit_html: post-processing ─────────────────────────────────────────
+
+
+def test_emit_html_post_process_adds_skip_link(stub_pandoc, tmp_path):
+    tex = tmp_path / "x.tex"
+    tex.write_text(r"\documentclass{article}\begin{document}hi\end{document}")
+    emit_pandoc.emit_html(tex, tmp_path / "out", doc_id="x")
+    html = (tmp_path / "out" / "x.html").read_text()
+    assert 'class="skip-link"' in html
+    assert "Skip to main content" in html
+    assert "Generated by Euxis Publisher" in html
+
+
+def test_emit_html_post_process_is_idempotent(stub_pandoc, tmp_path):
+    tex = tmp_path / "x.tex"
+    tex.write_text(r"\documentclass{article}\begin{document}hi\end{document}")
+    emit_pandoc.emit_html(tex, tmp_path / "out", doc_id="x")
+    first = (tmp_path / "out" / "x.html").read_text()
+    # Re-postprocess the same file
+    emit_pandoc._postprocess_html(tmp_path / "out" / "x.html")
+    second = (tmp_path / "out" / "x.html").read_text()
+    assert first == second
+
+
+# ── emit_jats: argv composition ────────────────────────────────────────
+
+
+def test_emit_jats_uses_archiving_writer(stub_pandoc, tmp_path):
+    tex = tmp_path / "x.tex"
+    tex.write_text(r"\documentclass{article}\begin{document}hi\end{document}")
+    result = emit_pandoc.emit_jats(tex, tmp_path / "out", doc_id="x", title="Hi")
+    argv = stub_pandoc["argv"]
+    assert "--to=jats_archiving" in argv
+    assert "--standalone" in argv
+    assert "--metadata=title:Hi" in argv
+    assert result.format == "jats"
+    assert result.output_path == tmp_path / "out" / "x.xml"
+
+
+# ── error paths ────────────────────────────────────────────────────────
+
+
+def test_emit_html_raises_on_pandoc_failure(monkeypatch, tmp_path):
+    monkeypatch.setattr(emit_pandoc.shutil, "which", lambda _x: "/fake/pandoc")
+
+    def fake_run(argv, **k):
+        if "--version" in argv:
+            return mock.MagicMock(returncode=0)
+        return mock.MagicMock(returncode=1, stdout="", stderr="latex parse error: \\foo")
+
+    monkeypatch.setattr(emit_pandoc.subprocess, "run", fake_run)
+    tex = tmp_path / "x.tex"
+    tex.write_text("garbage")
+    with pytest.raises(subprocess.CalledProcessError):
+        emit_pandoc.emit_html(tex, tmp_path / "out", doc_id="x")
+
+
+def test_emit_all_routes_to_emitters(stub_pandoc, tmp_path):
+    tex = tmp_path / "x.tex"
+    tex.write_text(r"\documentclass{article}\begin{document}hi\end{document}")
+    results = emit_pandoc.emit_all(tex, tmp_path / "out", doc_id="x")
+    formats = {r.format for r in results}
+    assert formats == {"html", "jats"}
+
+
+def test_emit_all_subset(stub_pandoc, tmp_path):
+    tex = tmp_path / "x.tex"
+    tex.write_text(r"\documentclass{article}\begin{document}hi\end{document}")
+    results = emit_pandoc.emit_all(tex, tmp_path / "out", doc_id="x", formats=["html"])
+    assert [r.format for r in results] == ["html"]
+
+
+def test_emit_all_unknown_format_raises(stub_pandoc, tmp_path):
+    tex = tmp_path / "x.tex"
+    tex.write_text(r"\documentclass{article}\begin{document}hi\end{document}")
+    with pytest.raises(ValueError, match="Unknown emit format"):
+        emit_pandoc.emit_all(tex, tmp_path / "out", doc_id="x", formats=["bogus"])
+
+
+# ── Integration: real pandoc when available ────────────────────────────
+
+
+REAL_PANDOC = shutil.which("pandoc")
+
+
+@pytest.mark.skipif(REAL_PANDOC is None, reason="pandoc not installed locally")
+def test_emit_html_end_to_end(tmp_path):
+    tex = tmp_path / "smoke.tex"
+    tex.write_text(
+        r"""\documentclass{article}
+\begin{document}
+\section{Intro}
+Hello, accessible world.
+\end{document}
+""",
+        encoding="utf-8",
+    )
+    result = emit_pandoc.emit_html(tex, tmp_path / "out", doc_id="smoke")
+    html = result.output_path.read_text(encoding="utf-8")
+    assert "<h1" in html
+    assert "Hello, accessible world" in html
+    assert 'lang="en-GB"' in html
+    assert "skip-link" in html
+    assert "Generated by Euxis Publisher" in html
+
+
+@pytest.mark.skipif(REAL_PANDOC is None, reason="pandoc not installed locally")
+def test_emit_jats_end_to_end(tmp_path):
+    tex = tmp_path / "smoke.tex"
+    tex.write_text(
+        r"""\documentclass{article}
+\begin{document}
+\section{Intro}
+Hello, structured world.
+\end{document}
+""",
+        encoding="utf-8",
+    )
+    result = emit_pandoc.emit_jats(tex, tmp_path / "out", doc_id="smoke")
+    jats = result.output_path.read_text(encoding="utf-8")
+    assert "<article" in jats
+    assert "Hello, structured world" in jats
