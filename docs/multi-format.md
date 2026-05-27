@@ -100,15 +100,28 @@ become `<xref>` placeholders that need a bibliography back-end
 
 ## CLI
 
-The Pandoc emitters are not yet wired into `euxis-publisher build`
-itself; today they're a Python API. Sprint 7 adds:
+Sprint 7 wired the emitters into the build CLI:
 
 ```bash
-euxis-publisher emit --doc whisper-paper --formats html,jats
+# Emit both formats for every registered document
+python -m euxis_publisher.cli.build emit
+# or via Make:
+make emit
+
+# Single document, single format
+python -m euxis_publisher.cli.build emit --doc whisper-paper --formats html
+make emit-html
+
+# Strict mode for CI — exits 1 on any pandoc failure
+python -m euxis_publisher.cli.build emit --strict
 ```
 
-Track [docs/audit-2026-05.md](audit-2026-05.md) §5 Sprint 7 for the CLI
-wiring + the JATS4R validation gate.
+The registry filter from `cli.audit` applies — only documents listed
+in `data/meta.yaml documents:` get emitted, and entries flagged with
+`note: This is an input file used by another` are skipped.
+
+JATS4R validation + the EPUB-A emitter (S6.6) land in Sprint 7.5;
+track [docs/audit-2026-05.md](audit-2026-05.md) §5.
 
 ## MCP integration
 
