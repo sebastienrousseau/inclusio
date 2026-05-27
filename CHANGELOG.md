@@ -8,6 +8,31 @@ and [Conventional Commits](https://www.conventionalcommits.org/).
 
 ### Added
 
+- **Sprint 6 (S6.4 + S6.5) — MCP server + Claude skill + Cursor rule (2026-05-27)**:
+  - `euxis_publisher/mcp/server.py` — FastMCP-based MCP server exposing
+    the engine's read + audit surface:
+      - Tools: `list_docs`, `audit_pdf`, `render`, `doc_count`
+      - Resources: `euxis://meta`, `euxis://audit/latest`, `euxis://version`
+  - `euxis-mcp` console script with stdio (Claude Code default) and
+    Streamable HTTP (`--http`) transports.
+  - `mcp` optional extra (`pip install 'euxis-publisher[mcp]'`,
+    `mcp[cli]>=1.27.0`).
+  - `.claude/skills/euxis-publisher/SKILL.md` — Claude skill with
+    canonical preamble, untagged-content traps, command catalogue,
+    EAA compliance context.
+  - `.cursor/rules/euxis-publisher.mdc` — Cursor rule auto-loading on
+    `.tex / .cls / .sty / meta.yaml / *-data.yaml`.
+  - `tests/test_mcp_server.py` — 18 tests covering server creation,
+    tool/resource registration, content-root resolution, and the
+    missing-dep error path. Skips cleanly when `mcp[cli]` is absent.
+  - `docs/mcp-server.md` — install / run / tool reference / Claude
+    Code + Cursor integration guide.
+
+  Closes Forcing Function #4 (AI authoring layer) on the engine
+  surface; Sprint 7 adds write-side tools (tailor, lint, LLM judge).
+
+### Added (earlier in Sprint 5)
+
 - **Sprint 5 — public fixtures migrated to tagged-PDF; veraPDF gate strict (2026-05-27)**:
   - All 9 public fixtures (`whisper-mps-realtime-asr`, `arxiv-paper`,
     `preprint-paper`, `prime-paper`, `patent`, `cv`, `bio`, `faqs`,
