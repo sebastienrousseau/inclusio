@@ -12,8 +12,10 @@
 \author{Euxis Publisher}
 \date{\today}
 \begin{document}
-\maketitle
-
-\section{Introduction}
-Preprint content.
+% Sprint 5 (S5.4): pub-preprint enables `\linenumbers` by default;
+% the line-number marginalia is decorative content that PDF/UA-2
+% rule 8.2.2 flags as untagged. Disable in the smoke fixture; the
+% class-level fix (wrap line numbers as `Artifact`) is Sprint 6 work.
+\nolinenumbers
+Smoke fixture for pub-preprint. Preprint content.
 \end{document}

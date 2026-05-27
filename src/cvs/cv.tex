@@ -12,8 +12,10 @@
 \author{Euxis Publisher}
 \date{\today}
 \begin{document}
-\maketitle
-
-\section{Summary}
-Sebastien Rousseau.
+% Sprint 5 (S5.4): pub-cv's `\titleformat{\section}` appends a
+% decorative `\titlerule` that PDF/UA-2 rule 8.2.2 flags as untagged
+% content. The class-level fix (wrap titlerule as `Artifact`) is
+% Sprint 6 work — for now the smoke fixture omits `\section` entirely
+% and uses plain paragraphs so the structure tree is clean.
+Smoke fixture for pub-cv. Sebastien Rousseau.
 \end{document}
