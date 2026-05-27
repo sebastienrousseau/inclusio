@@ -112,13 +112,25 @@ class TestRenderMarkdown:
         result = render.render_markdown(data, "cv")
         assert "# Jane Doe" in result
         assert "## Summary" in result
-        assert "## Professional Experience" in result
+        # Workday-friendly headings since Sprint 0+1: parser maps
+        # "Experience" / "Skills" / "Education" directly to Workday
+        # fields (was "Professional Experience" pre-2026).
+        assert "## Experience" in result
         assert "## Education" in result
-        assert "## Languages" in result
+        # Languages render under the Education list (not as a section)
+        # to keep the Workday-friendly section heading list minimal.
+        assert "Languages" in result
 
-    def test_unknown_type_raises(self):
-        with pytest.raises(ValueError, match="Unknown document type"):
-            render.render_markdown({}, "unknown_type")
+    def test_unknown_type_falls_back_to_generic(self):
+        # Pre-2026 the renderer raised on unknown types; Sprint 0 added
+        # the generic-Markdown fallback for ad-hoc data files. Verify the
+        # fallback emits a non-empty document with the type as the H1
+        # heading (titlecased), and the value rendered under its key.
+        result = render.render_markdown({"body": "hi"}, "unknown_type")
+        first_line = result.splitlines()[0]
+        assert first_line.startswith("# ") and "Unknown" in first_line, result[:120]
+        assert "## Body" in result
+        assert "hi" in result
 
     def test_blog_type_delegates(self, tmp_path):
         (tmp_path / "blog-post.md.j2").write_text(
@@ -765,11 +777,14 @@ class TestXmpDataGeneration:
         assert "\\Title{PDF Title}" in content
         assert "\\Author{Test Author}" in content
         assert "\\Subject{PDF Subject}" in content
-        assert "\\Description{A test PDF document}" in content
         assert "\\Keywords{kw1, kw2}" in content
         assert "\\Copyright{\u00a9 2026 Test}" in content
-        assert "\\Creator{LaTeX with hyperref}" in content
-        assert "\\CreatorTool{Publications Build System}" in content
+        # Sprint 1 (commit cc8f62f): pdfx in camera-ready. Updated set
+        # of pdfx-supported XMP commands. Description / Creator dropped
+        # (Description is data.description in the XMP packet via pdfx's
+        # \Subject; Creator is what pdfx auto-emits).
+        assert "\\CreatorTool{Euxis Publications Build System}" in content
+        assert "\\Producer{LuaLaTeX + pdfx}" in content
         assert "\\Language{en}" in content
 
     def test_xmpdata_defaults(self, monkeypatch, tmp_path):
@@ -784,11 +799,12 @@ class TestXmpDataGeneration:
         assert "\\Title{fallback-doc}" in content
         # Author falls back to empty
         assert "\\Author{}" in content
-        # Subject/Description/Keywords/Copyright fall back to empty
+        # Subject / Keywords fall back to empty; Description and Copyright
+        # are only emitted when non-empty (Sprint 1: avoid `Description{}`
+        # leaking blank fields into Adobe's Description panel).
         assert "\\Subject{}" in content
-        assert "\\Description{}" in content
         assert "\\Keywords{}" in content
-        assert "\\Copyright{}" in content
+        assert "\\Copyright{" not in content  # only emitted when truthy
 
     def test_xmpdata_generated_on_latex_render(self, monkeypatch, tmp_path):
         """render_document() generates .xmpdata when format is latex."""
