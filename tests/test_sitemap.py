@@ -342,7 +342,6 @@ class TestSitemapMain:
     @patch("sys.argv", ["sitemap.py", "-o", "/tmp/custom-sitemap.json"])
     def test_main_custom_output(self):
         sitemap.main()
-        from pathlib import Path
 
         out = Path("/tmp/custom-sitemap.json")
         assert out.exists()

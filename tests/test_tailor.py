@@ -1,11 +1,8 @@
 """test_tailor.py — Full coverage tests for scripts/tailor.py."""
 
 import copy
-import json
-import os
 import subprocess
 import sys
-from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -1301,12 +1298,11 @@ class TestTailorMain:
         mock_build = MagicMock()
         mock_build.load_meta.return_value = {"build": {}}
         with patch("sys.argv", ["tailor.py", str(brief_file),
-                                 "--build", "--no-ai"]):
-            with patch.dict(
-                "sys.modules",
-                {"render": mock_render, "build": mock_build},
-            ):
-                tailor.main()
+                                 "--build", "--no-ai"]), patch.dict(
+            "sys.modules",
+            {"render": mock_render, "build": mock_build},
+        ):
+            tailor.main()
         mock_render.render_document.assert_called_once()
         mock_build.build_document.assert_called_once()
 
@@ -1383,6 +1379,7 @@ class TestTailorMain:
             yaml.dump(sample_cv_data, f, default_flow_style=False)
 
         import builtins
+
         from euxis_publisher.cli import render as package_render
         real_import = builtins.__import__
 
@@ -1412,6 +1409,7 @@ class TestTailorMain:
             yaml.dump(sample_cv_data, f, default_flow_style=False)
 
         import builtins
+
         from euxis_publisher.cli import build as package_build
         real_import = builtins.__import__
 

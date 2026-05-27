@@ -4,7 +4,6 @@ import re
 
 import pytest
 
-
 # Commands forbidden in src/ .tex files (must use semantic macros instead)
 FORBIDDEN_PATTERNS = [
     (r"\\textbf\{", "Use \\keyterm{} instead of \\textbf{}"),
@@ -62,7 +61,7 @@ def test_all_documents_have_source(project_root, documents):
             missing.append(f"  {doc_id}: {config['src']}")
 
     if missing:
-        pytest.fail(f"Missing source files:\n" + "\n".join(missing))
+        pytest.fail("Missing source files:\n" + "\n".join(missing))
 
 
 def test_all_documents_use_pub_class(project_root, documents):
@@ -84,5 +83,5 @@ def test_all_documents_use_pub_class(project_root, documents):
 
     if issues:
         pytest.fail(
-            f"Documents still referencing old classes:\n" + "\n".join(issues)
+            "Documents still referencing old classes:\n" + "\n".join(issues)
         )

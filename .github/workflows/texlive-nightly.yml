@@ -21,7 +21,8 @@ jobs:
     name: TeX Live Package Health Check
     runs-on: ubuntu-latest
     container:
-      image: ${{ env.DOCKER_IMAGE }}
+      # GHA forbids ${{ env.* }} in container.image; image inlined.
+      image: texlive/texlive:TL2024-historic
       options: --user root
 
     steps:

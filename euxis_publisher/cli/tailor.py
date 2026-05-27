@@ -20,7 +20,6 @@ Usage:
 
 import argparse
 import copy
-import json
 import os
 import re
 import shutil
@@ -34,9 +33,7 @@ import yaml
 # ── Paths ────────────────────────────────────────────────────────────────
 SCRIPT_DIR = Path(__file__).resolve().parent
 PROJECT_ROOT = SCRIPT_DIR.parent.parent
-DEFAULT_SUBPROCESS_TIMEOUT = int(
-    os.environ.get("EUXIS_SUBPROCESS_TIMEOUT", "300")
-)
+DEFAULT_SUBPROCESS_TIMEOUT = int(os.environ.get("EUXIS_SUBPROCESS_TIMEOUT", "300"))
 
 # CONTENT_ROOT: where content lives (data/, src/).
 # Defaults to PROJECT_ROOT; overridden by EUXIS_CONTENT_DIR env var.
@@ -51,62 +48,118 @@ TAILORED_DIR = CONTENT_ROOT / "data" / "tailored"
 THEME_MAP = {
     "ai_ml": {
         "keywords": [
-            "artificial intelligence", "machine learning", "deep learning",
-            "llm", "generative ai", "neural", "nlp", "model training",
-            "data science", "computer vision", "genai", "vertex",
+            "artificial intelligence",
+            "machine learning",
+            "deep learning",
+            "llm",
+            "generative ai",
+            "neural",
+            "nlp",
+            "model training",
+            "data science",
+            "computer vision",
+            "genai",
+            "vertex",
         ],
         "label": "technology-driven product innovation and AI/ML solutions",
     },
     "cloud": {
         "keywords": [
-            "cloud", "aws", "gcp", "google cloud", "azure", "saas", "paas",
-            "infrastructure", "platform", "kubernetes", "devops",
+            "cloud",
+            "aws",
+            "gcp",
+            "google cloud",
+            "azure",
+            "saas",
+            "paas",
+            "infrastructure",
+            "platform",
+            "kubernetes",
+            "devops",
         ],
         "label": "cloud platforms and scalable infrastructure",
     },
     "product": {
         "keywords": [
-            "product manager", "product management", "roadmap",
-            "product strategy", "product development", "product lifecycle",
-            "conception to launch", "ideation", "execution",
+            "product manager",
+            "product management",
+            "roadmap",
+            "product strategy",
+            "product development",
+            "product lifecycle",
+            "conception to launch",
+            "ideation",
+            "execution",
         ],
         "label": "product strategy and lifecycle management",
     },
     "gtm": {
         "keywords": [
-            "go-to-market", "gtm", "market strategy", "launch",
-            "commercialization", "market adoption", "outbound",
-            "positioning", "market size", "market insights",
+            "go-to-market",
+            "gtm",
+            "market strategy",
+            "launch",
+            "commercialization",
+            "market adoption",
+            "outbound",
+            "positioning",
+            "market size",
+            "market insights",
         ],
         "label": "go-to-market strategy and product commercialization",
     },
     "engineering": {
         "keywords": [
-            "engineering", "software development", "technical",
-            "architecture", "api", "sdk", "system design",
-            "technical products", "development",
+            "engineering",
+            "software development",
+            "technical",
+            "architecture",
+            "api",
+            "sdk",
+            "system design",
+            "technical products",
+            "development",
         ],
         "label": "technical product development and API-driven solutions",
     },
     "payments": {
         "keywords": [
-            "payment", "banking", "fintech", "transaction", "sepa", "psd2",
-            "open banking", "financial", "merchant",
+            "payment",
+            "banking",
+            "fintech",
+            "transaction",
+            "sepa",
+            "psd2",
+            "open banking",
+            "financial",
+            "merchant",
         ],
         "label": "payment solutions and financial technology",
     },
     "leadership": {
         "keywords": [
-            "leadership", "cross-functional", "stakeholder", "executive",
-            "team management", "collaboration", "partnership", "influence",
+            "leadership",
+            "cross-functional",
+            "stakeholder",
+            "executive",
+            "team management",
+            "collaboration",
+            "partnership",
+            "influence",
             "cross-functionally",
         ],
         "label": "cross-functional leadership and executive stakeholder management",
     },
     "customer": {
         "keywords": [
-            "customer", "client", "partner", "enterprise", "user",
-            "feedback", "engagement", "user insights",
+            "customer",
+            "client",
+            "partner",
+            "enterprise",
+            "user",
+            "feedback",
+            "engagement",
+            "user insights",
         ],
         "label": "customer engagement and partner ecosystem development",
     },
@@ -137,8 +190,7 @@ def _extract_yaml(text):
     # 3. Find where YAML ends (stop at prose/commentary)
     end = len(lines)
     for i in range(start, len(lines)):
-        if re.match(r"^\s*(\*\*|Key changes|Rationale|Note:|Here |I |This )",
-                    lines[i]):
+        if re.match(r"^\s*(\*\*|Key changes|Rationale|Note:|Here |I |This )", lines[i]):
             end = i
             break
 
@@ -283,8 +335,7 @@ def _compose_summary(brief_text, keywords, base_data):
 
     # Build summary — vary sentence length for natural rhythm
     parts = [
-        f"{role_prefix} with 20+ years of experience delivering "
-        f"{theme_str} at {company_str}.",
+        f"{role_prefix} with 20+ years of experience delivering {theme_str} at {company_str}.",
     ]
 
     # Add a concrete highlight from the top-scoring bullet
@@ -348,11 +399,26 @@ def _filter_bullets(bullets, keywords, max_count=5):
 
 # Words and patterns that signal AI-generated or non-British text
 BANNED_PHRASES = [
-    "delve into", "leveraging", "leverage", "seamlessly", "robust",
-    "proven track record", "passionate about", "cutting-edge",
-    "best-in-class", "synergy", "holistic", "ecosystem", "paradigm",
-    "innovative", "thought leader", "disruptive", "spearheaded",
-    "game-changing", "world-class", "utilize",
+    "delve into",
+    "leveraging",
+    "leverage",
+    "seamlessly",
+    "robust",
+    "proven track record",
+    "passionate about",
+    "cutting-edge",
+    "best-in-class",
+    "synergy",
+    "holistic",
+    "ecosystem",
+    "paradigm",
+    "innovative",
+    "thought leader",
+    "disruptive",
+    "spearheaded",
+    "game-changing",
+    "world-class",
+    "utilize",
 ]
 
 PHRASE_REPLACEMENTS = {
@@ -403,19 +469,23 @@ def lint_cv_data(data):
         # Check banned phrases
         for phrase in BANNED_PHRASES:
             if phrase in text_lower:
-                warnings.append({
-                    "field": field,
-                    "issue": f"banned phrase: '{phrase}'",
-                    "value": text[:80],
-                })
+                warnings.append(
+                    {
+                        "field": field,
+                        "issue": f"banned phrase: '{phrase}'",
+                        "value": text[:80],
+                    }
+                )
         # Check -ize spellings
         for match in AMERICAN_IZE_PATTERN.finditer(text):
-            warnings.append({
-                "field": field,
-                "issue": f"American spelling: '{match.group()}' → "
-                         f"'{match.group().replace('ize', 'ise').replace('ized', 'ised').replace('izer', 'iser').replace('izes', 'ises')}'",
-                "value": text[:80],
-            })
+            warnings.append(
+                {
+                    "field": field,
+                    "issue": f"American spelling: '{match.group()}' → "
+                    f"'{match.group().replace('ize', 'ise').replace('ized', 'ised').replace('izer', 'iser').replace('izes', 'ises')}'",
+                    "value": text[:80],
+                }
+            )
 
     # Scan summary
     if "summary" in data and isinstance(data["summary"], str):
@@ -435,22 +505,25 @@ def lint_cv_data(data):
     # Achievement verification: flag vague bullets with no numbers
     for i, exp in enumerate(data.get("experience", [])):
         for j, bullet in enumerate(exp.get("bullets", [])):
-            has_metric = bool(re.search(
-                r"\d+[%+]?|\$[\d,.]+|£[\d,.]+|€[\d,.]+", bullet
-            ))
-            has_impact_verb = bool(re.search(
-                r"\b(delivered|led|built|designed|orchestrated|streamlined|"
-                r"shaped|established|drove|secured|introduced|expanded|"
-                r"negotiated|coordinated|defined|partnered|reduced|increased|"
-                r"achieved|saved|generated|grew|launched|managed)\b",
-                bullet, re.IGNORECASE,
-            ))
+            has_metric = bool(re.search(r"\d+[%+]?|\$[\d,.]+|£[\d,.]+|€[\d,.]+", bullet))
+            has_impact_verb = bool(
+                re.search(
+                    r"\b(delivered|led|built|designed|orchestrated|streamlined|"
+                    r"shaped|established|drove|secured|introduced|expanded|"
+                    r"negotiated|coordinated|defined|partnered|reduced|increased|"
+                    r"achieved|saved|generated|grew|launched|managed)\b",
+                    bullet,
+                    re.IGNORECASE,
+                )
+            )
             if not has_metric and not has_impact_verb:
-                warnings.append({
-                    "field": f"experience[{i}].bullets[{j}]",
-                    "issue": "vague: no metric or impact verb found",
-                    "value": bullet[:80],
-                })
+                warnings.append(
+                    {
+                        "field": f"experience[{i}].bullets[{j}]",
+                        "issue": "vague: no metric or impact verb found",
+                        "value": bullet[:80],
+                    }
+                )
 
     return warnings
 
@@ -497,10 +570,7 @@ def _escape_latex_strings(value):
     if isinstance(value, list):
         return [_escape_latex_strings(item) for item in value]
     if isinstance(value, dict):
-        return {
-            key: _escape_latex_strings(item)
-            for key, item in value.items()
-        }
+        return {key: _escape_latex_strings(item) for key, item in value.items()}
     return value
 
 
@@ -555,9 +625,7 @@ def _clean_cv_language(value):
     if isinstance(value, str):
         cleaned = value
         for source, target in PHRASE_REPLACEMENTS.items():
-            cleaned = re.sub(
-                re.escape(source), target, cleaned, flags=re.IGNORECASE
-            )
+            cleaned = re.sub(re.escape(source), target, cleaned, flags=re.IGNORECASE)
         return cleaned
     if isinstance(value, list):
         return [_clean_cv_language(item) for item in value]
@@ -567,9 +635,7 @@ def _clean_cv_language(value):
             for exp in cleaned.get("experience", []):
                 bullets = exp.get("bullets", [])
                 if isinstance(bullets, list):
-                    exp["bullets"] = [
-                        _rewrite_bullet_for_impact(bullet) for bullet in bullets
-                    ]
+                    exp["bullets"] = [_rewrite_bullet_for_impact(bullet) for bullet in bullets]
         return cleaned
     return value
 
@@ -604,9 +670,7 @@ def tailor_cv(brief_text, base_data):
     skills = data.get("skills", [])
     data["skills"] = sorted(
         skills,
-        key=lambda s: score_section(
-            f"{s.get('title', '')} {s.get('description', '')}", keywords
-        ),
+        key=lambda s: score_section(f"{s.get('title', '')} {s.get('description', '')}", keywords),
         reverse=True,
     )
 
@@ -624,8 +688,10 @@ def claude_generate(brief_text, doc_type, base_data):
         return None
 
     base_yaml = yaml.dump(
-        base_data, default_flow_style=False,
-        allow_unicode=True, sort_keys=False,
+        base_data,
+        default_flow_style=False,
+        allow_unicode=True,
+        sort_keys=False,
     )
 
     prompt = (
@@ -694,13 +760,14 @@ def claude_generate(brief_text, doc_type, base_data):
 
         result = subprocess.run(
             ["claude", "-p", prompt],
-            capture_output=True, text=True, timeout=120,
+            capture_output=True,
+            text=True,
+            timeout=120,
             env=env,
         )
         if result.returncode != 0:
             print(
-                f"WARN: claude CLI returned {result.returncode}, "
-                "falling back to keywords",
+                f"WARN: claude CLI returned {result.returncode}, falling back to keywords",
                 file=sys.stderr,
             )
             return None
@@ -722,8 +789,9 @@ def claude_generate(brief_text, doc_type, base_data):
         return None
 
 
-def generate(brief_path, doc_type="cv", output_id=None, base_path=None,
-             use_ai=True, output_path=None):
+def generate(
+    brief_path, doc_type="cv", output_id=None, base_path=None, use_ai=True, output_path=None
+):
     """Read brief, tailor data, write YAML, return output path.
 
     1. Read brief from any format
@@ -765,9 +833,7 @@ def generate(brief_path, doc_type="cv", output_id=None, base_path=None,
     if doc_type == "cv":
         tailored = _optimise_cv_for_ats(tailored)
         tailored = _clean_cv_language(tailored)
-    tailored = _stamp_publisher_metadata(
-        tailored, doc_type, output_id, brief_path
-    )
+    tailored = _stamp_publisher_metadata(tailored, doc_type, output_id, brief_path)
     tailored = _escape_latex_strings(tailored)
 
     # Consistency gate — lint before saving
@@ -786,8 +852,7 @@ def generate(brief_path, doc_type="cv", output_id=None, base_path=None,
         TAILORED_DIR.mkdir(parents=True, exist_ok=True)
         out_path = TAILORED_DIR / f"{output_id}.yaml"
     with open(out_path, "w") as f:
-        yaml.dump(tailored, f, default_flow_style=False, allow_unicode=True,
-                  sort_keys=False)
+        yaml.dump(tailored, f, default_flow_style=False, allow_unicode=True, sort_keys=False)
 
     return out_path
 
@@ -796,18 +861,14 @@ def main(argv=None):
     parser = argparse.ArgumentParser(
         description="Generate tailored documents from briefs/job descriptions"
     )
-    parser.add_argument(
-        "brief", type=Path, help="Path to brief/job description file"
-    )
+    parser.add_argument("brief", type=Path, help="Path to brief/job description file")
     parser.add_argument(
         "--type",
         default="cv",
         choices=["cv", "paper", "patent", "faq", "guide"],
         help="Document type (default: cv)",
     )
-    parser.add_argument(
-        "--id", help="Output document ID (default: derived from brief filename)"
-    )
+    parser.add_argument("--id", help="Output document ID (default: derived from brief filename)")
     parser.add_argument(
         "--base",
         type=Path,
@@ -842,11 +903,9 @@ def main(argv=None):
             except ModuleNotFoundError:
                 from euxis_publisher.cli import render as render_module
 
-            render_module.render_document(output_id, fmt="latex",
-                                          build_mode="draft")
+            render_module.render_document(output_id, fmt="latex", build_mode="draft")
         except ImportError:
-            print("ERROR: Jinja2 not installed. Run: pip install jinja2",
-                  file=sys.stderr)
+            print("ERROR: Jinja2 not installed. Run: pip install jinja2", file=sys.stderr)
             sys.exit(1)
 
     if args.build:

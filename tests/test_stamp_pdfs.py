@@ -2,7 +2,7 @@
 
 import subprocess
 import sys
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pikepdf
 import pytest
@@ -106,10 +106,9 @@ class TestStampPdf:
 
         stamp_pdfs.stamp_pdf(pdf_path, "abc1234", "2026-02-17T12:00:00Z")
 
-        with pikepdf.open(pdf_path) as pdf:
-            with pdf.open_metadata() as meta:
-                desc = meta.get("dc:description", "")
-                producer = meta.get("pdf:Producer", "")
+        with pikepdf.open(pdf_path) as pdf, pdf.open_metadata() as meta:
+            desc = meta.get("dc:description", "")
+            producer = meta.get("pdf:Producer", "")
         assert "abc1234" in desc
         assert "2026-02-17" in desc
         assert "abc1234" in producer

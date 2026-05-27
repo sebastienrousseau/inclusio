@@ -101,7 +101,11 @@ jobs:
       fail-fast: false
       matrix: ${{ fromJson(needs.detect-changes.outputs.matrix) }}
     container:
-      image: ${{ env.DOCKER_IMAGE }}
+      # GHA forbids ${{ env.* }} in container.image (only github / inputs
+       # / matrix / needs / strategy / vars contexts allowed here), so the
+       # image is inlined. Keep in sync with the env.DOCKER_IMAGE doc string
+       # at the top of the file if it ever needs to change.
+      image: texlive/texlive:TL2024-historic
       options: --user root
 
     steps:
@@ -360,7 +364,11 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main')
     container:
-      image: ${{ env.DOCKER_IMAGE }}
+      # GHA forbids ${{ env.* }} in container.image (only github / inputs
+       # / matrix / needs / strategy / vars contexts allowed here), so the
+       # image is inlined. Keep in sync with the env.DOCKER_IMAGE doc string
+       # at the top of the file if it ever needs to change.
+      image: texlive/texlive:TL2024-historic
       options: --user root
     steps:
       - name: Check TeX Live package status

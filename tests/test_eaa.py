@@ -17,12 +17,9 @@ the public-fixture documents.
 """
 
 import json
-import os
 import sys
 from pathlib import Path
 from unittest import mock
-
-import pytest
 
 # Ensure the cli module is importable.
 sys.path.insert(
@@ -31,7 +28,6 @@ sys.path.insert(
 )
 
 from euxis_publisher.cli import audit as audit_mod
-
 
 # ── Helpers ─────────────────────────────────────────────────────────────
 
@@ -44,6 +40,7 @@ def _make_pdf(path, content=b"%PDF-1.7\n%dummy\n"):
 
 def _fake_subprocess_run(pass_for=("ua2", "wt1a", "4f")):
     """Build a fake subprocess.run that returns PASS for the given flavours."""
+
     def runner(cmd, *args, **kwargs):
         flavour = cmd[cmd.index("--flavour") + 1]
         pdf = cmd[-1]
@@ -53,6 +50,7 @@ def _fake_subprocess_run(pass_for=("ua2", "wt1a", "4f")):
             stdout=f"{verdict} {pdf} {flavour}\n",
             stderr="",
         )
+
     return runner
 
 
@@ -66,7 +64,7 @@ def test_collect_single_pdf(tmp_path):
 
 
 def test_collect_directory_skips_cache_and_audit(tmp_path):
-    pdf_a = _make_pdf(tmp_path / "build" / "papers" / "a.pdf")
+    _make_pdf(tmp_path / "build" / "papers" / "a.pdf")
     _make_pdf(tmp_path / "build" / ".cache" / "intermediates" / "x.pdf")
     _make_pdf(tmp_path / "build" / ".audit" / "old.pdf")
     out = audit_mod.collect_pdfs(tmp_path, tmp_path)
@@ -80,9 +78,7 @@ def test_collect_with_registry_filter(tmp_path):
     """Registry filter keeps only PDFs whose stem is registered."""
     _make_pdf(tmp_path / "build" / "papers" / "registered.pdf")
     _make_pdf(tmp_path / "build" / "jobs" / "recruiter-brief.pdf")
-    out = audit_mod.collect_pdfs(
-        tmp_path, tmp_path, registry_stems={"registered"}
-    )
+    out = audit_mod.collect_pdfs(tmp_path, tmp_path, registry_stems={"registered"})
     out_names = [p.name for p in out]
     assert out_names == ["registered.pdf"]
 
@@ -129,9 +125,7 @@ def test_audit_returns_expected_structure(tmp_path, monkeypatch):
     report = audit_mod.audit([pdf])
     assert report["tool"] == "euxis-audit"
     assert report["verapdf_present"] is True
-    assert set(report["summary"].keys()) == {
-        "pdfs", "checks", "pass", "fail", "skip", "error"
-    }
+    assert set(report["summary"].keys()) == {"pdfs", "checks", "pass", "fail", "skip", "error"}
     assert report["summary"]["pdfs"] == 1
     assert report["summary"]["checks"] == 3  # ua2, wt1a, 4f
     assert report["summary"]["pass"] == 3
@@ -143,9 +137,7 @@ def test_audit_returns_expected_structure(tmp_path, monkeypatch):
 def test_audit_records_fail(tmp_path, monkeypatch):
     pdf = _make_pdf(tmp_path / "p.pdf")
     monkeypatch.setattr(audit_mod.shutil, "which", lambda x: "/usr/bin/verapdf")
-    monkeypatch.setattr(
-        audit_mod.subprocess, "run", _fake_subprocess_run(pass_for=("ua2",))
-    )
+    monkeypatch.setattr(audit_mod.subprocess, "run", _fake_subprocess_run(pass_for=("ua2",)))
 
     report = audit_mod.audit([pdf])
     assert report["summary"]["pass"] == 1  # only ua2
@@ -196,9 +188,7 @@ def test_render_markdown_includes_summary(tmp_path, monkeypatch):
 def test_is_blocking_true_on_fail(tmp_path, monkeypatch):
     pdf = _make_pdf(tmp_path / "p.pdf")
     monkeypatch.setattr(audit_mod.shutil, "which", lambda x: "/usr/bin/verapdf")
-    monkeypatch.setattr(
-        audit_mod.subprocess, "run", _fake_subprocess_run(pass_for=("ua2",))
-    )
+    monkeypatch.setattr(audit_mod.subprocess, "run", _fake_subprocess_run(pass_for=("ua2",)))
     report = audit_mod.audit([pdf])
     assert audit_mod._is_blocking(report) is True
 
@@ -225,9 +215,7 @@ def test_main_no_pdfs_returns_zero_unless_strict(tmp_path, monkeypatch):
 def test_main_strict_failure_returns_one(tmp_path, monkeypatch):
     pdf = _make_pdf(tmp_path / "p.pdf")
     monkeypatch.setattr(audit_mod.shutil, "which", lambda x: "/usr/bin/verapdf")
-    monkeypatch.setattr(
-        audit_mod.subprocess, "run", _fake_subprocess_run(pass_for=())
-    )
+    monkeypatch.setattr(audit_mod.subprocess, "run", _fake_subprocess_run(pass_for=()))
     monkeypatch.setattr(audit_mod, "DEFAULT_AUDIT_DIR", tmp_path / ".audit")
     rc = audit_mod.main([str(pdf), "--strict", "--all"])
     assert rc == 1
@@ -250,9 +238,7 @@ def test_main_writes_json_and_markdown(tmp_path, monkeypatch):
     monkeypatch.setattr(audit_mod, "DEFAULT_AUDIT_DIR", tmp_path / ".audit")
     json_path = tmp_path / "report.json"
     md_path = tmp_path / "report.md"
-    rc = audit_mod.main([
-        str(pdf), "--all", "--json", str(json_path), "--markdown", str(md_path)
-    ])
+    rc = audit_mod.main([str(pdf), "--all", "--json", str(json_path), "--markdown", str(md_path)])
     assert rc == 0
     assert json_path.exists()
     assert md_path.exists()
@@ -269,15 +255,20 @@ def test_main_filters_by_registry_when_no_all(tmp_path, monkeypatch):
     _make_pdf(tmp_path / "build" / "jobs" / "unwanted.pdf")
     meta = tmp_path / "meta.yaml"
     meta.write_text(
-        "documents:\n"
-        "  wanted:\n    src: src/papers/wanted.tex\n",
+        "documents:\n  wanted:\n    src: src/papers/wanted.tex\n",
         encoding="utf-8",
     )
-    rc = audit_mod.main([
-        str(tmp_path / "build"), "--meta", str(meta),
-        "--json", str(tmp_path / "r.json"),
-        "--markdown", str(tmp_path / "r.md"),
-    ])
+    rc = audit_mod.main(
+        [
+            str(tmp_path / "build"),
+            "--meta",
+            str(meta),
+            "--json",
+            str(tmp_path / "r.json"),
+            "--markdown",
+            str(tmp_path / "r.md"),
+        ]
+    )
     assert rc == 0
     report = json.loads((tmp_path / "r.json").read_text())
     assert report["summary"]["pdfs"] == 1

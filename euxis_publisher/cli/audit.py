@@ -39,7 +39,7 @@ import os
 import shutil
 import subprocess
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 try:
@@ -185,17 +185,16 @@ def audit(
 
     Returns the report dict (see audit_report_schema in docs).
     """
-    started = datetime.now(timezone.utc).isoformat()
+    started = datetime.now(UTC).isoformat()
     checks = []
     for pdf in pdfs:
         for flavour, label, _block in flavours:
             checks.append(_verapdf(pdf, flavour, timeout=timeout))
-    finished = datetime.now(timezone.utc).isoformat()
+    finished = datetime.now(UTC).isoformat()
 
     # Aggregate per-PDF and per-flavour stats.
     by_pdf = {}
-    by_flavour = {f[0]: {"pass": 0, "fail": 0, "skip": 0, "error": 0}
-                  for f in flavours}
+    by_flavour = {f[0]: {"pass": 0, "fail": 0, "skip": 0, "error": 0} for f in flavours}
     for c in checks:
         pdf = c["pdf"]
         by_pdf.setdefault(pdf, []).append(c)
@@ -215,8 +214,7 @@ def audit(
         "verapdf_present": _have_verapdf(),
         "started_at": started,
         "finished_at": finished,
-        "flavours": [{"id": f[0], "label": f[1], "blocking": f[2]}
-                     for f in flavours],
+        "flavours": [{"id": f[0], "label": f[1], "blocking": f[2]} for f in flavours],
         "summary": summary,
         "by_flavour": by_flavour,
         "by_pdf": by_pdf,
@@ -239,8 +237,9 @@ def render_markdown(report: dict) -> str:
     lines.append("")
     lines.append(f"- PDFs audited: **{s['pdfs']}**")
     lines.append(f"- Total checks: **{s['checks']}**")
-    lines.append(f"- PASS: **{s['pass']}**, FAIL: **{s['fail']}**, "
-                 f"SKIP: {s['skip']}, ERROR: {s['error']}")
+    lines.append(
+        f"- PASS: **{s['pass']}**, FAIL: **{s['fail']}**, SKIP: {s['skip']}, ERROR: {s['error']}"
+    )
     lines.append("")
     lines.append("## Per-flavour")
     lines.append("")
@@ -254,8 +253,7 @@ def render_markdown(report: dict) -> str:
     lines.append("")
     lines.append("## Per-PDF")
     lines.append("")
-    lines.append("| PDF | " + " | ".join(f"`{f['id']}`"
-                                          for f in report["flavours"]) + " |")
+    lines.append("| PDF | " + " | ".join(f"`{f['id']}`" for f in report["flavours"]) + " |")
     lines.append("|---" + "|---" * len(report["flavours"]) + "|")
     for pdf, checks in report["by_pdf"].items():
         row = [f"`{Path(pdf).name}`"]
@@ -382,8 +380,7 @@ def main(argv=None):
         )
         return 1
     if args.strict and _is_blocking(report):
-        print("STRICT MODE: blocking-flavour failures detected.",
-              file=sys.stderr)
+        print("STRICT MODE: blocking-flavour failures detected.", file=sys.stderr)
         return 1
     return 0
 

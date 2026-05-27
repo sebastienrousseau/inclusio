@@ -21,7 +21,6 @@ from textwrap import dedent
 
 import pytest
 
-
 # Classes to exercise. Tuple format: (class_name, class_options).
 CLASSES = [
     ("pub-base", ""),

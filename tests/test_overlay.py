@@ -19,8 +19,8 @@ import pytest
 
 from euxis_publisher.tools.overlay import merge, resolve
 
-
 # ── merge: dicts ────────────────────────────────────────────────────────
+
 
 def test_merge_dicts_recursive():
     base = {"a": 1, "b": {"x": 1, "y": 2}}
@@ -59,6 +59,7 @@ def test_merge_empty_overlay_returns_base_copy():
 
 # ── merge: lists ────────────────────────────────────────────────────────
 
+
 def test_merge_lists_overlay_replaces_base():
     """Lists are replaced wholesale — reordering matters for a CV."""
     assert merge({"items": [1, 2, 3]}, {"items": [4, 5]}) == {"items": [4, 5]}
@@ -70,6 +71,7 @@ def test_merge_list_in_overlay_replaces_dict_in_base():
 
 # ── merge: scalars ──────────────────────────────────────────────────────
 
+
 def test_merge_scalar_overlay_replaces_scalar_base():
     assert merge({"a": "old"}, {"a": "new"}) == {"a": "new"}
 
@@ -79,6 +81,7 @@ def test_merge_scalar_overlay_replaces_dict_base():
 
 
 # ── merge: deletion via None ────────────────────────────────────────────
+
 
 def test_merge_none_in_overlay_deletes_key():
     assert merge({"a": 1, "b": 2}, {"a": None}) == {"b": 2}
@@ -95,6 +98,7 @@ def test_merge_none_in_overlay_does_not_add_missing_key():
 
 # ── merge: edge types ───────────────────────────────────────────────────
 
+
 def test_merge_top_level_scalar_overlay_wins():
     assert merge(1, 2) == 2
 
@@ -109,6 +113,7 @@ def test_merge_dict_into_list_overlay_wins():
 
 
 # ── resolve ─────────────────────────────────────────────────────────────
+
 
 def test_resolve_no_inherits_returns_overlay_unchanged():
     overlay = {"name": "Alice", "title": "CTO"}
