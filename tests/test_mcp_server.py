@@ -240,11 +240,17 @@ def test_create_server_without_mcp_installed_raises(monkeypatch):
 
 
 def _extract_structured(call_tool_result):
-    """FastMCP `call_tool` returns (list[Content], structured_dict?) in
-    recent versions; older versions return just list[Content]. Accept
-    both shapes."""
+    """FastMCP `call_tool` returns (list[Content], structured_dict?)
+    in 3.x. The structured payload for primitive / list returns is
+    wrapped under {"result": <value>} — unwrap that. For dict returns
+    the dict is returned directly. Older FastMCP returns just
+    list[Content]; fall back to parsing the first text payload as JSON.
+    """
     if isinstance(call_tool_result, tuple) and len(call_tool_result) >= 2:
-        return call_tool_result[1]
+        payload = call_tool_result[1]
+        if isinstance(payload, dict) and set(payload.keys()) == {"result"}:
+            return payload["result"]
+        return payload
     # Fallback: parse JSON from the first text content.
     items = (
         call_tool_result
