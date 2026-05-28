@@ -14,7 +14,7 @@ on:
 
 permissions:
   contents: write          # create release, upload artefacts
-  id-token: write          # sigstore / attest-build-provenance OIDC
+  id-token: write          # sigstore / attest-build-provenance OIDC + PyPI Trusted Publishing
   attestations: write      # attest-build-provenance writes here
 
 jobs:
@@ -75,3 +75,26 @@ jobs:
           files: |
             dist/*.tar.gz
             dist/*.whl
+
+      - name: Publish to PyPI (Trusted Publishing)
+        # Gated on the `PYPI_TRUSTED_PUBLISHING` repo variable so the
+        # workflow stays green before PyPI is wired up.
+        #
+        # To enable:
+        #   1. Configure a Trusted Publisher on PyPI:
+        #      https://pypi.org/manage/account/publishing/
+        #      Owner: sebastienrousseau, Repo: euxis-publisher,
+        #      Workflow: release.yml, Environment: pypi
+        #   2. Add `pypi` to repo environments (Settings → Environments)
+        #      and re-add the `environment:` block to this job.
+        #   3. Set repo variable `PYPI_TRUSTED_PUBLISHING=true`
+        #      (Settings → Secrets and variables → Actions → Variables).
+        #
+        # Until enabled, the GitHub Release above is already published
+        # and the wheel/sdist are downloadable from the release page;
+        # a manual `twine upload` remains available as a fallback.
+        if: vars.PYPI_TRUSTED_PUBLISHING == 'true'
+        uses: pypa/gh-action-pypi-publish@76f52bc884231f62b9a034ebfe128415bbaabdfc  # v1.12.4
+        with:
+          packages-dir: dist/
+          print-hash: true

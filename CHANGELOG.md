@@ -4,6 +4,85 @@ All notable changes to **Euxis Publisher** are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and [Conventional Commits](https://www.conventionalcommits.org/).
 
+## [0.1.0] — 2026-05-28
+
+First public release of the **Euxis Publisher** engine. Production-
+ready LaTeX-first publishing pipeline with EAA / WCAG 2.2 AA
+accessibility enforcement, multi-format emission, content
+authenticity, and an MCP server for agent integration.
+
+### Highlights
+
+- **PDF/UA-2 + WTPDF + PDF/A-4f triple-conformance** via the LaTeX
+  kernel's `tagpdf` integration. Every published PDF passes the
+  veraPDF gate on all three flavours (27/27 on the current registered
+  set: bio, cv, faq, user-guide, 4 papers, 1 patent).
+- **CI-enforced quality bar**: 98 % code coverage (gate at 97 %),
+  100 % docstring coverage (gate at 100 %), ruff lint + format,
+  signed-commits PR gate, EAA strict audit, hot-path benchmark
+  surface.
+- **Multi-format emission**: HTML5, JATS XML, EPUB3 through Pandoc
+  with accessibility metadata.
+- **LLM-augmented judges**: ATS (Workday/Greenhouse/Lever heuristic)
+  + citation grounding + JD-to-CV fit, with optional local
+  (llama.cpp) or cloud (Anthropic / OpenAI BYO-key) rerank that
+  falls back to heuristic-only when the LLM is unreachable.
+- **Content provenance**: C2PA Content Credentials (c2patool) +
+  PAdES eIDAS-aligned signatures (B-B / B-T / B-LT / B-LTA via
+  pyhanko) + SLSA L3 build provenance via
+  `actions/attest-build-provenance`.
+- **MCP server** (FastMCP) exposing the read + audit surface so
+  Claude Code / other agents can `list_docs`, `audit_pdf`, `render`,
+  and reach the project manifest as a resource.
+- **JSON Resume importer** — convert jsonresume.org v1 documents
+  to the Euxis CV YAML schema.
+- **Brief-driven tailoring** — generate ATS-clean CV variants
+  against a job description with deterministic British-English
+  cleanup and consistency lint.
+
+### Sprint timeline
+
+This release bundles ten sprints of work:
+
+| Sprint | Theme | Issues |
+|---|---|---|
+| 0 | Operational hygiene + audit foundation | #1, #2 |
+| 1 | Hand-crafted XMP + AES-256 + draft watermark | #3 |
+| 2 | Per-class tagged-PDF retrofit (PDF/UA-2 + PDF/A-4f) | #4 |
+| 3 | Euxis audit CLI + EAA / accessibility CI gate | #5 |
+| 4 | Engine validation + ruff config + SLSA L3 | #5, #9 |
+| 5 | Tagged-PDF Sprint-5 metadata refactor + JSON Resume importer | #6 |
+| 6 | MCP server + multi-format emitters | #7, #10 |
+| 7 | LLM judges (ATS / citations / JD fit) | #8, #12 |
+| 8 | C2PA Content Credentials | #11 |
+| 8.5 | PAdES eIDAS signatures | #11 |
+| Quality | 100 % docstrings + 98 % coverage + benchmarks | — |
+
+### Installation
+
+```bash
+pip install euxis-publisher                    # engine + CLI
+pip install 'euxis-publisher[mcp]'             # adds FastMCP server
+pip install 'euxis-publisher[provenance]'      # adds pyhanko (PAdES)
+pip install 'euxis-publisher[dev]'             # adds pytest + ruff + sphinx
+```
+
+### Requirements
+
+- Python ≥ 3.11 (tested on 3.11 / 3.12 / 3.13).
+- LaTeX toolchain (LuaLaTeX + latexmk) for PDF builds.
+- Optional: veraPDF for the audit gate; Pandoc for HTML / JATS /
+  EPUB; c2patool for Content Credentials; pyhanko for PAdES.
+
+### Repository layout
+
+The engine ships as a stand-alone Python package; private content
+repositories (`euxis-publisher-private` and similar) consume it via
+`pip install euxis-publisher` and supply their own `data/meta.yaml`
++ `src/*.tex` overlay through `--content-dir` or
+`EUXIS_CONTENT_DIR`. The public engine surface is fully test-covered
+without any private content.
+
 ## [Unreleased]
 
 ### Added

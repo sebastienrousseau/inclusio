@@ -55,3 +55,9 @@ docs/_build/
 
 # pytest-benchmark output
 .benchmarks/
+
+# Python build artefacts
+*.egg-info/
+dist/
+build/lib/
+build/bdist*/
