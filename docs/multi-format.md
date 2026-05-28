@@ -1,10 +1,10 @@
 # Multi-format emission — `euxis_publisher.emit`
 
-Sprint 6 (S6.2 + S6.3) ships HTML5 and JATS XML emitters that
-convert a built LaTeX document into single-source multi-format output.
-Closes Forcing Function #3 in
-[`strategy-2026.md`](strategy-2026.md): single-source PDF + HTML + JATS
-(EPUB-A coming in S6.6).
+Sprint 6 (S6.2 + S6.3 + S6.6) ships HTML5, JATS XML, and EPUB3
+emitters that convert a built LaTeX document into single-source
+multi-format output. Closes Forcing Function #3 in
+[`strategy-2026.md`](strategy-2026.md): single-source PDF + HTML +
+JATS + EPUB.
 
 Both emitters wrap Pandoc — the engine doesn't reimplement a LaTeX→X
 converter, just composes the right `pandoc` flags and post-processes
@@ -37,7 +37,6 @@ result = pandoc.emit_html(
     lang="en-GB",                          # BCP-47 language code
 )
 print(result.output_path)   # build/papers/whisper-paper.html
-print(result.bytes)         # size of generated artefact
 
 # JATS XML 1.3 (archiving DTD; Crossref / PMC / JATS4R compatible)
 result = pandoc.emit_jats(
@@ -48,12 +47,22 @@ result = pandoc.emit_jats(
 )
 print(result.output_path)   # build/papers/whisper-paper.xml
 
-# Both at once
+# EPUB3 (DAISY ACE prerequisites; epubcheck-clean)
+result = pandoc.emit_epub(
+    tex_path=Path("src/papers/whisper.tex"),
+    output_dir=Path("build/papers"),
+    doc_id="whisper-paper",
+    title="Real-Time ASR with Whisper",
+    lang="en-GB",
+)
+print(result.output_path)   # build/papers/whisper-paper.epub
+
+# All three at once
 results = pandoc.emit_all(
     tex_path=Path("src/papers/whisper.tex"),
     output_dir=Path("build/papers"),
     doc_id="whisper-paper",
-    formats=["html", "jats"],   # default: both
+    formats=["html", "jats", "epub"],   # default: all three
 )
 ```
 
@@ -81,6 +90,25 @@ Known limitations (Sprint 6 scope):
   to `--mathml` when targeting accessibility-strict readers.
 - No automatic table-of-contents `role="doc-toc"` injection yet —
   Sprint 7 work.
+
+## EPUB3 — what you get
+
+`emit_epub` uses Pandoc's `--to epub3 --standalone --mathjax` with an
+explicit `--metadata=lang:<bcp47>`. Output is a valid EPUB3 archive
+(PK ZIP container) that:
+
+- Passes `epubcheck` structural validation.
+- Includes a TOC `<nav epub:type="toc">` from `\section` boundaries.
+- Carries the BCP-47 language code on the OPF metadata for TTS
+  engines (Apple Books, Thorium, Voice Dream).
+- MathJax renders inline + display math without per-reader CSS hacks.
+
+What's NOT yet shipped (Sprint 8):
+
+- DAISY ACE validation in the build gate.
+- Schema.org `accessibilityFeature` / `accessibilityHazard` metadata
+  for WCAG-equivalent EPUB-A conformance signalling.
+- Cover-image extraction from `\titlegraphic` / front-matter assets.
 
 ## JATS XML — what you get
 
@@ -136,7 +164,9 @@ multi-format build without shelling out. See
 |---|---|---|
 | S6.2 | JATS XML emitter via Pandoc | ✅ done |
 | S6.3 | HTML5 emitter via Pandoc + accessibility post-process | ✅ done |
-| S6.6 | EPUB-A emitter | ⏸️ Sprint 7 (needs `epubcheck` + DAISY ACE) |
-| S7.x | CLI wiring (`euxis-publisher emit`) + JATS4R validator gate | ⏸️ Sprint 7 |
+| S6.6 | EPUB3 emitter (epubcheck-clean) | ✅ done |
+| S7.x | CLI wiring (`euxis-publisher emit`) | ✅ done |
+| S8.x | DAISY ACE EPUB-A validation gate | ⏸️ Sprint 8 |
+| S8.x | JATS4R validator gate + Crossref `<xref>` resolver | ⏸️ Sprint 8 |
 | S7.x | Crossref reference resolution for JATS `<xref>` placeholders | ⏸️ Sprint 7 |
 | S8.x | `axe-core` / `pa11y-ci` accessibility gate on HTML output | ⏸️ Sprint 8 |

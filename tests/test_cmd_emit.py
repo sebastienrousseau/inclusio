@@ -69,10 +69,10 @@ def stub_emit(monkeypatch):
                 "title": title,
             }
         )
-        formats = formats or ["html", "jats"]
+        formats = formats or ["html", "jats", "epub"]
         results = []
         for fmt in formats:
-            ext = {"html": "html", "jats": "xml"}[fmt]
+            ext = {"html": "html", "jats": "xml", "epub": "epub"}[fmt]
             out_path = output_dir / f"{doc_id}.{ext}"
             output_dir.mkdir(parents=True, exist_ok=True)
             out_path.write_text(f"stub {fmt}", encoding="utf-8")

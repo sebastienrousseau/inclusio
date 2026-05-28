@@ -246,10 +246,80 @@ def emit_jats(
     )
 
 
+# ── EPUB3 ───────────────────────────────────────────────────────────────
+
+
+def emit_epub(
+    tex_path: Path,
+    output_dir: Path,
+    doc_id: str,
+    title: str = "",
+    lang: str = "en-GB",
+    timeout: int = 60,
+) -> EmitResult:
+    """Convert *tex_path* to EPUB3 (with accessibility metadata).
+
+    Uses Pandoc's `--to epub3` with `--standalone --mathjax` and an
+    explicit `--metadata=lang:<bcp47>` so reading systems present the
+    right language to TTS engines. Full EPUB-A (DAISY ACE) validation
+    is a separate Sprint 8 work item — this emitter targets EPUB3
+    structural compliance (the DAISY ACE prerequisites) but does NOT
+    yet inject the `accessibilityFeature` / `accessibilityHazard`
+    Schema.org metadata. epubcheck-clean output is the immediate
+    target; ACE-clean is Sprint 8.
+
+    Args:
+        tex_path: path to the source `.tex` file.
+        output_dir: directory to write `<doc_id>.epub` into.
+        doc_id: stable id used as the filename stem.
+        title: optional metadata title (used for the `<dc:title>` and
+            the reading-system navigation pane).
+        lang: BCP-47 language code (Schema.org accessibilityLang).
+        timeout: subprocess timeout in seconds.
+
+    Returns:
+        EmitResult with `.format == "epub"`.
+
+    Raises:
+        PandocMissing: if pandoc is not installed.
+        subprocess.CalledProcessError: if Pandoc fails.
+    """
+    pandoc = _require_pandoc()
+    output_dir.mkdir(parents=True, exist_ok=True)
+    out_path = output_dir / f"{doc_id}.epub"
+
+    cmd = [
+        pandoc,
+        "--from=latex",
+        "--to=epub3",
+        "--standalone",
+        "--mathjax",
+        f"--metadata=lang:{lang}",
+        f"--output={out_path}",
+        str(tex_path),
+    ]
+    if title:
+        cmd.insert(-1, f"--metadata=title:{title}")
+
+    result = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
+    if result.returncode != 0:
+        raise subprocess.CalledProcessError(
+            result.returncode, cmd, output=result.stdout, stderr=result.stderr
+        )
+
+    return EmitResult(
+        doc_id=doc_id,
+        format="epub",
+        output_path=out_path,
+        bytes=out_path.stat().st_size,
+        stderr=result.stderr or "",
+    )
+
+
 # ── Multi-format orchestration ──────────────────────────────────────────
 
 
-SUPPORTED_FORMATS = ("html", "jats")
+SUPPORTED_FORMATS = ("html", "jats", "epub")
 
 
 def emit_all(
@@ -265,11 +335,11 @@ def emit_all(
     Args:
         tex_path: source .tex file.
         output_dir: parent dir for outputs (per-format extension chosen
-            by the emitter — `.html`, `.xml`).
+            by the emitter — `.html`, `.xml`, `.epub`).
         doc_id: filename stem for outputs.
         formats: subset of SUPPORTED_FORMATS. Default: all of them.
         title: shared metadata title.
-        lang: BCP-47 language code (HTML emitter only).
+        lang: BCP-47 language code (HTML + EPUB emitters).
 
     Returns:
         List of EmitResult, one per format. Failures raise rather than
@@ -283,6 +353,8 @@ def emit_all(
             results.append(emit_html(tex_path, output_dir, doc_id, title=title, lang=lang))
         elif fmt == "jats":
             results.append(emit_jats(tex_path, output_dir, doc_id, title=title))
+        elif fmt == "epub":
+            results.append(emit_epub(tex_path, output_dir, doc_id, title=title, lang=lang))
         else:
             raise ValueError(f"Unknown emit format: {fmt!r} (expected one of {SUPPORTED_FORMATS})")
     return results
