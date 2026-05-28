@@ -8,6 +8,39 @@ and [Conventional Commits](https://www.conventionalcommits.org/).
 
 ### Added
 
+- **Sprint 7 (S7.1) — local llama.cpp HTTP adapter for LLM judges (2026-05-28)**:
+  - `euxis_publisher/judge/local_llm.py` — stdlib-only HTTP client
+    over llama.cpp's `/completion` endpoint. No `httpx` / `requests`
+    dependency. `LocalLLM` dataclass with `complete()`,
+    `complete_json()` (handles ```json fenced output), and
+    `is_available()` probe.
+  - Error taxonomy: `LLMError` (base), `LLMUnavailable`
+    (ECONNREFUSED / DNS), `LLMTimeout`, `LLMParseError`.
+  - `score_cv_with_llm(plain_text, llm)` in `ats.py` — runs heuristic
+    first, asks the LLM for ONE additional finding, clamps the
+    adjustment to [-15, +5]. Falls back to heuristic-only with an
+    info-level breadcrumb when the LLM is unreachable.
+  - CLI flags `--llm-url <url>` + `--llm-timeout <seconds>` on
+    `judge`. `--llm-url http://localhost:8080` flips on the rerank.
+  - `build_ats_rerank_prompt(plain_text_cv)` helper composes the
+    rerank prompt + schema; CV text is truncated to 6 KB for short-
+    context models.
+  - 23 tests in `tests/test_judge_local_llm.py` covering argv
+    composition, default values, stop sequences, URL trailing
+    slash, raw payload propagation, every error path
+    (ECONNREFUSED, socket timeout, native TimeoutError, non-JSON
+    body, malformed JSON completion), `complete_json` fence
+    stripping (3 forms), `is_available` true/false, prompt builder
+    truncation, rerank merge + clamp (lower + upper), graceful
+    fallback on `LLMUnavailable` + `LLMParseError`, empty-finding
+    handling.
+  - Docs (`docs/judges.md`) updated with LLM rerank section,
+    llama-server startup recipe, Python API, JSON schema for the
+    rerank contract.
+
+  Closes Sprint 7 (S7.1). Unlocks S7.2 (citation grounding) and
+  S7.4 (JD-CV reranker) on the same `LocalLLM` surface.
+
 - **Sprint 6 (S6.6) — EPUB3 emitter (2026-05-28)**:
   - `euxis_publisher/emit/pandoc.py::emit_epub` — Pandoc `--to epub3
     --standalone --mathjax` with BCP-47 language metadata. Closes

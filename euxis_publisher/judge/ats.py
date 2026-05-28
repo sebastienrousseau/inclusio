@@ -142,6 +142,64 @@ def score_cv(plain_text: str) -> JudgeReport:
     return report
 
 
+def score_cv_with_llm(plain_text: str, llm) -> JudgeReport:
+    """Run the heuristic + ask a local LLM for ONE additional finding.
+
+    The LLM is used as a *re-ranker*, not a replacement. The heuristic
+    catches mechanical issues (missing sections, killer phrases); the
+    LLM catches semantic issues (tone-match, role-level mismatch) the
+    heuristic can't see.
+
+    Args:
+        plain_text: ATS-safe CV text (output of `render_text`).
+        llm: a `LocalLLM` instance (or any duck-type with the same
+            `complete_json(prompt)` surface) — typically a llama.cpp
+            HTTP wrapper. When the call fails (`LLMUnavailable`,
+            `LLMTimeout`, `LLMParseError`), the heuristic result is
+            returned unchanged with a single info-level finding
+            documenting the LLM failure.
+
+    Returns:
+        A merged JudgeReport. The LLM's adjustment is bounded to
+        [-15, +5] to keep one bad prompt from dominating the grade.
+    """
+    # Lazy import to keep the heuristic import-light. Note that
+    # `score_cv_with_llm` callers must opt-in to the LLM dep.
+    from . import local_llm as _llm_mod
+
+    report = score_cv(plain_text)
+    prompt = _llm_mod.build_ats_rerank_prompt(plain_text)
+    try:
+        payload = llm.complete_json(prompt)
+    except _llm_mod.LLMError as exc:
+        report.findings.append(
+            Finding(
+                check="llm_rerank",
+                severity="info",
+                message=f"LLM rerank unavailable: {exc}",
+                deduction=0,
+            )
+        )
+        return report
+
+    adj = int(payload.get("score_adjustment", 0))
+    adj = max(-15, min(5, adj))  # clamp
+    finding_payload = payload.get("finding") or {}
+    if finding_payload.get("message"):
+        report.findings.append(
+            Finding(
+                check=str(finding_payload.get("check", "llm_rerank")),
+                severity=str(finding_payload.get("severity", "info")),
+                message=str(finding_payload["message"]),
+                deduction=int(finding_payload.get("deduction", 0)),
+            )
+        )
+    report.score = max(0, min(100, report.score + adj))
+    report.metrics["llm_adjustment"] = adj
+    _finalise_grade(report)
+    return report
+
+
 # ── Individual checks ──────────────────────────────────────────────────
 
 
