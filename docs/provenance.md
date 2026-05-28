@@ -75,7 +75,7 @@ The minimal manifest the engine emits:
 
 ```json
 {
-  "claim_generator": "euxis-publisher/0.1.0",
+  "claim_generator": "inclusio/0.1.0",
   "title": "Whisper Paper",
   "format": "application/pdf",
   "assertions": [
@@ -140,7 +140,7 @@ jurisdictions (Regulation EU 910/2014 + ETSI EN 319 142). Wraps
 ### Install
 
 ```bash
-pip install 'euxis-publisher[provenance]'   # adds pyhanko>=0.22
+pip install 'inclusio[provenance]'   # adds pyhanko>=0.22
 ```
 
 ### Baselines

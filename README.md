@@ -9,11 +9,11 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/sebastienrousseau/euxis-publisher/actions/workflows/engine-validation.yml"><img src="https://img.shields.io/github/actions/workflow/status/sebastienrousseau/euxis-publisher/engine-validation.yml?style=for-the-badge&logo=github" alt="Engine Validation" /></a>
-  <a href="https://github.com/sebastienrousseau/euxis-publisher/actions/workflows/verapdf.yml"><img src="https://img.shields.io/github/actions/workflow/status/sebastienrousseau/euxis-publisher/verapdf.yml?style=for-the-badge&logo=github&label=veraPDF" alt="veraPDF Audit" /></a>
-  <a href="https://github.com/sebastienrousseau/euxis-publisher"><img src="https://img.shields.io/badge/Python-%3E%3D3.11-3776AB?style=for-the-badge&logo=python&logoColor=white" alt="Python >= 3.11" /></a>
-  <a href="https://github.com/sebastienrousseau/euxis-publisher"><img src="https://img.shields.io/badge/PDF%2FUA--2%20%7C%20WTPDF%20%7C%20PDF%2FA--4f-blue?style=for-the-badge" alt="PDF/UA-2 | WTPDF | PDF/A-4f" /></a>
-  <a href="https://github.com/sebastienrousseau/euxis-publisher/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-MIT-black?style=for-the-badge" alt="License" /></a>
+  <a href="https://github.com/sebastienrousseau/inclusio/actions/workflows/engine-validation.yml"><img src="https://img.shields.io/github/actions/workflow/status/sebastienrousseau/inclusio/engine-validation.yml?style=for-the-badge&logo=github" alt="Engine Validation" /></a>
+  <a href="https://github.com/sebastienrousseau/inclusio/actions/workflows/verapdf.yml"><img src="https://img.shields.io/github/actions/workflow/status/sebastienrousseau/inclusio/verapdf.yml?style=for-the-badge&logo=github&label=veraPDF" alt="veraPDF Audit" /></a>
+  <a href="https://github.com/sebastienrousseau/inclusio"><img src="https://img.shields.io/badge/Python-%3E%3D3.11-3776AB?style=for-the-badge&logo=python&logoColor=white" alt="Python >= 3.11" /></a>
+  <a href="https://github.com/sebastienrousseau/inclusio"><img src="https://img.shields.io/badge/PDF%2FUA--2%20%7C%20WTPDF%20%7C%20PDF%2FA--4f-blue?style=for-the-badge" alt="PDF/UA-2 | WTPDF | PDF/A-4f" /></a>
+  <a href="https://github.com/sebastienrousseau/inclusio/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-MIT-black?style=for-the-badge" alt="License" /></a>
 </p>
 
 ---
@@ -42,20 +42,20 @@ make coverage
 Publish against the private content repository with the shell-agnostic form:
 
 ```bash
-make publish CONTENT_DIR=/absolute/path/to/euxis-publisher-private
+make publish CONTENT_DIR=/absolute/path/to/inclusio-private
 ```
 
 Use the shell-specific form only when you need it:
 
 ```bash
 # Bash / Zsh / POSIX sh
-EUXIS_CONTENT_DIR=/absolute/path/to/euxis-publisher-private make publish
+INCLUSIO_CONTENT_DIR=/absolute/path/to/inclusio-private make publish
 
 # fish
-env EUXIS_CONTENT_DIR=/absolute/path/to/euxis-publisher-private make publish
+env INCLUSIO_CONTENT_DIR=/absolute/path/to/inclusio-private make publish
 
 # PowerShell
-$env:EUXIS_CONTENT_DIR = "/absolute/path/to/euxis-publisher-private"
+$env:INCLUSIO_CONTENT_DIR = "/absolute/path/to/inclusio-private"
 make publish
 ```
 
@@ -71,7 +71,7 @@ compiling PDFs.
 ## Overview
 
 Use this repository as the public engine layer of the Euxis publishing stack.
-Keep private content in `euxis-publisher-private`.
+Keep private content in `inclusio-private`.
 
 You get:
 
@@ -124,7 +124,7 @@ graph TD
 | `make list` | inspect registered documents |
 | `make draft` | compile all public documents in draft mode |
 | `make final` | compile camera-ready output from the current content root |
-| `make publish CONTENT_DIR=/absolute/path/to/euxis-publisher-private` | auto-tailor briefs from `data/jobs/` and compile the full private set |
+| `make publish CONTENT_DIR=/absolute/path/to/inclusio-private` | auto-tailor briefs from `data/jobs/` and compile the full private set |
 | `make render` | render Jinja2 templates to LaTeX |
 | `make render-md` | render Markdown output |
 | `make blog` | render blog posts |

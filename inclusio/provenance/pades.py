@@ -82,7 +82,7 @@ def _require_pyhanko() -> None:
     if not _PYHANKO_AVAILABLE:
         raise PAdESMissing(
             "pyhanko is required for PAdES signing. "
-            "Install via `pip install 'euxis-publisher[provenance]'` or "
+            "Install via `pip install 'inclusio[provenance]'` or "
             "`pip install 'pyhanko[pkcs11]>=0.22'` directly. "
             "See https://pyhanko.readthedocs.io/en/latest/cli-guide/signing.html."
         )

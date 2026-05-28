@@ -144,7 +144,7 @@
         pdfstandard=a-4}\MessageBreak
       \space\space\string\documentclass[final,tagged]{pub-paper}\MessageBreak
       Or remove [tagged] and use [final-untagged] during migration.%
-    }{See docs/tagged-pdf.md in the euxis-publisher repository.}%
+    }{See docs/tagged-pdf.md in the inclusio repository.}%
   \fi
 \else
   %% Legacy / non-tagged path. If tagpdf happens to be loaded later by

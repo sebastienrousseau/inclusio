@@ -51,8 +51,8 @@ except ImportError:  # pragma: no cover - PyYAML is a hard dep at install time
 SCRIPT_DIR = Path(__file__).resolve().parent
 PROJECT_ROOT = SCRIPT_DIR.parent.parent
 
-# CONTENT_ROOT: where build/ lives. Honours EUXIS_CONTENT_DIR.
-_env_content = os.environ.get("EUXIS_CONTENT_DIR")
+# CONTENT_ROOT: where build/ lives. Honours INCLUSIO_CONTENT_DIR.
+_env_content = os.environ.get("INCLUSIO_CONTENT_DIR")
 CONTENT_ROOT = Path(_env_content).resolve() if _env_content else PROJECT_ROOT
 DEFAULT_BUILD_DIR = CONTENT_ROOT / "build"
 DEFAULT_AUDIT_DIR = DEFAULT_BUILD_DIR / ".audit"
@@ -300,7 +300,7 @@ def main(argv=None):
         "target",
         nargs="?",
         default=str(DEFAULT_BUILD_DIR),
-        help="PDF file or directory to audit (default: $EUXIS_CONTENT_DIR/build)",
+        help="PDF file or directory to audit (default: $INCLUSIO_CONTENT_DIR/build)",
     )
     parser.add_argument(
         "--flavours",

@@ -9,7 +9,7 @@ remains importable without it.
 
 Coverage focus:
   - `create_server()` returns a configured FastMCP instance
-  - Tool functions resolve content from EUXIS_CONTENT_DIR
+  - Tool functions resolve content from INCLUSIO_CONTENT_DIR
   - Resource handlers degrade gracefully when files are absent
   - CLI `main()` reports the missing-dep error path
 """
@@ -50,7 +50,7 @@ def content_root(tmp_path, monkeypatch):
         "    pdf_a: a-4f\n",
         encoding="utf-8",
     )
-    monkeypatch.setenv("EUXIS_CONTENT_DIR", str(tmp_path))
+    monkeypatch.setenv("INCLUSIO_CONTENT_DIR", str(tmp_path))
     return tmp_path
 
 
@@ -60,7 +60,7 @@ def content_root(tmp_path, monkeypatch):
 def test_create_server_returns_fastmcp_instance():
     app = mcp_server.create_server()
     assert app is not None
-    assert app.name == "euxis-publisher"
+    assert app.name == "inclusio"
 
 
 def test_create_server_registers_tools(content_root):
@@ -81,28 +81,28 @@ def test_create_server_registers_resources(content_root):
 
     resources = asyncio.run(app.list_resources())
     uris = {str(r.uri) for r in resources}
-    assert "euxis://meta" in uris
-    assert "euxis://audit/latest" in uris
-    assert "euxis://version" in uris
+    assert "inclusio://meta" in uris
+    assert "inclusio://audit/latest" in uris
+    assert "inclusio://version" in uris
 
 
 # ── _load_meta + _content_root ──────────────────────────────────────────
 
 
 def test_content_root_honours_env_var(tmp_path, monkeypatch):
-    monkeypatch.setenv("EUXIS_CONTENT_DIR", str(tmp_path))
+    monkeypatch.setenv("INCLUSIO_CONTENT_DIR", str(tmp_path))
     assert mcp_server._content_root() == tmp_path.resolve()
 
 
 def test_content_root_default_when_env_unset(monkeypatch):
-    monkeypatch.delenv("EUXIS_CONTENT_DIR", raising=False)
+    monkeypatch.delenv("INCLUSIO_CONTENT_DIR", raising=False)
     from inclusio.cli import build
 
     assert mcp_server._content_root() == build.CONTENT_ROOT
 
 
 def test_load_meta_returns_empty_when_no_yaml(tmp_path, monkeypatch):
-    monkeypatch.setenv("EUXIS_CONTENT_DIR", str(tmp_path))
+    monkeypatch.setenv("INCLUSIO_CONTENT_DIR", str(tmp_path))
     assert mcp_server._load_meta() == {}
 
 
@@ -133,7 +133,7 @@ def test_list_docs_tool_enumerates_manifest(content_root):
 
 
 def test_list_docs_returns_empty_list_when_no_manifest(tmp_path, monkeypatch):
-    monkeypatch.setenv("EUXIS_CONTENT_DIR", str(tmp_path))
+    monkeypatch.setenv("INCLUSIO_CONTENT_DIR", str(tmp_path))
     app = mcp_server.create_server()
     import asyncio
 
@@ -195,27 +195,27 @@ def test_meta_resource_returns_yaml_text(content_root):
     app = mcp_server.create_server()
     import asyncio
 
-    result = asyncio.run(app.read_resource("euxis://meta"))
+    result = asyncio.run(app.read_resource("inclusio://meta"))
     text = _resource_text(result)
     assert "whisper-paper" in text
     assert "pub-cv" in text
 
 
 def test_meta_resource_returns_empty_when_no_yaml(tmp_path, monkeypatch):
-    monkeypatch.setenv("EUXIS_CONTENT_DIR", str(tmp_path))
+    monkeypatch.setenv("INCLUSIO_CONTENT_DIR", str(tmp_path))
     app = mcp_server.create_server()
     import asyncio
 
-    result = asyncio.run(app.read_resource("euxis://meta"))
+    result = asyncio.run(app.read_resource("inclusio://meta"))
     assert _resource_text(result) == ""
 
 
 def test_audit_latest_resource_returns_empty_object_when_absent(tmp_path, monkeypatch):
-    monkeypatch.setenv("EUXIS_CONTENT_DIR", str(tmp_path))
+    monkeypatch.setenv("INCLUSIO_CONTENT_DIR", str(tmp_path))
     app = mcp_server.create_server()
     import asyncio
 
-    result = asyncio.run(app.read_resource("euxis://audit/latest"))
+    result = asyncio.run(app.read_resource("inclusio://audit/latest"))
     assert _resource_text(result) == "{}"
 
 
@@ -223,9 +223,9 @@ def test_version_resource_returns_engine_card(content_root):
     app = mcp_server.create_server()
     import asyncio
 
-    result = asyncio.run(app.read_resource("euxis://version"))
+    result = asyncio.run(app.read_resource("inclusio://version"))
     payload = json.loads(_resource_text(result))
-    assert payload["name"] == "euxis-publisher"
+    assert payload["name"] == "inclusio"
     assert "version" in payload
     assert "content_root" in payload
     assert payload["mcp_spec"] == "0.1"
@@ -273,7 +273,7 @@ def test_list_docs_impl_returns_manifest_records(content_root):
 
 
 def test_list_docs_impl_returns_empty_without_manifest(tmp_path, monkeypatch):
-    monkeypatch.setenv("EUXIS_CONTENT_DIR", str(tmp_path))
+    monkeypatch.setenv("INCLUSIO_CONTENT_DIR", str(tmp_path))
     assert mcp_server._list_docs_impl() == []
 
 
@@ -292,12 +292,12 @@ def test_meta_resource_impl_returns_yaml_text(content_root):
 
 
 def test_meta_resource_impl_returns_empty_when_no_yaml(tmp_path, monkeypatch):
-    monkeypatch.setenv("EUXIS_CONTENT_DIR", str(tmp_path))
+    monkeypatch.setenv("INCLUSIO_CONTENT_DIR", str(tmp_path))
     assert mcp_server._meta_resource_impl() == ""
 
 
 def test_audit_latest_resource_impl_returns_empty_object_when_absent(tmp_path, monkeypatch):
-    monkeypatch.setenv("EUXIS_CONTENT_DIR", str(tmp_path))
+    monkeypatch.setenv("INCLUSIO_CONTENT_DIR", str(tmp_path))
     assert mcp_server._audit_latest_resource_impl() == "{}"
 
 
@@ -310,7 +310,7 @@ def test_audit_latest_resource_impl_returns_existing_json(content_root):
 
 def test_version_resource_impl(content_root):
     payload = json.loads(mcp_server._version_resource_impl())
-    assert payload["name"] == "euxis-publisher"
+    assert payload["name"] == "inclusio"
     assert payload["mcp_spec"] == "0.1"
 
 

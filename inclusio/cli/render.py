@@ -33,8 +33,8 @@ PROJECT_ROOT = SCRIPT_DIR.parent.parent
 DEFAULT_SUBPROCESS_TIMEOUT = int(os.environ.get("EUXIS_SUBPROCESS_TIMEOUT", "300"))
 
 # CONTENT_ROOT: where content lives (data/, templates/, build/).
-# Defaults to PROJECT_ROOT; overridden by EUXIS_CONTENT_DIR env var.
-_env_content = os.environ.get("EUXIS_CONTENT_DIR")
+# Defaults to PROJECT_ROOT; overridden by INCLUSIO_CONTENT_DIR env var.
+_env_content = os.environ.get("INCLUSIO_CONTENT_DIR")
 CONTENT_ROOT = Path(_env_content).resolve() if _env_content else PROJECT_ROOT
 
 META_FILE = CONTENT_ROOT / "data" / "meta.yaml"

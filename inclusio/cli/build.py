@@ -38,9 +38,25 @@ AUTO_TAILOR_USE_AI = os.environ.get("EUXIS_AUTO_TAILOR_AI", "").lower() in {
 }
 
 # CONTENT_ROOT: where content lives (data/, src/, templates/, build/).
-# Defaults to PROJECT_ROOT; overridden by EUXIS_CONTENT_DIR env var or
+# Defaults to PROJECT_ROOT; overridden by INCLUSIO_CONTENT_DIR env var or
 # --content-dir CLI flag for split-repo workflows.
-_env_content = os.environ.get("EUXIS_CONTENT_DIR")
+#
+# Legacy `EUXIS_CONTENT_DIR` is honoured for one minor cycle (until
+# inclusio v0.3) with a DeprecationWarning, so content repositories
+# pinned to the old name keep working through the rename window.
+_env_content = os.environ.get("INCLUSIO_CONTENT_DIR")
+if _env_content is None:
+    _legacy_content = os.environ.get("EUXIS_CONTENT_DIR")
+    if _legacy_content is not None:
+        import warnings
+
+        warnings.warn(
+            "EUXIS_CONTENT_DIR is deprecated; use INCLUSIO_CONTENT_DIR. "
+            "Legacy support will be removed in inclusio v0.3.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        _env_content = _legacy_content
 CONTENT_ROOT = Path(_env_content).resolve() if _env_content else PROJECT_ROOT
 
 META_FILE = CONTENT_ROOT / "data" / "meta.yaml"
@@ -853,7 +869,7 @@ def cmd_assets(args, meta):
         sys.exit(1)
 
     env = os.environ.copy()
-    env["EUXIS_CONTENT_DIR"] = str(CONTENT_ROOT)
+    env["INCLUSIO_CONTENT_DIR"] = str(CONTENT_ROOT)
     result = subprocess.run(
         ["bash", str(script)],
         cwd=str(CONTENT_ROOT),
@@ -867,7 +883,7 @@ def cmd_lint(args, meta):
     """Run quality checks."""
     errors = 0
     env = os.environ.copy()
-    env["EUXIS_CONTENT_DIR"] = str(CONTENT_ROOT)
+    env["INCLUSIO_CONTENT_DIR"] = str(CONTENT_ROOT)
 
     # 1. Semantic check
     print("Running semantic check...")
@@ -952,7 +968,7 @@ def cmd_fix(args, meta):
     if getattr(args, "verbose", False):
         cmd.append("--verbose")
     env = os.environ.copy()
-    env["EUXIS_CONTENT_DIR"] = str(CONTENT_ROOT)
+    env["INCLUSIO_CONTENT_DIR"] = str(CONTENT_ROOT)
     result = subprocess.run(
         cmd,
         cwd=str(CONTENT_ROOT),
@@ -1108,7 +1124,7 @@ def cmd_provenance(args, meta):
     if not pdf_path.exists():
         print(
             f"ERROR: {pdf_path} not found. Run `make publish` (or "
-            "`euxis-publisher build --mode camera-ready`) first.",
+            "`inclusio build --mode camera-ready`) first.",
             file=sys.stderr,
         )
         sys.exit(1)
@@ -1498,7 +1514,7 @@ Commands:
     )
     parser.add_argument(
         "--content-dir",
-        help="External content directory (overrides EUXIS_CONTENT_DIR env var)",
+        help="External content directory (overrides INCLUSIO_CONTENT_DIR env var)",
     )
 
     subparsers = parser.add_subparsers(dest="command", help="Command to run")

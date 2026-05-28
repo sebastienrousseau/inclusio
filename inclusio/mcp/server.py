@@ -4,9 +4,9 @@
 """FastMCP server exposing the Euxis Publisher engine over MCP.
 
 Run with:
-    euxis-mcp                       # stdio transport (Claude Code default)
-    euxis-mcp --http                # Streamable HTTP on :8000
-    euxis-mcp --http --port 9090    # custom port
+    inclusio-mcp                       # stdio transport (Claude Code default)
+    inclusio-mcp --http                # Streamable HTTP on :8000
+    inclusio-mcp --http --port 9090    # custom port
 
 Or from Python:
     python -m inclusio.mcp.server
@@ -28,8 +28,8 @@ from pathlib import Path
 from typing import Any
 
 # FastMCP is an optional dependency — only required when the MCP server
-# is actually run. Import lazily so `pip install euxis-publisher` works
-# without it; clear error if a user runs `euxis-mcp` without installing
+# is actually run. Import lazily so `pip install inclusio` works
+# without it; clear error if a user runs `inclusio-mcp` without installing
 # the `mcp` extra.
 try:
     from mcp.server.fastmcp import FastMCP
@@ -42,8 +42,8 @@ from inclusio.cli import render as render_mod
 
 
 def _content_root() -> Path:
-    """Resolve the content root (EUXIS_CONTENT_DIR or the package root)."""
-    env = os.environ.get("EUXIS_CONTENT_DIR")
+    """Resolve the content root (INCLUSIO_CONTENT_DIR or the package root)."""
+    env = os.environ.get("INCLUSIO_CONTENT_DIR")
     if env:
         return Path(env).resolve()
     return build_mod.CONTENT_ROOT
@@ -140,11 +140,11 @@ def _version_resource_impl() -> str:
     """Return the engine version and MCP Server Card metadata."""
     return json.dumps(
         {
-            "name": "euxis-publisher",
+            "name": "inclusio",
             "version": _engine_version(),
             "mcp_spec": "0.1",
             "content_root": str(_content_root()),
-            "homepage": ("https://github.com/sebastienrousseau/euxis-publisher"),
+            "homepage": ("https://github.com/sebastienrousseau/inclusio"),
         },
         indent=2,
     )
@@ -158,15 +158,15 @@ def create_server() -> Any:
     """
     if FastMCP is None:  # pragma: no cover - exercised only without `[mcp]` extra
         raise RuntimeError(
-            "FastMCP is not installed. Install with: pip install 'euxis-publisher[mcp]'"
+            "FastMCP is not installed. Install with: pip install 'inclusio[mcp]'"
         )
 
     app = FastMCP(
-        "euxis-publisher",
+        "inclusio",
         instructions=(
             "Euxis Publisher MCP server — list, render, lint, and audit "
             "documents in a LaTeX-first publishing repository. Honours "
-            "EUXIS_CONTENT_DIR. Use list_docs first to see what's available."
+            "INCLUSIO_CONTENT_DIR. Use list_docs first to see what's available."
         ),
     )
 
@@ -187,7 +187,7 @@ def create_server() -> Any:
 
         Args:
             target: PDF path or directory. Defaults to `build/` under
-                EUXIS_CONTENT_DIR.
+                INCLUSIO_CONTENT_DIR.
             strict: When True, every blocking-flavour FAIL is surfaced
                 in the response (`blocking_failure: True`); the caller
                 decides whether to treat this as an error.
@@ -222,12 +222,12 @@ def create_server() -> Any:
 
     # ── Resources ───────────────────────────────────────────────────────
 
-    @app.resource("euxis://meta", mime_type="text/yaml")
+    @app.resource("inclusio://meta", mime_type="text/yaml")
     def meta_resource() -> str:
         """Return the raw text of data/meta.yaml (project manifest)."""
         return _meta_resource_impl()
 
-    @app.resource("euxis://audit/latest", mime_type="application/json")
+    @app.resource("inclusio://audit/latest", mime_type="application/json")
     def audit_latest_resource() -> str:
         """Return the last audit report JSON (build/.audit/latest.json).
 
@@ -235,7 +235,7 @@ def create_server() -> Any:
         """
         return _audit_latest_resource_impl()
 
-    @app.resource("euxis://version", mime_type="application/json")
+    @app.resource("inclusio://version", mime_type="application/json")
     def version_resource() -> str:
         """Return the engine version and MCP Server Card metadata."""
         return _version_resource_impl()
@@ -264,14 +264,14 @@ def _engine_version() -> str:
 def main(
     argv: list[str] | None = None,
 ) -> int:  # pragma: no cover - CLI entry; runs the FastMCP event loop
-    """Entry point for the `euxis-mcp` console script.
+    """Entry point for the `inclusio-mcp` console script.
 
     Builds the FastMCP server, picks the transport (stdio by default,
     Streamable HTTP when `--http` is passed), and runs the event loop.
     Exits 1 with a clear install hint when FastMCP isn't installed.
     """
     parser = argparse.ArgumentParser(
-        prog="euxis-mcp",
+        prog="inclusio-mcp",
         description="MCP server for the Euxis Publisher engine.",
     )
     parser.add_argument(
@@ -294,7 +294,7 @@ def main(
 
     if FastMCP is None:
         print(
-            "ERROR: FastMCP is not installed.\nInstall with: pip install 'euxis-publisher[mcp]'",
+            "ERROR: FastMCP is not installed.\nInstall with: pip install 'inclusio[mcp]'",
             file=sys.stderr,
         )
         return 1

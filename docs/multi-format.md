@@ -153,7 +153,7 @@ track [docs/audit-2026-05.md](audit-2026-05.md) §5.
 
 ## MCP integration
 
-Once the CLI wiring lands, the MCP server (`euxis-mcp`) will expose
+Once the CLI wiring lands, the MCP server (`inclusio-mcp`) will expose
 `emit` as a tool so Claude Code / Cursor clients can request a
 multi-format build without shelling out. See
 [mcp-server.md](mcp-server.md) for the resource + tool catalogue.
@@ -165,7 +165,7 @@ multi-format build without shelling out. See
 | S6.2 | JATS XML emitter via Pandoc | ✅ done |
 | S6.3 | HTML5 emitter via Pandoc + accessibility post-process | ✅ done |
 | S6.6 | EPUB3 emitter (epubcheck-clean) | ✅ done |
-| S7.x | CLI wiring (`euxis-publisher emit`) | ✅ done |
+| S7.x | CLI wiring (`inclusio emit`) | ✅ done |
 | S8.x | DAISY ACE EPUB-A validation gate | ⏸️ Sprint 8 |
 | S8.x | JATS4R validator gate + Crossref `<xref>` resolver | ⏸️ Sprint 8 |
 | S7.x | Crossref reference resolution for JATS `<xref>` placeholders | ⏸️ Sprint 7 |

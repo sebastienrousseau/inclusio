@@ -91,7 +91,7 @@ def build_manifest_json(
     title: str,
     author: str,
     publisher: str = "Euxis Publisher",
-    claim_generator: str = "euxis-publisher",
+    claim_generator: str = "inclusio",
     claim_generator_version: str = "0.1.0",
     date_published: str | None = None,
     ai_disclosure: str = "",

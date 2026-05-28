@@ -406,7 +406,7 @@ def test_mcp_list_docs_handles_non_dict_doc_entry(tmp_path, monkeypatch):
     content = tmp_path
     (content / "data").mkdir()
     (content / "data" / "meta.yaml").write_text("documents:\n  foo:\n  bar:\n    src: bar.tex\n")
-    monkeypatch.setenv("EUXIS_CONTENT_DIR", str(content))
+    monkeypatch.setenv("INCLUSIO_CONTENT_DIR", str(content))
     srv.create_server()
     # `_load_meta` returns {"foo": None, "bar": {...}} — `_list_docs_impl`
     # wraps the None entry as {} so it doesn't crash list_docs.

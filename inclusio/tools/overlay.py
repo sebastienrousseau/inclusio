@@ -4,7 +4,7 @@
 """Deep-merge data + overlay for CV / paper / patent variants.
 
 Content repositories that author with Euxis Publisher (e.g. the
-companion `euxis-publisher-private`) tend to grow CV / paper / patent
+companion `inclusio-private`) tend to grow CV / paper / patent
 variants quickly: an author may keep a base CV and tailor it for
 JP Morgan, Citi, or a specific job description. Each variant
 historically ships as a fully-cloned YAML data file — sustainable
@@ -25,7 +25,7 @@ The merge rules are intentionally simple and explicit:
 
 This module has no runtime dependencies beyond stdlib. Content repos
 import it via `from inclusio.tools.overlay import merge,
-resolve` after `pip install euxis-publisher`.
+resolve` after `pip install inclusio`.
 """
 
 from __future__ import annotations

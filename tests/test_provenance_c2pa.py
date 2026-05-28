@@ -41,7 +41,7 @@ def test_require_c2patool_returns_path_when_present(monkeypatch):
 def test_manifest_includes_claim_generator():
     js = c2pa.build_manifest_json(title="T", author="A")
     payload = json.loads(js)
-    assert payload["claim_generator"] == "euxis-publisher/0.1.0"
+    assert payload["claim_generator"] == "inclusio/0.1.0"
     assert payload["format"] == "application/pdf"
     assert payload["title"] == "T"
 

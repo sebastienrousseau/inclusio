@@ -1,5 +1,5 @@
 ---
-name: euxis-publisher
+name: inclusio
 description: Build, render, lint, and audit LaTeX-first documents (CVs, papers, patents, FAQs, guides) through the Euxis Publisher engine. Use when the user mentions LaTeX, tagged PDFs, PDF/UA-2, PDF/A-4f, WCAG accessibility, the European Accessibility Act (EAA), or asks about building/auditing documents in a repository that has a `data/meta.yaml` manifest.
 ---
 
@@ -9,11 +9,11 @@ Use the Euxis Publisher engine (`inclusio` Python package) to build
 camera-ready tagged PDFs, lint LaTeX, and audit accessibility conformance
 (PDF/UA-2 + WTPDF + PDF/A-4f). The engine is split across two repos:
 
-- **Engine** (`euxis-publisher`): document classes, build CLI, audit CLI,
+- **Engine** (`inclusio`): document classes, build CLI, audit CLI,
   Jinja2 renderer. Open source, MIT-licensed.
-- **Content** (`euxis-publisher-private` or any repo with
+- **Content** (`inclusio-private` or any repo with
   `data/meta.yaml`): LaTeX sources, YAML data, templates. Discovered via
-  `EUXIS_CONTENT_DIR` or the `--content-dir` flag.
+  `INCLUSIO_CONTENT_DIR` or the `--content-dir` flag.
 
 ## When to use this skill
 
@@ -29,7 +29,7 @@ Trigger on any of:
 
 ## Core commands
 
-All commands assume `EUXIS_CONTENT_DIR` points at the content repo (or
+All commands assume `INCLUSIO_CONTENT_DIR` points at the content repo (or
 the current working directory contains `data/meta.yaml`).
 
 ```bash
@@ -93,11 +93,11 @@ Known triggers in pub-* classes:
 
 ## MCP server
 
-The engine also ships as an MCP server (`euxis-mcp`). When the user is
+The engine also ships as an MCP server (`inclusio-mcp`). When the user is
 working through Claude Code or Cursor, prefer calling the MCP tools
 (`list_docs`, `audit_pdf`, `render`) over shelling out, because the
 results are typed and serialisable. Install via `pip install
-'euxis-publisher[mcp]'`.
+'inclusio[mcp]'`.
 
 ## Documentation
 
@@ -110,6 +110,6 @@ results are typed and serialisable. Install via `pip install
 
 EAA enforcement is **live since 28 June 2025** for EU consumer
 audiences. Untagged PDF/A-2u is a regulatory exposure. Camera-ready
-artefacts MUST pass the strict `euxis-publisher audit --strict` gate
+artefacts MUST pass the strict `inclusio audit --strict` gate
 before publication. Penalties: Germany €100k, France €250k, Italy 5% of
 turnover.

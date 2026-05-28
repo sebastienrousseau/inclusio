@@ -12,7 +12,7 @@
 - `--cov=inclusio`
 - `--cov-fail-under=95`
 
-Coverage output is written with `COVERAGE_FILE=/tmp/euxis-publisher.coverage` to avoid local permission collisions.
+Coverage output is written with `COVERAGE_FILE=/tmp/inclusio.coverage` to avoid local permission collisions.
 
 ## CI Workflow
 

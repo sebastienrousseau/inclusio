@@ -243,7 +243,7 @@ green verdict.
 
 ---
 
-## Sprint 11 (weeks 21-22) — `euxis-mcp` server (P1.3, pulled forward)
+## Sprint 11 (weeks 21-22) — `inclusio-mcp` server (P1.3, pulled forward)
 
 **Goal:** Euxis is visible to every Claude Code / Cursor / Continue
 user via MCP.

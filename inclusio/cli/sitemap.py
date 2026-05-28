@@ -29,8 +29,8 @@ SCRIPT_DIR = Path(__file__).resolve().parent
 PROJECT_ROOT = SCRIPT_DIR.parent.parent
 
 # CONTENT_ROOT: where content lives (data/, build/).
-# Defaults to PROJECT_ROOT; overridden by EUXIS_CONTENT_DIR env var.
-_env_content = os.environ.get("EUXIS_CONTENT_DIR")
+# Defaults to PROJECT_ROOT; overridden by INCLUSIO_CONTENT_DIR env var.
+_env_content = os.environ.get("INCLUSIO_CONTENT_DIR")
 CONTENT_ROOT = Path(_env_content).resolve() if _env_content else PROJECT_ROOT
 
 META_FILE = CONTENT_ROOT / "data" / "meta.yaml"

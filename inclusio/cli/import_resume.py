@@ -332,7 +332,7 @@ def main(argv: list[str] | None = None) -> int:
     (default) or the requested path.
     """
     parser = argparse.ArgumentParser(
-        prog="euxis-publisher import",
+        prog="inclusio import",
         description=(
             "Convert a JSON Resume document (jsonresume.org) into the Euxis CV YAML schema."
         ),

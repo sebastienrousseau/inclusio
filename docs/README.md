@@ -1,6 +1,6 @@
 # Euxis Publisher Docs
 
-Public documentation for the `euxis-publisher` engine.
+Public documentation for the `inclusio` engine.
 
 ## Contents
 

@@ -3,7 +3,7 @@ requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "euxis-publisher"
+name = "inclusio"
 version = "0.1.0"
 description = "Professional document publishing engine for the Euxis Agent Framework"
 readme = "README.md"
@@ -58,7 +58,7 @@ dev = [
 ]
 # Sprint 6 (S6.4): MCP server. `mcp[cli]` is the official Python SDK
 # from modelcontextprotocol/python-sdk and includes FastMCP +
-# inspector. Optional so `pip install euxis-publisher` stays minimal
+# inspector. Optional so `pip install inclusio` stays minimal
 # for callers that only want the CLI + audit gate.
 mcp = [
     "mcp[cli]>=1.27.0",
@@ -73,10 +73,10 @@ provenance = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/sebastienrousseau/euxis-publisher"
-Documentation = "https://github.com/sebastienrousseau/euxis-publisher/tree/main/docs"
-Issues = "https://github.com/sebastienrousseau/euxis-publisher/issues"
-Changelog = "https://github.com/sebastienrousseau/euxis-publisher/blob/main/CHANGELOG.md"
+Homepage = "https://github.com/sebastienrousseau/inclusio"
+Documentation = "https://github.com/sebastienrousseau/inclusio/tree/main/docs"
+Issues = "https://github.com/sebastienrousseau/inclusio/issues"
+Changelog = "https://github.com/sebastienrousseau/inclusio/blob/main/CHANGELOG.md"
 
 [tool.ruff]
 target-version = "py311"
@@ -117,8 +117,8 @@ ignore = [
 quote-style = "double"
 
 [project.scripts]
-euxis-publisher = "inclusio.cli.build:main"
-euxis-mcp = "inclusio.mcp.server:main"
+inclusio = "inclusio.cli.build:main"
+inclusio-mcp = "inclusio.mcp.server:main"
 
 [tool.setuptools.packages.find]
 where = ["."]
@@ -129,7 +129,7 @@ exclude = ["tests*", ".claude*", ".cursor*"]
 testpaths = ["tests"]
 python_files = "test_*.py"
 addopts = "--strict-markers"
-cache_dir = "/tmp/euxis-publisher-pytest-cache"
+cache_dir = "/tmp/inclusio-pytest-cache"
 
 [tool.coverage.run]
 source = ["inclusio"]

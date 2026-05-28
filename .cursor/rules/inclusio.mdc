@@ -7,7 +7,7 @@ alwaysApply: false
 # Euxis Publisher — Cursor rule
 
 This repository (or a sibling content repo) is built by the
-[Euxis Publisher](https://github.com/sebastienrousseau/euxis-publisher)
+[Euxis Publisher](https://github.com/sebastienrousseau/inclusio)
 engine. When editing `.tex`, `.cls`, `.sty`, or `data/meta.yaml`, prefer
 the engine's CLI over hand-running `latexmk`.
 
@@ -58,10 +58,10 @@ macros instead.
 
 ## MCP server
 
-`pip install 'euxis-publisher[mcp]'` then `euxis-mcp` exposes the engine
+`pip install 'inclusio[mcp]'` then `inclusio-mcp` exposes the engine
 as an MCP server with tools `list_docs`, `audit_pdf`, `render`,
-`doc_count` and resources `euxis://meta`, `euxis://audit/latest`,
-`euxis://version`. Use it when the agent needs structured access to the
+`doc_count` and resources `inclusio://meta`, `inclusio://audit/latest`,
+`inclusio://version`. Use it when the agent needs structured access to the
 manifest or audit reports rather than shelling out.
 
 ## Reference

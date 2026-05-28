@@ -10,13 +10,13 @@ Code, Cursor, and other MCP clients can invoke it directly:
     - render            render a doc template (latex/markdown/json/text)
 
   Resources:
-    - euxis://meta              data/meta.yaml (project manifest)
-    - euxis://audit/latest      build/.audit/latest.json (last audit run)
-    - euxis://pdf/{doc_id}      build/<type>/<doc_id>.pdf binary
+    - inclusio://meta              data/meta.yaml (project manifest)
+    - inclusio://audit/latest      build/.audit/latest.json (last audit run)
+    - inclusio://pdf/{doc_id}      build/<type>/<doc_id>.pdf binary
 
 The server uses FastMCP (the official MCP Python SDK's high-level API)
 with stdio transport by default and Streamable HTTP available via
-`euxis-mcp --http`. Per docs/strategy-2026.md decision D4, the server
+`inclusio-mcp --http`. Per docs/strategy-2026.md decision D4, the server
 is the brokered-access surface for AI-authoring clients.
 """
 
