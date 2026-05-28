@@ -28,6 +28,14 @@ env:
   BUILD_TIMEOUT: "120"  # 120 second SLO
   DOCKER_IMAGE: "texlive/texlive:TL2024-historic"
 
+# `dorny/paths-filter` (used in detect-changes) calls the PR-files
+# REST endpoint on pull_request events; that needs `pull-requests:
+# read`. Repo default token permissions are scoped down to
+# `contents: read`, so we have to declare PR access explicitly.
+permissions:
+  contents: read
+  pull-requests: read
+
 jobs:
   detect-changes:
     name: Detect LaTeX Changes
