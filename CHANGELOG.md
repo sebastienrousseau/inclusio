@@ -1,8 +1,64 @@
 # Changelog
 
-All notable changes to **Euxis Publisher** are documented here.
-Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
-and [Conventional Commits](https://www.conventionalcommits.org/).
+All notable changes to **Inclusio** (previously *Euxis Publisher*)
+are documented here. Format based on
+[Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and
+[Conventional Commits](https://www.conventionalcommits.org/).
+
+## [0.2.0] — 2026-05-28
+
+### Renamed — euxis-publisher → inclusio
+
+The project has been renamed from `euxis-publisher` to **inclusio**.
+The new name comes from Latin *inclusio* (an enclosure / a literary
+framing device) and aligns the package with its accessibility-first
+mission. Tagline: **"Publishing that includes everyone."**
+
+#### What changed
+
+| Surface | Before | After |
+|---|---|---|
+| PyPI package | `euxis-publisher` | `inclusio` |
+| Python import | `from euxis_publisher.…` | `from inclusio.…` |
+| CLI entry point | `euxis-publisher` | `inclusio` |
+| MCP CLI | `euxis-mcp` | `inclusio-mcp` |
+| Content-dir env var | `EUXIS_CONTENT_DIR` | `INCLUSIO_CONTENT_DIR` |
+| Tailor engine env var | `EUXIS_TAILOR_ENGINE` | `INCLUSIO_TAILOR_ENGINE` |
+| MCP URI scheme | `euxis://meta` | `inclusio://meta` |
+| GitHub repo | `sebastienrousseau/euxis-publisher` | `sebastienrousseau/inclusio` |
+
+#### Compatibility window
+
+- `EUXIS_CONTENT_DIR` is still honoured for one minor cycle
+  (until **v0.3**) and emits a `DeprecationWarning`. Content
+  repositories should switch to `INCLUSIO_CONTENT_DIR` at their
+  earliest convenience.
+- All other surfaces have NO compatibility shim — they're a clean
+  break. v0.1.0 was tagged but never published to PyPI, so there
+  are no installed copies of the old name to migrate.
+
+#### Migration
+
+```bash
+# Drop the old package; install the new one.
+pip uninstall euxis-publisher
+pip install inclusio
+
+# Code changes (sed-replaceable in one pass):
+sed -i 's/euxis_publisher/inclusio/g'   your/file.py
+sed -i 's/euxis-publisher/inclusio/g'   your/file.md
+sed -i 's/euxis-mcp/inclusio-mcp/g'     your/file.toml
+sed -i 's|euxis://|inclusio://|g'       your/mcp/config.json
+```
+
+#### Historical context
+
+Past CHANGELOG entries, the strategy doc (`docs/strategy-2026.md`),
+the audit synthesis (`docs/audit-2026-05.md`), and the
+implementation plan (`docs/implementation-plan-2026.md`) are
+left unchanged — those are time-locked records of when the
+project was called *Euxis Publisher*. The technical content
+they describe is unchanged.
 
 ## [0.1.0] — 2026-05-28
 

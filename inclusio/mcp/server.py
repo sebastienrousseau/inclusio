@@ -157,9 +157,7 @@ def create_server() -> Any:
     running it, and so the CLI entry point can pick transport at run time.
     """
     if FastMCP is None:  # pragma: no cover - exercised only without `[mcp]` extra
-        raise RuntimeError(
-            "FastMCP is not installed. Install with: pip install 'inclusio[mcp]'"
-        )
+        raise RuntimeError("FastMCP is not installed. Install with: pip install 'inclusio[mcp]'")
 
     app = FastMCP(
         "inclusio",
