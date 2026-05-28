@@ -52,6 +52,15 @@ jobs:
         run: python -m build
 
       - name: Attest build provenance (SLSA L3)
+        # GitHub attestations require either a public repo or a paid
+        # plan with private-repo attestations enabled. Gate on a repo
+        # variable so this step skips cleanly on private/free until
+        # one of those is in place.
+        #
+        # To enable:
+        #   Settings → Secrets and variables → Actions → Variables →
+        #   set `SLSA_ATTESTATION_ENABLED=true`.
+        if: vars.SLSA_ATTESTATION_ENABLED == 'true'
         uses: actions/attest-build-provenance@96b4a1ef7235a096b17240c259729fdd70c83d45  # v2
         with:
           subject-path: |
