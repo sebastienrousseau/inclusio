@@ -1202,15 +1202,29 @@ def cmd_judge(args, meta):
 
     plain_text = out_path.read_text(encoding="utf-8")
     if args.llm_url:
-        # Sprint 7 (S7.1): optional local-LLM rerank. Falls back to
-        # heuristic-only when the server is unreachable.
-        from euxis_publisher.judge import local_llm
-
-        llm = local_llm.LocalLLM(base_url=args.llm_url, timeout=args.llm_timeout)
+        # Sprint 7 (S7.1 + S7.5): local or cloud LLM rerank. Falls
+        # back to heuristic-only when the LLM is unreachable.
+        llm = _make_llm(args)
         report = ats_judge.score_cv_with_llm(plain_text, llm)
     else:
         report = ats_judge.score_cv(plain_text)
     _print_and_persist_report(report, doc_id, args)
+
+
+def _make_llm(args):
+    """Build the right LLM adapter for `args.llm_url`.
+
+    Sprint 7.5: anthropic.com / openai.com URLs route to `CloudLLM`
+    (BYO-key via env var); everything else stays on `LocalLLM`
+    (llama.cpp HTTP).
+    """
+    from euxis_publisher.judge import cloud_llm
+
+    return cloud_llm.from_url(
+        args.llm_url,
+        timeout=args.llm_timeout,
+        model=getattr(args, "llm_model", "claude-opus-4-7") or "claude-opus-4-7",
+    )
 
 
 def _print_and_persist_report(report, doc_id, args):
@@ -1551,7 +1565,15 @@ Commands:
         "--llm-timeout",
         type=int,
         default=30,
-        help="Seconds to wait for the local LLM (default 30).",
+        help="Seconds to wait for the LLM (default 30).",
+    )
+    judge_parser.add_argument(
+        "--llm-model",
+        default="claude-opus-4-7",
+        help=(
+            "Model id for cloud LLMs (Anthropic / OpenAI). Default: "
+            "claude-opus-4-7. Ignored for local llama.cpp URLs."
+        ),
     )
 
     emit_parser = subparsers.add_parser(

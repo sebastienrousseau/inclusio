@@ -8,6 +8,42 @@ and [Conventional Commits](https://www.conventionalcommits.org/).
 
 ### Added
 
+- **Sprint 7 (S7.5) — cloud LLM adapter (Anthropic + OpenAI BYO-key) (2026-05-28)**:
+  - `euxis_publisher/judge/cloud_llm.py` — `CloudLLM` class mirroring
+    `LocalLLM`'s interface (`complete()`, `complete_json()`,
+    `is_available()`) against:
+      - Anthropic Messages API (`/v1/messages`)
+      - OpenAI-compatible chat completions (`/v1/chat/completions`)
+        — works with OpenAI, xAI, Together, Groq, DeepSeek, Cerebras.
+  - Provider detection from base URL (`anthropic.com` → Anthropic;
+    everything else → OpenAI-compatible default).
+  - BYO-key: constructor `api_key=` arg or env var
+    (`ANTHROPIC_API_KEY` / `OPENAI_API_KEY`). Missing key →
+    `LLMUnavailable`, surfaced as a judge fallback with breadcrumb.
+  - HTTP 4xx/5xx (401, 403, 429, 5xx) → `LLMUnavailable` (graceful
+    judge fallback); native timeout → `LLMTimeout`.
+  - Stdlib-only (urllib.request + json + os). No `anthropic` /
+    `openai` / `httpx` package dependency.
+  - `from_url(url, **kwargs)` dispatcher: returns the right adapter
+    for a URL. Used by the CLI to route `--llm-url` automatically.
+  - CLI: `--llm-url https://api.anthropic.com --llm-model
+    claude-opus-4-7` on every judge. Same flag works for local
+    (`http://localhost:8080`).
+  - 29 tests in `tests/test_judge_cloud_llm.py` covering provider
+    detection (3 cases), API-key resolution (4 cases: explicit /
+    anthropic-env / openai-env / missing), Anthropic request shape
+    (endpoint, headers, body, stop sequences, empty content blocks),
+    OpenAI-compatible request shape (endpoint, bearer auth, body,
+    stop sequences, empty choices), error paths (HTTP error,
+    URL error, native timeout, non-JSON body), `complete_json`
+    (anthropic parse, fence stripping, parse error), `is_available`
+    (true / false on missing key), `from_url` dispatcher (4 cases).
+  - Docs (`docs/judges.md`) updated with CloudLLM section, BYO-key
+    setup, provider-detection rules, Sprint 7.5 marked done.
+
+  Closes Sprint 7 entirely. 5 of 5 Sprint 7 items shipped. Only F7
+  (PAdES + C2PA) remains across all forcing functions.
+
 - **Sprint 7 (S7.4) — JD-to-CV fit judge (2026-05-28)**:
   - `euxis_publisher/judge/jd_fit.py` — third judge in the pipeline.
     Compares a job-description brief against a candidate CV; flags

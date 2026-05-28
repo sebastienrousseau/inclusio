@@ -223,6 +223,61 @@ LLM rerank prompt asks for *one* top strength + *one* top gap
 (severity warn/block/info, deduction capped at 15). On `LLMError`
 the heuristic report is returned with an info breadcrumb.
 
+## Cloud LLM adapter — `CloudLLM` (S7.5)
+
+When the data isn't sensitive (public papers, anonymised CVs, generic
+JD fits) and judge quality matters more than data residency, the same
+judges route through Anthropic or any OpenAI-compatible endpoint.
+BYO-key via env var:
+
+```bash
+export ANTHROPIC_API_KEY=sk-ant-...
+python -m euxis_publisher.cli.build judge \
+    --doc cv --judge jd_fit \
+    --brief data/jobs/role.md \
+    --llm-url https://api.anthropic.com \
+    --llm-model claude-opus-4-7
+```
+
+For OpenAI-compatible providers (xAI, Together, Groq, DeepSeek):
+
+```bash
+export OPENAI_API_KEY=sk-...
+python -m euxis_publisher.cli.build judge \
+    --doc cv --judge ats \
+    --llm-url https://api.openai.com \
+    --llm-model gpt-5-pro
+```
+
+Provider detection is automatic from the URL:
+- contains `anthropic.com` → Anthropic Messages API
+- everything else → OpenAI-compatible `/v1/chat/completions`
+
+The adapter is stdlib-only — no `anthropic` / `openai` / `httpx`
+package dependency. HTTP 4xx/5xx (401, 403, 429, 5xx) surface as
+`LLMUnavailable`, so the judge falls back to heuristic-only with a
+clear breadcrumb rather than crashing the build.
+
+### Python API
+
+```python
+from euxis_publisher.judge import CloudLLM, from_url
+
+# Explicit:
+llm = CloudLLM(
+    base_url="https://api.anthropic.com",
+    model="claude-opus-4-7",
+    api_key="sk-ant-...",  # or unset → falls back to env var
+)
+
+# Or let from_url route by base URL:
+llm = from_url("https://api.anthropic.com", timeout=60)
+llm = from_url("http://localhost:8080")  # → LocalLLM
+```
+
+Per decision D4 (`docs/strategy-2026.md`), default to `LocalLLM` for
+sensitive content. Cloud is the explicit opt-in.
+
 ## Roadmap
 
 | Sprint | Item | Status |
@@ -231,5 +286,6 @@ the heuristic report is returned with an info breadcrumb.
 | S7.1 | llama.cpp HTTP adapter (local LLM backend) | ✅ done |
 | S7.2 | Citation-grounding judge (ScholarCopilot pattern) | ✅ done |
 | S7.4 | Job-description fit scorer (re-rank tailored CVs vs JD) | ✅ done |
-| S7.5 | MCP-broker BYO-key for Claude / GPT-5 | ⏸️ Sprint 8 |
+| S7.5 | Cloud LLM adapter (Anthropic + OpenAI BYO-key) | ✅ done |
 | S8.x | BibTeX `.bib` support in citations judge | ⏸️ Sprint 8 |
+| S8.x | MCP server tool wiring for cloud judges (broker mode) | ⏸️ Sprint 8 |
