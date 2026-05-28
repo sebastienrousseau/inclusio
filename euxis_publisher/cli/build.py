@@ -1063,6 +1063,78 @@ def cmd_list(args, meta):
         print(f"{doc_id:<20} {config['class']:<15} {src:<55} {desc}")
 
 
+def cmd_provenance(args, meta):
+    """Embed C2PA Content Credentials in a registered document's PDF (S8).
+
+    Reads metadata from `meta.documents.<doc_id>` (title, author,
+    publisher, ai_disclosure), builds a minimal C2PA manifest, and
+    invokes `c2patool` to embed it.
+
+    Without `--cert` + `--key`, falls back to c2patool's built-in
+    test cert and warns — fine for development, NOT publication.
+    """
+    from euxis_publisher.provenance import c2pa as c2pa_mod
+
+    documents = meta.get("documents", {}) or {}
+    if args.doc not in documents:
+        print(
+            f"ERROR: {args.doc} not in documents: in meta.yaml",
+            file=sys.stderr,
+        )
+        sys.exit(2)
+    doc = documents[args.doc]
+    src_rel = doc.get("src", "")
+    if not src_rel:
+        print(f"ERROR: {args.doc} has no `src:` in meta", file=sys.stderr)
+        sys.exit(2)
+
+    # The PDF path follows `_artifact_subdir(doc_id, doc)/{stem}.pdf`,
+    # mirroring how cmd_build resolves outputs.
+    artefact_subdir = _artifact_subdir(args.doc, doc)
+    pdf_stem = Path(src_rel).stem
+    pdf_path = BUILD_DIR / artefact_subdir / f"{pdf_stem}.pdf"
+    if not pdf_path.exists():
+        print(
+            f"ERROR: {pdf_path} not found. Run `make publish` (or "
+            "`euxis-publisher build --mode camera-ready`) first.",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+
+    author_block = meta.get("author", {}) or {}
+    manifest_json = c2pa_mod.build_manifest_json(
+        title=doc.get("title", args.doc),
+        author=author_block.get("name", ""),
+        publisher=author_block.get("publisher", "Euxis Publisher"),
+        date_published=doc.get("filing_date") or None,
+        ai_disclosure=doc.get("ai_disclosure") or meta.get("ai_disclosure") or "",
+    )
+
+    cert = Path(args.cert) if args.cert else None
+    key = Path(args.key) if args.key else None
+    try:
+        result = c2pa_mod.embed_manifest(pdf_path, manifest_json, cert_path=cert, key_path=key)
+    except c2pa_mod.C2PAMissing as exc:
+        print(f"ERROR: {exc}", file=sys.stderr)
+        sys.exit(1)
+    except subprocess.CalledProcessError as exc:
+        print(
+            f"ERROR: c2patool exit {exc.returncode}: {(exc.stderr or '').strip()[:300]}",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+
+    print(f"  OK   {args.doc} → {result.pdf_path}")
+    print(f"  manifest bytes: {result.manifest_bytes}")
+    if result.signed_with_test_cert:
+        print(
+            "  WARN: signed with c2patool's test cert (development only). "
+            "Pass --cert + --key for publication-ready signatures."
+        )
+    if args.strict and result.signed_with_test_cert:
+        sys.exit(1)
+
+
 def cmd_judge(args, meta):
     """Run an LLM/heuristic judge against a rendered document (Sprint 7).
 
@@ -1521,6 +1593,29 @@ Commands:
     )
 
     # assets
+    provenance_parser = subparsers.add_parser(
+        "provenance",
+        help="Embed C2PA Content Credentials in a registered PDF (S8.x F7)",
+    )
+    provenance_parser.add_argument(
+        "--doc", required=True, help="Registered document id (must already be built)."
+    )
+    provenance_parser.add_argument(
+        "--cert",
+        default=None,
+        help="Path to PEM-encoded X.509 signing certificate.",
+    )
+    provenance_parser.add_argument(
+        "--key",
+        default=None,
+        help="Path to the PEM-encoded private key for --cert.",
+    )
+    provenance_parser.add_argument(
+        "--strict",
+        action="store_true",
+        help="Exit 1 if the PDF was signed with c2patool's test cert (CI gate).",
+    )
+
     judge_parser = subparsers.add_parser(
         "judge",
         help="Score a registered document against an LLM/heuristic judge (S7.x)",
@@ -1636,6 +1731,7 @@ Commands:
         "list": cmd_list,
         "emit": cmd_emit,
         "judge": cmd_judge,
+        "provenance": cmd_provenance,
     }
 
     commands[args.command](args, meta)

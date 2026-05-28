@@ -8,6 +8,44 @@ and [Conventional Commits](https://www.conventionalcommits.org/).
 
 ### Added
 
+- **Sprint 8 — C2PA Content Credentials (F7) (2026-05-28)**:
+  - `euxis_publisher/provenance/c2pa.py` — subprocess wrapper over
+    the `c2patool` reference implementation. Builds a minimal C2PA
+    manifest (schema.org CreativeWork + c2pa.actions + optional
+    c2pa.training-mining for AI disclosure) and embeds it into a
+    PDF artefact.
+  - Same pattern as the Pandoc emitters: shells out to a static
+    binary rather than pulling the 12 MB `c2pa-python` native
+    wheel — keeps the engine air-gap deployable.
+  - `build_manifest_json(...)` composes the manifest; merges
+    `ai_disclosure` from F6 (XMP field) into a
+    `c2pa.training-mining` assertion so the same disclosure
+    surfaces in both XMP and C2PA readers.
+  - `embed_manifest(pdf_path, manifest_json, cert_path, key_path,
+    ...)` writes the manifest, invokes `c2patool`, and reports
+    whether the test-cert fallback was used (CI gate via
+    `--strict`).
+  - `verify_manifest(pdf_path)` parses an embedded manifest;
+    returns an empty dict for unsigned PDFs.
+  - CLI: `python -m euxis_publisher.cli.build provenance --doc X
+    [--cert C] [--key K] [--strict]`.
+  - 22 tests in `tests/test_provenance_c2pa.py` covering the
+    binary-missing path, manifest builder (claim generator,
+    schema.org assertion shape, c2pa.actions, optional
+    date_published, AI-disclosure merge, extra assertions, custom
+    claim generator), embed_manifest (argv composition, manifest
+    temp-file emission, default + custom output path, test-cert
+    flag detection, signer args propagation, failure surfaces,
+    manifest-bytes accounting), and verify_manifest (parse,
+    missing manifest, invalid JSON).
+  - Docs (`docs/provenance.md`): install-c2patool recipe, CLI
+    examples, Python API, manifest shape reference, verification
+    walkthrough, Sprint 8.5 PAdES roadmap.
+
+  Closes Forcing Function #7 on the C2PA layer. PAdES signature
+  (eIDAS-aligned, pyhanko-based) is Sprint 8.5; SLSA L3 attestation
+  already shipped in S4.
+
 - **Sprint 7 (S7.5) — cloud LLM adapter (Anthropic + OpenAI BYO-key) (2026-05-28)**:
   - `euxis_publisher/judge/cloud_llm.py` — `CloudLLM` class mirroring
     `LocalLLM`'s interface (`complete()`, `complete_json()`,
