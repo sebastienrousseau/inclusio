@@ -22,7 +22,7 @@ to ask the judge whether their CV reads well.
 
 Usage:
 
-    from euxis_publisher.judge.local_llm import LocalLLM
+    from inclusio.judge.local_llm import LocalLLM
 
     llm = LocalLLM(base_url="http://localhost:8080")
     response = llm.complete(

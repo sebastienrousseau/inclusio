@@ -3,7 +3,7 @@ name: Build Documents
 # Compiles the public-fixture documents (whisper-paper, cv, faq,
 # user-guide) in both draft and camera-ready modes, then validates
 # the produced PDFs. Complements verapdf.yml (which gates accessibility)
-# by exercising the actual `python -m euxis_publisher.cli.build` path.
+# by exercising the actual `python -m inclusio.cli.build` path.
 
 on:
   push:
@@ -16,7 +16,7 @@ on:
       - 'scripts/**'
       - 'tests/**'
       - 'Makefile'
-      - 'euxis_publisher/**'
+      - 'inclusio/**'
       - '.github/workflows/build.yml'
   pull_request:
     branches: [ main ]
@@ -77,7 +77,7 @@ jobs:
         # gate is on the private content repo via `make publish`.
         # Building one known-good fixture here exercises the full
         # build → stamp → blog pipeline end-to-end.
-        run: python3 -m euxis_publisher.cli.build build --doc whisper-paper --mode ${{ matrix.mode }} --force
+        run: python3 -m inclusio.cli.build build --doc whisper-paper --mode ${{ matrix.mode }} --force
 
       - name: Validate built PDF (whisper-paper)
         # test_pdf_validation.py iterates build/**/*.pdf and asserts
@@ -95,9 +95,9 @@ jobs:
         run: |
           if [ -d build ]; then
             if [ "${{ matrix.mode }}" = "camera-ready" ]; then
-              python3 -m euxis_publisher.tools.stamp_pdfs build/
+              python3 -m inclusio.tools.stamp_pdfs build/
             else
-              python3 -m euxis_publisher.tools.stamp_pdfs build/ \
+              python3 -m inclusio.tools.stamp_pdfs build/ \
                 --watermark "DRAFT — $(git rev-parse --abbrev-ref HEAD)"
             fi
           else
@@ -105,7 +105,7 @@ jobs:
           fi
 
       - name: Render blog posts
-        run: python3 -m euxis_publisher.cli.build blog
+        run: python3 -m inclusio.cli.build blog
 
       - name: Upload PDF artifacts
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4

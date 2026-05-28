@@ -8,11 +8,11 @@ build.py — Unified build orchestrator for Publications.
 Replaces 5× latex-build.mk (2,925 lines) + 5× project Makefiles.
 
 Usage:
-    python -m euxis_publisher.cli.build build [--mode draft|submission|camera-ready] [--doc DOC]
-    python -m euxis_publisher.cli.build assets
-    python -m euxis_publisher.cli.build lint
-    python -m euxis_publisher.cli.build clean
-    python -m euxis_publisher.cli.build list
+    python -m inclusio.cli.build build [--mode draft|submission|camera-ready] [--doc DOC]
+    python -m inclusio.cli.build assets
+    python -m inclusio.cli.build lint
+    python -m inclusio.cli.build clean
+    python -m inclusio.cli.build list
 """
 
 import argparse
@@ -81,7 +81,7 @@ def _import_render_module():
     try:
         return __import__("render")
     except ModuleNotFoundError:
-        from euxis_publisher.cli import render as render_module
+        from inclusio.cli import render as render_module
 
         return render_module
 
@@ -91,7 +91,7 @@ def _import_tailor_module():
     try:
         return __import__("tailor")
     except ModuleNotFoundError:
-        from euxis_publisher.cli import tailor as tailor_module
+        from inclusio.cli import tailor as tailor_module
 
         return tailor_module
 
@@ -1065,7 +1065,7 @@ def cmd_list(args, meta):
 
 def cmd_import_resume(args, meta):  # noqa: ARG001 (meta unused, dispatcher signature)
     """Convert a JSON Resume document to Euxis CV YAML (Sprint 5, #6)."""
-    from euxis_publisher.cli import import_resume
+    from inclusio.cli import import_resume
 
     cmd = [args.input]
     if args.output:
@@ -1085,7 +1085,7 @@ def cmd_provenance(args, meta):
     Without `--cert` + `--key`, falls back to c2patool's built-in
     test cert and warns — fine for development, NOT publication.
     """
-    from euxis_publisher.provenance import c2pa as c2pa_mod
+    from inclusio.provenance import c2pa as c2pa_mod
 
     documents = meta.get("documents", {}) or {}
     if args.doc not in documents:
@@ -1165,10 +1165,10 @@ def cmd_judge(args, meta):
         )
         sys.exit(2)
 
-    from euxis_publisher.cli import render as render_module
-    from euxis_publisher.judge import ats as ats_judge
-    from euxis_publisher.judge import citations as cit_judge
-    from euxis_publisher.judge import jd_fit as jd_fit_judge
+    from inclusio.cli import render as render_module
+    from inclusio.judge import ats as ats_judge
+    from inclusio.judge import citations as cit_judge
+    from inclusio.judge import jd_fit as jd_fit_judge
 
     doc_id = args.doc
 
@@ -1215,7 +1215,7 @@ def cmd_judge(args, meta):
             sys.exit(1)
         cv_text = cv_path.read_text(encoding="utf-8")
         if args.llm_url:
-            from euxis_publisher.judge import local_llm
+            from inclusio.judge import local_llm
 
             llm = local_llm.LocalLLM(base_url=args.llm_url, timeout=args.llm_timeout)
             report = jd_fit_judge.score_jd_fit_with_llm(jd_text, cv_text, llm)
@@ -1249,7 +1249,7 @@ def cmd_judge(args, meta):
             sys.exit(1)
         tex_source = tex_path.read_text(encoding="utf-8")
         if args.llm_url:
-            from euxis_publisher.judge import local_llm
+            from inclusio.judge import local_llm
 
             llm = local_llm.LocalLLM(base_url=args.llm_url, timeout=args.llm_timeout)
             report = cit_judge.score_citations_with_llm(tex_source, llm)
@@ -1302,7 +1302,7 @@ def _make_llm(args):
     (BYO-key via env var); everything else stays on `LocalLLM`
     (llama.cpp HTTP).
     """
-    from euxis_publisher.judge import cloud_llm
+    from inclusio.judge import cloud_llm
 
     return cloud_llm.from_url(
         args.llm_url,
@@ -1330,12 +1330,12 @@ def _print_and_persist_report(report, doc_id, args):
 def cmd_emit(args, meta):
     """Emit HTML / JATS XML from registered documents (Sprint 6 wiring).
 
-    Wraps `euxis_publisher.emit.pandoc.emit_all` with the registry
+    Wraps `inclusio.emit.pandoc.emit_all` with the registry
     filter that the build CLI already uses for `build` / `audit` —
     only documents listed in `data/meta.yaml` `documents:` get emitted.
     """
     try:
-        from euxis_publisher.emit import pandoc as emit_pandoc
+        from inclusio.emit import pandoc as emit_pandoc
     except ImportError as exc:  # pragma: no cover - defensive
         print(f"ERROR: emit module unavailable: {exc}", file=sys.stderr)
         sys.exit(1)
@@ -1471,7 +1471,7 @@ def cmd_tailor(args, meta):
 
 
 def main(argv=None):
-    """Entry point for `python -m euxis_publisher.cli.build`.
+    """Entry point for `python -m inclusio.cli.build`.
 
     Parses the top-level subcommand (build / render / blog / tailor /
     fix / sitemap / assets / lint / clean / distclean / list / emit /

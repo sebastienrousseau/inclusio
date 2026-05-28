@@ -128,7 +128,7 @@ def score_cv(plain_text: str) -> JudgeReport:
     """Run every ATS check against *plain_text* and return a JudgeReport.
 
     *plain_text* should be the output of
-    `euxis_publisher.cli.render.render_text(data, "cv")` or equivalent
+    `inclusio.cli.render.render_text(data, "cv")` or equivalent
     — ASCII-where-possible, no Markdown, no LaTeX escapes, hyphen
     bullets (per the Sprint-4 render-text contract).
     """

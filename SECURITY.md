@@ -20,12 +20,12 @@ This repository ships the **public publishing engine**: a Python
 CLI (`euxis-publisher`), LaTeX document classes and style packages
 under `core/`, and a Jinja2 rendering layer. In-scope concerns:
 
-- **Template injection** in the Jinja2 renderer (`euxis_publisher.cli.render`).
-- **Path traversal** in the build orchestrator (`euxis_publisher.cli.build`)
-  or the audit CLI (`euxis_publisher.cli.audit`) — particularly via
+- **Template injection** in the Jinja2 renderer (`inclusio.cli.render`).
+- **Path traversal** in the build orchestrator (`inclusio.cli.build`)
+  or the audit CLI (`inclusio.cli.audit`) — particularly via
   the `EUXIS_CONTENT_DIR` env var or `--content-dir` flag.
 - **Command injection** in the tailor CLI's subprocess paths
-  (`euxis_publisher.cli.tailor`) or the asset pipeline shell helpers.
+  (`inclusio.cli.tailor`) or the asset pipeline shell helpers.
 - **Arbitrary code execution** through unsafe YAML loading or
   unchecked LaTeX `\write18` shell-escape.
 - **Supply-chain risks** introduced by `pyproject.toml` dependencies

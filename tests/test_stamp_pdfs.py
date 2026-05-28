@@ -7,7 +7,7 @@ from unittest.mock import patch
 import pikepdf
 import pytest
 
-from euxis_publisher.tools import stamp_pdfs
+from inclusio.tools import stamp_pdfs
 
 sys.modules["stamp_pdfs"] = stamp_pdfs
 

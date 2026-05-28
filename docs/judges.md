@@ -1,11 +1,11 @@
-# LLM / heuristic judges — `euxis_publisher.judge`
+# LLM / heuristic judges — `inclusio.judge`
 
 Sprint 7 (S7.3) ships the first judge: an **ATS-conformance heuristic**
 for CV variants. Closes Forcing Function #5 (LLM judges in the build)
 on the deterministic surface; LLM-backed judges (citation grounding,
 re-scoring via local llama.cpp) layer on top of the same API.
 
-## ATS judge — `euxis_publisher.judge.ats`
+## ATS judge — `inclusio.judge.ats`
 
 Scores a CV against the Workday / Greenhouse / Lever / Taleo
 extraction heuristics. Local, deterministic, sub-millisecond — no
@@ -32,20 +32,20 @@ Grades: A (≥90), B (≥80), C (≥70), D (≥60), F otherwise.
 
 ```bash
 # Score a registered CV — runs render --format text under the hood
-python -m euxis_publisher.cli.build judge --doc cv --judge ats
+python -m inclusio.cli.build judge --doc cv --judge ats
 
 # Write JSON to disk
-python -m euxis_publisher.cli.build judge --doc cv --json build/ats-report.json
+python -m inclusio.cli.build judge --doc cv --json build/ats-report.json
 
 # Strict mode: exits 1 on grade D or F (use in CI for tailored CVs)
-python -m euxis_publisher.cli.build judge --doc cv --strict
+python -m inclusio.cli.build judge --doc cv --strict
 ```
 
 ### Python API
 
 ```python
-from euxis_publisher.cli.render import render_text
-from euxis_publisher.judge.ats import score_cv
+from inclusio.cli.render import render_text
+from inclusio.judge.ats import score_cv
 
 # `data` is the CV's parsed YAML
 plain = render_text(data, "cv")
@@ -76,7 +76,7 @@ HTTP:
 llama-server --model models/Llama-3-8B-Instruct.Q4_K_M.gguf --port 8080
 
 # 2. Score a CV with the rerank enabled:
-python -m euxis_publisher.cli.build judge \
+python -m inclusio.cli.build judge \
     --doc cv --judge ats \
     --llm-url http://localhost:8080 \
     --llm-timeout 30
@@ -104,8 +104,8 @@ grade. The JSON contract:
 ### Python API
 
 ```python
-from euxis_publisher.judge import LocalLLM, score_cv_with_llm
-from euxis_publisher.cli.render import render_text
+from inclusio.judge import LocalLLM, score_cv_with_llm
+from inclusio.cli.render import render_text
 
 plain = render_text(data, "cv")
 llm = LocalLLM(base_url="http://localhost:8080")
@@ -118,7 +118,7 @@ The LLM client is stdlib-only (`urllib.request` + `json`) — no
 `LLMUnavailable`, `LLMTimeout`, `LLMParseError`; callers can catch
 the umbrella `LLMError`.
 
-## Citation-grounding judge — `euxis_publisher.judge.citations` (S7.2)
+## Citation-grounding judge — `inclusio.judge.citations` (S7.2)
 
 Detects two failure modes in scientific papers:
 
@@ -148,7 +148,7 @@ tool-mode) we don't yet ship.
 ### LLM grounding (opt-in)
 
 ```bash
-python -m euxis_publisher.cli.build judge \
+python -m inclusio.cli.build judge \
     --doc whisper-paper --judge citations \
     --llm-url http://localhost:8080
 ```
@@ -170,8 +170,8 @@ the heuristic result is preserved.
 ### Python API
 
 ```python
-from euxis_publisher.judge import score_citations, score_citations_with_llm
-from euxis_publisher.judge import LocalLLM
+from inclusio.judge import score_citations, score_citations_with_llm
+from inclusio.judge import LocalLLM
 
 tex = Path("src/papers/whisper.tex").read_text()
 report = score_citations(tex)              # heuristic only
@@ -180,7 +180,7 @@ llm = LocalLLM(base_url="http://localhost:8080")
 report = score_citations_with_llm(tex, llm, max_checks=10)
 ```
 
-## JD-to-CV fit judge — `euxis_publisher.judge.jd_fit` (S7.4)
+## JD-to-CV fit judge — `inclusio.judge.jd_fit` (S7.4)
 
 Compares a CV against a job-description brief and surfaces:
 1. **Missing required keywords** — clauses introduced by "required",
@@ -200,7 +200,7 @@ and a clear mismatch lands in F.
 ### CLI
 
 ```bash
-python -m euxis_publisher.cli.build judge \
+python -m inclusio.cli.build judge \
     --doc cv --judge jd_fit \
     --brief data/jobs/senior-backend-engineer.md \
     --llm-url http://localhost:8080   # optional rerank
@@ -209,8 +209,8 @@ python -m euxis_publisher.cli.build judge \
 ### Python API
 
 ```python
-from euxis_publisher.judge import score_jd_fit, score_jd_fit_with_llm
-from euxis_publisher.judge import LocalLLM
+from inclusio.judge import score_jd_fit, score_jd_fit_with_llm
+from inclusio.judge import LocalLLM
 
 jd = Path("data/jobs/role.md").read_text()
 cv = Path("build/.cache/rendered/cv.txt").read_text()
@@ -232,7 +232,7 @@ BYO-key via env var:
 
 ```bash
 export ANTHROPIC_API_KEY=sk-ant-...
-python -m euxis_publisher.cli.build judge \
+python -m inclusio.cli.build judge \
     --doc cv --judge jd_fit \
     --brief data/jobs/role.md \
     --llm-url https://api.anthropic.com \
@@ -243,7 +243,7 @@ For OpenAI-compatible providers (xAI, Together, Groq, DeepSeek):
 
 ```bash
 export OPENAI_API_KEY=sk-...
-python -m euxis_publisher.cli.build judge \
+python -m inclusio.cli.build judge \
     --doc cv --judge ats \
     --llm-url https://api.openai.com \
     --llm-model gpt-5-pro
@@ -261,7 +261,7 @@ clear breadcrumb rather than crashing the build.
 ### Python API
 
 ```python
-from euxis_publisher.judge import CloudLLM, from_url
+from inclusio.judge import CloudLLM, from_url
 
 # Explicit:
 llm = CloudLLM(

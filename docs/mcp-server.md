@@ -26,7 +26,7 @@ euxis-mcp --http                       # 127.0.0.1:8000
 euxis-mcp --http --port 9090
 
 # Or directly through Python
-python -m euxis_publisher.mcp.server
+python -m inclusio.mcp.server
 ```
 
 The server honours `EUXIS_CONTENT_DIR` like every other engine CLI.

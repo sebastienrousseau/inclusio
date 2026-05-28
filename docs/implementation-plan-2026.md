@@ -98,7 +98,7 @@ produces an EAA conformance report.
 |---|---|---|---|---|---|
 | S3.1 | **PDF/A-4 support in `pub-metadata.sty`** - `\setPdfALevel{a-4}` switches pdfx config | `core/sty/pub-metadata.sty` | Building with `\setPdfALevel{a-4}` produces PDF with `pdfinfo: PDF subtype: PDF/A-4` | M | Med (pdfx PDF/A-4 maturity) |
 | S3.2 | **Schema update** - `pdf_a` regex accepts `a-4`, `a-4e`, `a-4f` | `data/meta.schema.yaml` (private repo) | YAML lint accepts new levels | XS | Low |
-| S3.3 | **New `cli/audit.py`** - runs veraPDF + WCAG-relevant checks; emits machine-readable + human-readable report | new `euxis_publisher/cli/audit.py`, `Makefile` target `make audit` | `python -m euxis_publisher.cli.audit build/papers/foo.pdf` returns exit code + JSON + Markdown summary | L | Med |
+| S3.3 | **New `cli/audit.py`** - runs veraPDF + WCAG-relevant checks; emits machine-readable + human-readable report | new `inclusio/cli/audit.py`, `Makefile` target `make audit` | `python -m inclusio.cli.audit build/papers/foo.pdf` returns exit code + JSON + Markdown summary | L | Med |
 | S3.4 | **`tests/test_eaa.py`** parameterised over all built PDFs | new test file | Fails on EAA-relevant veraPDF violations | M | Med |
 | S3.5 | **CI gate `eaa-audit`** on tagged release builds | `.github/workflows/release.yml` | Release blocked if EAA audit fails | S | Low |
 
@@ -137,7 +137,7 @@ emit is consolidated into a reusable surface.
 
 | ID | Deliverable | Files | Acceptance | Effort | Risk |
 |---|---|---|---|---|---|
-| S5.1 | **New `cli/import.py`** with `--json-resume` flag converting JSON Resume to Euxis YAML | new `euxis_publisher/cli/import.py` | `python -m euxis_publisher.cli.import --json-resume cv.json --out data/cv-data.yaml` works on jsonresume.org sample | L | Low |
+| S5.1 | **New `cli/import.py`** with `--json-resume` flag converting JSON Resume to Euxis YAML | new `inclusio/cli/import.py` | `python -m inclusio.cli.import --json-resume cv.json --out data/cv-data.yaml` works on jsonresume.org sample | L | Low |
 | S5.2 | **JSON Resume schema validator** in tests | `tests/test_import.py` | Imports valid + rejects malformed | M | Low |
 | S5.3 | **Refactor `_render_cv_markdown`** out of `cli/render.py` into `tools/cv_docx.py` (cleaner surface; reusable from import path) | `cli/render.py`, new `tools/cv_docx.py` | All existing CV DOCX tests still pass | M | Med |
 | S5.4 | **Round-trip test**: import JSON Resume → render to PDF → render to DOCX → check no field loss | `tests/test_json_resume_roundtrip.py` | All fields traceable | M | Med |
@@ -156,7 +156,7 @@ Greenhouse, and Lever before they submit.
 | ID | Deliverable | Files | Acceptance | Effort | Risk |
 |---|---|---|---|---|---|
 | S6.1 | **Rule packs** for Workday/Greenhouse/Lever as YAML rule files | new `data/ats-rules/workday.yaml`, `greenhouse.yaml`, `lever.yaml` (in public repo for community contribution) | Rules documented with source URLs | M | Low |
-| S6.2 | **New `tools/ats_validator.py`** that takes PDF + DOCX, extracts text via `pdfminer.six` / `python-docx`, runs rules, emits score + remediation | new tool | `python -m euxis_publisher.tools.ats_validator build/cvs/my-cv.pdf --target workday` returns numeric score + diff list | L | Med |
+| S6.2 | **New `tools/ats_validator.py`** that takes PDF + DOCX, extracts text via `pdfminer.six` / `python-docx`, runs rules, emits score + remediation | new tool | `python -m inclusio.tools.ats_validator build/cvs/my-cv.pdf --target workday` returns numeric score + diff list | L | Med |
 | S6.3 | **CI gate `ats-cv-score`** for CV builds in private repo - fails if Workday score below threshold | `.github/workflows/*` (private repo) | CV PRs blocked if regress below threshold | S | Low |
 | S6.4 | **`tests/test_ats.py`** with at least 5 golden CVs (scored + non-scored variants) | tests | 100% rule coverage | M | Low |
 | S6.5 | **`docs/ats-validation.md`** explaining each rule, source, and severity | new doc | Rule provenance auditable | S | Low |
@@ -232,7 +232,7 @@ publication-quality HTML + JATS + PDF triple; HTML passes Pa11y.
 
 | ID | Deliverable | Files | Acceptance | Effort | Risk |
 |---|---|---|---|---|---|
-| S10.1 | **New `tools/sign_pades.py`** using pyHanko - B-T (with timestamp) by default, B-LTA for archival | new tool | `python -m euxis_publisher.tools.sign_pades build/papers/foo.pdf` signs in place | M | Med (cert provisioning) |
+| S10.1 | **New `tools/sign_pades.py`** using pyHanko - B-T (with timestamp) by default, B-LTA for archival | new tool | `python -m inclusio.tools.sign_pades build/papers/foo.pdf` signs in place | M | Med (cert provisioning) |
 | S10.2 | **CI workflow** uses GitHub Actions OIDC + eIDAS test CA for signing (production cert path documented) | new `.github/workflows/sign-release.yml` | Tagged releases ship signed PDFs | M | Med |
 | S10.3 | **DSS validator** integration - validate every signed PDF against EU Commission DSS | extend `tools/sign_pades.py` | DSS verdict in CI log | S | Low |
 | S10.4 | **`tests/test_pades.py`** | tests | Signature verifies; timestamp present | S | Low |
@@ -250,7 +250,7 @@ user via MCP.
 
 | ID | Deliverable | Files | Acceptance | Effort | Risk |
 |---|---|---|---|---|---|
-| S11.1 | **New `cli/mcp.py`** exposing `list`, `build`, `render`, `tailor`, `validate`, `audit`, `sitemap` as MCP tools using the official Python MCP SDK | new `euxis_publisher/cli/mcp.py`, `pyproject.toml` adds `mcp` dep | `claude mcp add euxis -- python -m euxis_publisher.cli.mcp` registers; tools appear in Claude Code | L | Med (MCP API churn) |
+| S11.1 | **New `cli/mcp.py`** exposing `list`, `build`, `render`, `tailor`, `validate`, `audit`, `sitemap` as MCP tools using the official Python MCP SDK | new `inclusio/cli/mcp.py`, `pyproject.toml` adds `mcp` dep | `claude mcp add euxis -- python -m inclusio.cli.mcp` registers; tools appear in Claude Code | L | Med (MCP API churn) |
 | S11.2 | **Resource provider** - rendered PDFs and JATS appear as MCP resources for AI consumers | extension | `list_resources` returns built artefacts | M | Med |
 | S11.3 | **Entitlement gate** - `EUXIS_MCP_ALLOW_BUILD=true` to enable destructive tools | env-var handling | Read-only mode by default; build/tailor only with explicit opt-in | S | Low |
 | S11.4 | **`tests/test_mcp.py`** - exercise each tool through the SDK | tests | 100% tool coverage | M | Med |

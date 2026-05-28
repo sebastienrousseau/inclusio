@@ -5,7 +5,7 @@ description: Build, render, lint, and audit LaTeX-first documents (CVs, papers, 
 
 # Euxis Publisher — Claude skill
 
-Use the Euxis Publisher engine (`euxis_publisher` Python package) to build
+Use the Euxis Publisher engine (`inclusio` Python package) to build
 camera-ready tagged PDFs, lint LaTeX, and audit accessibility conformance
 (PDF/UA-2 + WTPDF + PDF/A-4f). The engine is split across two repos:
 
@@ -34,24 +34,24 @@ the current working directory contains `data/meta.yaml`).
 
 ```bash
 # List every registered document
-python -m euxis_publisher.cli.build list
+python -m inclusio.cli.build list
 
 # Build all docs in camera-ready (tagged PDF/A-4f) mode
-python -m euxis_publisher.cli.build build --mode camera-ready
+python -m inclusio.cli.build build --mode camera-ready
 
 # Build a single doc by id
-python -m euxis_publisher.cli.build build --doc whisper-paper --mode camera-ready
+python -m inclusio.cli.build build --doc whisper-paper --mode camera-ready
 
 # Render a Jinja2 template (latex/markdown/json/text)
-python -m euxis_publisher.cli.render --doc cv --format text   # ATS-safe .txt
-python -m euxis_publisher.cli.render --doc cv --format markdown  # Workday-friendly
+python -m inclusio.cli.render --doc cv --format text   # ATS-safe .txt
+python -m inclusio.cli.render --doc cv --format markdown  # Workday-friendly
 
 # Run accessibility audit (veraPDF UA-2 / WTPDF / PDF-A-4f)
-python -m euxis_publisher.cli.audit              # all PDFs under build/
-python -m euxis_publisher.cli.audit --strict     # non-zero exit on FAIL
+python -m inclusio.cli.audit              # all PDFs under build/
+python -m inclusio.cli.audit --strict     # non-zero exit on FAIL
 
 # Tailor a CV from a job description brief
-python -m euxis_publisher.cli.tailor data/jobs/brief.txt --type cv --build
+python -m inclusio.cli.tailor data/jobs/brief.txt --type cv --build
 ```
 
 `make` shortcuts exist in any repo using the engine: `make publish`,

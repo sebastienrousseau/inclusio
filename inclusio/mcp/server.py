@@ -9,7 +9,7 @@ Run with:
     euxis-mcp --http --port 9090    # custom port
 
 Or from Python:
-    python -m euxis_publisher.mcp.server
+    python -m inclusio.mcp.server
 
 The server intentionally does NOT auto-rebuild documents — it exposes
 the engine's read + audit surface so an MCP client can ask "list docs",
@@ -36,9 +36,9 @@ try:
 except ImportError:  # pragma: no cover - exercised by test_mcp_optional_import
     FastMCP = None  # type: ignore[assignment]
 
-from euxis_publisher.cli import audit as audit_mod
-from euxis_publisher.cli import build as build_mod
-from euxis_publisher.cli import render as render_mod
+from inclusio.cli import audit as audit_mod
+from inclusio.cli import build as build_mod
+from inclusio.cli import render as render_mod
 
 
 def _content_root() -> Path:

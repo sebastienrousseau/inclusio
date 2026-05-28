@@ -9,10 +9,10 @@ Renders structured YAML data through Jinja2 templates to produce
 LaTeX, Markdown, or JSON output.
 
 Usage:
-    python -m euxis_publisher.cli.render --doc cv
-    python -m euxis_publisher.cli.render --doc cv --format markdown
-    python -m euxis_publisher.cli.render --doc cv --format json
-    python -m euxis_publisher.cli.render --doc cv --mode draft
+    python -m inclusio.cli.render --doc cv
+    python -m inclusio.cli.render --doc cv --format markdown
+    python -m inclusio.cli.render --doc cv --format json
+    python -m inclusio.cli.render --doc cv --mode draft
 """
 
 import argparse
@@ -759,7 +759,7 @@ def render_blog(blog_id, blog_config, content_root=None):
 
 
 def main(argv=None):
-    """Entry point for `python -m euxis_publisher.cli.render`.
+    """Entry point for `python -m inclusio.cli.render`.
 
     Parses `--doc`, `--format`, `--mode`, and renders the matching
     template through Jinja2 to LaTeX / Markdown / JSON / plain-text.

@@ -54,7 +54,7 @@ jobs:
         # as their owning features get touched.
         run: |
           ruff format --check \
-            euxis_publisher/ \
+            inclusio/ \
             tests/test_overlay.py \
             tests/test_citation.py \
             tests/test_render_text.py \
@@ -119,13 +119,13 @@ jobs:
       - name: Verify expected doc IDs (3.12 only)
         if: matrix.python-version == '3.12'
         run: |
-          # Use the package CLI directly (`python -m euxis_publisher.cli.build`)
+          # Use the package CLI directly (`python -m inclusio.cli.build`)
           # instead of the `scripts/build.py` thin shim — the shim imports
-          # `euxis_publisher`, which requires the package to be installed
+          # `inclusio`, which requires the package to be installed
           # (and we don't `pip install -e .` in this workflow on purpose,
           # to keep the CI tests verifying the in-tree code, not an
           # installed copy).
-          python -m euxis_publisher.cli.build list | tee /tmp/euxis-doc-list.txt
+          python -m inclusio.cli.build list | tee /tmp/euxis-doc-list.txt
           for id in cv whisper-paper patent-paper patent-application faq user-guide-doc bio arxiv-paper preprint-paper prime-paper; do
             grep -q "${id}" /tmp/euxis-doc-list.txt || { echo "Missing expected doc id: ${id}"; exit 1; }
           done

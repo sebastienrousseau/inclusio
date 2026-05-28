@@ -10,12 +10,12 @@ Packaged command entrypoints for the public engine.
 Preferred invocation style:
 
 ```bash
-python3 -m euxis_publisher.cli.build list
-python3 -m euxis_publisher.cli.render --doc cv
-python3 -m euxis_publisher.cli.sitemap --pretty
-python3 -m euxis_publisher.cli.tailor data/jobs/test.txt --no-ai
+python3 -m inclusio.cli.build list
+python3 -m inclusio.cli.render --doc cv
+python3 -m inclusio.cli.sitemap --pretty
+python3 -m inclusio.cli.tailor data/jobs/test.txt --no-ai
 ```
 
-`python3 -m euxis_publisher.cli.build build` and `make publish` also scan
+`python3 -m inclusio.cli.build build` and `make publish` also scan
 `data/jobs/` and auto-generate tailored YAML for supported brief formats before
 they compile PDFs.

@@ -1,7 +1,7 @@
 # Copyright (c) 2026 Sebastien Rousseau
 # Licensed under the MIT License
 # See LICENSE file for details
-"""Sprint 7 CLI wiring: tests for `python -m euxis_publisher.cli.build emit`.
+"""Sprint 7 CLI wiring: tests for `python -m inclusio.cli.build emit`.
 
 The dispatch + argument-parsing + registry-filter behaviour is tested
 here without invoking pandoc — `emit_all` is monkeypatched. End-to-end
@@ -18,8 +18,8 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from euxis_publisher.cli import build as build_mod
-from euxis_publisher.emit import pandoc as emit_pandoc
+from inclusio.cli import build as build_mod
+from inclusio.emit import pandoc as emit_pandoc
 
 
 @pytest.fixture

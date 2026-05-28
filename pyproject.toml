@@ -117,12 +117,12 @@ ignore = [
 quote-style = "double"
 
 [project.scripts]
-euxis-publisher = "euxis_publisher.cli.build:main"
-euxis-mcp = "euxis_publisher.mcp.server:main"
+euxis-publisher = "inclusio.cli.build:main"
+euxis-mcp = "inclusio.mcp.server:main"
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["euxis_publisher*"]
+include = ["inclusio*"]
 exclude = ["tests*", ".claude*", ".cursor*"]
 
 [tool.pytest.ini_options]
@@ -132,7 +132,7 @@ addopts = "--strict-markers"
 cache_dir = "/tmp/euxis-publisher-pytest-cache"
 
 [tool.coverage.run]
-source = ["euxis_publisher"]
+source = ["inclusio"]
 branch = true
 
 [tool.coverage.report]

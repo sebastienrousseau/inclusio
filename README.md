@@ -76,11 +76,11 @@ Keep private content in `euxis-publisher-private`.
 You get:
 
 - **LaTeX classes and styles** through `core/cls/` and `core/sty/`
-- **Packaged Python entrypoints** through `euxis_publisher/cli/`
-- **Operator utilities** through `euxis_publisher/tools/`
+- **Packaged Python entrypoints** through `inclusio/cli/`
+- **Operator utilities** through `inclusio/tools/`
 - **Compatibility wrappers** through `scripts/`
 - **Public fixture content** through `data/`, `src/`, and `templates/`
-- **100% package coverage** over `euxis_publisher`
+- **100% package coverage** over `inclusio`
 
 ---
 
@@ -90,7 +90,7 @@ First, render or tailor content. Then compile camera-ready output from the same 
 
 ```mermaid
 graph TD
-    A[Private or Public Content] --> B{euxis_publisher.cli.build}
+    A[Private or Public Content] --> B{inclusio.cli.build}
     B --> C[Render: Jinja2 to LaTeX or Markdown]
     B --> D[Build: latexmk or TeX compiler]
     B --> E[Tailor: Brief to structured YAML]
@@ -111,7 +111,7 @@ graph TD
 | **Build Modes** | Draft, submission, and camera-ready flows managed from one orchestration layer |
 | **Publishing** | PDF/A-oriented metadata flow with provenance stamping support |
 | **Fixtures** | Public sample content for engine validation without exposing private briefs or templates |
-| **Coverage** | 100% package coverage across `euxis_publisher` |
+| **Coverage** | 100% package coverage across `inclusio` |
 | **Platforms** | macOS, Linux, and WSL |
 | **Docs** | Sphinx docs plus folder-level READMEs for every major public surface |
 
@@ -137,10 +137,10 @@ graph TD
 Use the packaged CLIs directly when you need lower-level control:
 
 ```bash
-python3 -m euxis_publisher.cli.build list
-python3 -m euxis_publisher.cli.render --doc cv
-python3 -m euxis_publisher.cli.sitemap --pretty
-python3 -m euxis_publisher.cli.tailor data/jobs/test.txt --no-ai
+python3 -m inclusio.cli.build list
+python3 -m inclusio.cli.render --doc cv
+python3 -m inclusio.cli.sitemap --pretty
+python3 -m inclusio.cli.tailor data/jobs/test.txt --no-ai
 ```
 
 For bulk private publishing, prefer `make publish`. It scans `data/jobs/`,
@@ -153,7 +153,7 @@ refreshes stale tailored YAML, and compiles the resulting PDFs in one pass.
 Keep these surfaces public:
 
 - `core/`
-- `euxis_publisher/`
+- `inclusio/`
 - `scripts/`
 - `tests/`
 - non-sensitive fixtures in `data/`, `src/`, and `templates/`
@@ -187,9 +187,9 @@ Folder guides:
 - [bin/README.md](bin/README.md)
 - [core/README.md](core/README.md)
 - [data/README.md](data/README.md)
-- [euxis_publisher/README.md](euxis_publisher/README.md)
-- [euxis_publisher/cli/README.md](euxis_publisher/cli/README.md)
-- [euxis_publisher/tools/README.md](euxis_publisher/tools/README.md)
+- [inclusio/README.md](inclusio/README.md)
+- [inclusio/cli/README.md](inclusio/cli/README.md)
+- [inclusio/tools/README.md](inclusio/tools/README.md)
 - [scripts/README.md](scripts/README.md)
 - [src/README.md](src/README.md)
 - [templates/README.md](templates/README.md)

@@ -19,7 +19,7 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from euxis_publisher.provenance import c2pa
+from inclusio.provenance import c2pa
 
 # ── _require_c2patool ──────────────────────────────────────────────────
 

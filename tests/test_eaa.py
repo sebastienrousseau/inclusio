@@ -1,6 +1,6 @@
 """Sprint 3: EAA / accessibility audit CLI tests.
 
-Covers `euxis_publisher.cli.audit`:
+Covers `inclusio.cli.audit`:
 
   - argument parsing
   - registry-filtered PDF collection (default behaviour skips
@@ -27,7 +27,7 @@ sys.path.insert(
     str(Path(__file__).resolve().parent.parent),
 )
 
-from euxis_publisher.cli import audit as audit_mod
+from inclusio.cli import audit as audit_mod
 
 # ── Helpers ─────────────────────────────────────────────────────────────
 

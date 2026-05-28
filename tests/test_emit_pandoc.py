@@ -26,7 +26,7 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from euxis_publisher.emit import pandoc as emit_pandoc
+from inclusio.emit import pandoc as emit_pandoc
 
 # ── _require_pandoc ────────────────────────────────────────────────────
 

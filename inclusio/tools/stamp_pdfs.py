@@ -12,8 +12,8 @@ Optionally overlays a semi-transparent diagonal watermark (e.g. "DRAFT")
 on every page to prevent accidental distribution of non-final documents.
 
 Usage (CI):
-    python3 -m euxis_publisher.tools.stamp_pdfs artifacts/draft/ --watermark "DRAFT"
-    python3 -m euxis_publisher.tools.stamp_pdfs artifacts/camera-ready/
+    python3 -m inclusio.tools.stamp_pdfs artifacts/draft/ --watermark "DRAFT"
+    python3 -m inclusio.tools.stamp_pdfs artifacts/camera-ready/
 
 Requires: pikepdf  (pip install pikepdf)
 """
@@ -224,7 +224,7 @@ def stamp_pdf(pdf_path, commit_hash, build_date):
 
 
 def main(argv=None):
-    """Entry point for `python -m euxis_publisher.tools.stamp_pdfs`.
+    """Entry point for `python -m inclusio.tools.stamp_pdfs`.
 
     Walks the requested build directory, embeds git provenance (commit
     SHA, branch, dirty flag, build timestamp) into each PDF's XMP

@@ -45,7 +45,7 @@ MCP-native (P2, 18-24 months).
 |---|---|---|---|
 | 1 | EAA enforcement live | EN 301 549 / WCAG 2.2 AA mandatory for in-scope products to EU consumers since 28 Jun 2025 | `core/sty/pub-metadata.sty`, `core/cls/pub-base.cls`, all `pub-*.cls` |
 | 2 | PDF/A-2u to PDF/A-4 + PDF/UA-2 + WTPDF | ISO 14289-2:2024 published; PDF/A-2u is "Unicode-mapped" but not tagged; WTPDF 1.0 baseline expected of new producers | `pub-metadata.sty` (pdfx call), `meta.yaml` `pdf_a` schema |
-| 3 | Single-source multi-format | Quarto/MyST/Jupyter Book 2 ship PDF+HTML+JATS+DOCX from one source; tier-1 publishers accept the Quarto manuscript bundle directly | `euxis_publisher/cli/build.py`, `templates/paper.tex.j2`, no JATS/HTML emitter exists |
+| 3 | Single-source multi-format | Quarto/MyST/Jupyter Book 2 ship PDF+HTML+JATS+DOCX from one source; tier-1 publishers accept the Quarto manuscript bundle directly | `inclusio/cli/build.py`, `templates/paper.tex.j2`, no JATS/HTML emitter exists |
 | 4 | AI authoring layer | Cursor/Claude Code are where 2026 authors live; MCP is the brokered-access protocol per NISO Plus 2026 | No `euxis-mcp` server, no Claude skill, no Cursor rules |
 | 5 | LLM judges in the build | ScholarCopilot/FACTUM-class citation grounding now SOTA; ATS-scoring for CVs is one-click in JobSprout/Rezi | `chktex`+`vale` are the only quality gates; no LLM judge stage |
 | 6 | STM AI-disclosure metadata | STM Sept 2025 classification; portal enforcement expected 2026-2027 | `meta.yaml` schema has no `ai_disclosure:` block |

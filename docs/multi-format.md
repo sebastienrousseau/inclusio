@@ -1,4 +1,4 @@
-# Multi-format emission — `euxis_publisher.emit`
+# Multi-format emission — `inclusio.emit`
 
 Sprint 6 (S6.2 + S6.3 + S6.6) ships HTML5, JATS XML, and EPUB3
 emitters that convert a built LaTeX document into single-source
@@ -26,7 +26,7 @@ needed.
 ## API
 
 ```python
-from euxis_publisher.emit import pandoc
+from inclusio.emit import pandoc
 
 # HTML5 (WCAG 2.2 AA target via semantic markup + skip-link)
 result = pandoc.emit_html(
@@ -132,16 +132,16 @@ Sprint 7 wired the emitters into the build CLI:
 
 ```bash
 # Emit both formats for every registered document
-python -m euxis_publisher.cli.build emit
+python -m inclusio.cli.build emit
 # or via Make:
 make emit
 
 # Single document, single format
-python -m euxis_publisher.cli.build emit --doc whisper-paper --formats html
+python -m inclusio.cli.build emit --doc whisper-paper --formats html
 make emit-html
 
 # Strict mode for CI — exits 1 on any pandoc failure
-python -m euxis_publisher.cli.build emit --strict
+python -m inclusio.cli.build emit --strict
 ```
 
 The registry filter from `cli.audit` applies — only documents listed

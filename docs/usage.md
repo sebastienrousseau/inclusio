@@ -26,10 +26,10 @@ then builds the PDFs.
 ## Build Script
 
 ```bash
-python3 -m euxis_publisher.cli.build list
-python3 -m euxis_publisher.cli.build build --mode draft
-python3 -m euxis_publisher.cli.build render --doc cv --mode draft
-python3 -m euxis_publisher.cli.build sitemap --pretty
+python3 -m inclusio.cli.build list
+python3 -m inclusio.cli.build build --mode draft
+python3 -m inclusio.cli.build render --doc cv --mode draft
+python3 -m inclusio.cli.build sitemap --pretty
 ```
 
 ## Tailoring Note

@@ -19,7 +19,7 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from euxis_publisher.cli import build as build_mod
+from inclusio.cli import build as build_mod
 
 # ── content_root fixture (shared shape with other CLI tests) ───────────
 
@@ -129,7 +129,7 @@ def test_cmd_provenance_missing_pdf_exits_one(content_root, capsys):
 
 def test_cmd_provenance_happy_path_with_mocked_c2patool(content_root, monkeypatch, capsys):
     """End-to-end through cmd_provenance with c2patool subprocess mocked."""
-    from euxis_publisher.provenance import c2pa as c2pa_mod
+    from inclusio.provenance import c2pa as c2pa_mod
 
     captured = {"argv": None}
 
@@ -167,7 +167,7 @@ def test_cmd_provenance_happy_path_with_mocked_c2patool(content_root, monkeypatc
 
 def test_cmd_provenance_strict_exits_one_on_test_cert(content_root, monkeypatch):
     """With --strict + no real cert, exit 1 after publishing."""
-    from euxis_publisher.provenance import c2pa as c2pa_mod
+    from inclusio.provenance import c2pa as c2pa_mod
 
     monkeypatch.setattr(c2pa_mod.shutil, "which", lambda _x: "/fake/c2patool")
 
@@ -184,7 +184,7 @@ def test_cmd_provenance_strict_exits_one_on_test_cert(content_root, monkeypatch)
 
 
 def test_cmd_provenance_propagates_c2patool_missing(content_root, monkeypatch, capsys):
-    from euxis_publisher.provenance import c2pa as c2pa_mod
+    from inclusio.provenance import c2pa as c2pa_mod
 
     monkeypatch.setattr(c2pa_mod.shutil, "which", lambda _x: None)
     with pytest.raises(SystemExit) as excinfo:
@@ -194,7 +194,7 @@ def test_cmd_provenance_propagates_c2patool_missing(content_root, monkeypatch, c
 
 
 def test_cmd_provenance_surfaces_c2patool_failure(content_root, monkeypatch, capsys):
-    from euxis_publisher.provenance import c2pa as c2pa_mod
+    from inclusio.provenance import c2pa as c2pa_mod
 
     monkeypatch.setattr(c2pa_mod.shutil, "which", lambda _x: "/fake/c2patool")
 

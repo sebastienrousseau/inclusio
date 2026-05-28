@@ -9,9 +9,9 @@ Replaces forbidden raw formatting commands with their semantic equivalents
 as defined in data/meta.yaml quality.forbidden_commands.
 
 Usage:
-    python -m euxis_publisher.tools.fix_semantic src/
-    python -m euxis_publisher.tools.fix_semantic src/ --dry-run
-    python -m euxis_publisher.tools.fix_semantic src/ --verbose
+    python -m inclusio.tools.fix_semantic src/
+    python -m inclusio.tools.fix_semantic src/ --dry-run
+    python -m inclusio.tools.fix_semantic src/ --verbose
 """
 
 import argparse
@@ -94,7 +94,7 @@ def fix_file(path, dry_run=False, verbose=False):
 
 
 def main(argv=None):
-    """Entry point for `python -m euxis_publisher.tools.fix_semantic`.
+    """Entry point for `python -m inclusio.tools.fix_semantic`.
 
     Walks the requested `.tex` directory and rewrites forbidden
     direct-formatting commands (`\\textbf`, `\\textit`, `\\vspace`,

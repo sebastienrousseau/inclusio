@@ -31,7 +31,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 @contextmanager
 def _stub_urlopen(response_json=None, raise_exc=None):
     """Patch urllib.request.urlopen in cloud_llm."""
-    from euxis_publisher.judge import cloud_llm as cl
+    from inclusio.judge import cloud_llm as cl
 
     def fake_urlopen(req, timeout=None):
         if raise_exc is not None:
@@ -49,7 +49,7 @@ def _stub_urlopen(response_json=None, raise_exc=None):
 
 def test_anthropic_text_block_breaks_first_match():
     """cloud_llm.py:150 — first text block ends the content-blocks loop."""
-    from euxis_publisher.judge import cloud_llm as cl
+    from inclusio.judge import cloud_llm as cl
 
     payload = {
         "content": [
@@ -72,7 +72,7 @@ def test_anthropic_text_block_breaks_first_match():
 
 def test_cloud_llm_native_timeout_error_path():
     """cloud_llm.py:202 — bare TimeoutError (not socket.timeout) maps to LLMTimeout."""
-    from euxis_publisher.judge import cloud_llm as cl
+    from inclusio.judge import cloud_llm as cl
 
     with _stub_urlopen(raise_exc=TimeoutError("kernel")):
         client = cl.CloudLLM(
@@ -85,7 +85,7 @@ def test_cloud_llm_native_timeout_error_path():
 
 def test_cloud_llm_socket_timeout_within_urlerror_maps_to_timeout():
     """cloud_llm.py:201 — URLError wrapping socket.timeout → LLMTimeout."""
-    from euxis_publisher.judge import cloud_llm as cl
+    from inclusio.judge import cloud_llm as cl
 
     err = urllib.error.URLError(TimeoutError("slow"))
     with _stub_urlopen(raise_exc=err):
@@ -102,7 +102,7 @@ def test_cloud_llm_socket_timeout_within_urlerror_maps_to_timeout():
 
 def test_jd_fit_extract_keywords_drops_pure_numeric_token():
     """jd_fit.py:127 — pure-numeric token like '2026' is dropped."""
-    from euxis_publisher.judge import jd_fit
+    from inclusio.judge import jd_fit
 
     out = jd_fit.extract_keywords("python 2026 kubernetes")
     assert "2026" not in out
@@ -111,7 +111,7 @@ def test_jd_fit_extract_keywords_drops_pure_numeric_token():
 
 def test_jd_fit_jaccard_empty_union_returns_one():
     """jd_fit.py:138 — defensive path for zero-length union (both sides empty)."""
-    from euxis_publisher.judge import jd_fit
+    from inclusio.judge import jd_fit
 
     # The natural `not a and not b` returns 1.0 at line 134; line 138 is
     # the secondary `not union` guard which protects a future caller that
@@ -128,7 +128,7 @@ def test_jd_fit_seniority_rank_returns_none_when_no_term_matches():
     rank. Monkeypatch the alternation pattern to match a token that
     isn't in the ladder dict so the loop falls through.
     """
-    from euxis_publisher.judge import jd_fit
+    from inclusio.judge import jd_fit
 
     # No ladder term in this text → early `if not match: return None`
     assert jd_fit._seniority_rank("backend writer who codes") is None
@@ -141,7 +141,7 @@ def test_jd_fit_seniority_rank_defensive_no_match_in_ladder(monkeypatch):
     match that exists in the live alternation. We achieve this by
     temporarily swapping a term to a non-matching alias.
     """
-    from euxis_publisher.judge import jd_fit
+    from inclusio.judge import jd_fit
 
     # Force `_SENIORITY_LADDER` so the loop runs but no term equals the
     # matched lower-case word — exits via the final `return None`.
@@ -154,7 +154,7 @@ def test_jd_fit_seniority_rank_defensive_no_match_in_ladder(monkeypatch):
 
 def test_emit_jats_raises_called_process_error(tmp_path, monkeypatch):
     """emit/pandoc.py:236 — JATS subprocess failure surfaces."""
-    from euxis_publisher.emit import pandoc as p
+    from inclusio.emit import pandoc as p
 
     src = tmp_path / "x.tex"
     src.write_text(r"\documentclass{article}\begin{document}X\end{document}")
@@ -170,7 +170,7 @@ def test_emit_jats_raises_called_process_error(tmp_path, monkeypatch):
 
 def test_emit_epub_raises_called_process_error(tmp_path, monkeypatch):
     """emit/pandoc.py:306 — EPUB subprocess failure surfaces."""
-    from euxis_publisher.emit import pandoc as p
+    from inclusio.emit import pandoc as p
 
     src = tmp_path / "x.tex"
     src.write_text(r"\documentclass{article}\begin{document}X\end{document}")
@@ -191,8 +191,8 @@ def test_emit_epub_raises_called_process_error(tmp_path, monkeypatch):
 
 def test_citation_grounding_records_fallback_only_once(monkeypatch):
     """citations.py:339->349 — second LLMError doesn't append a second finding."""
-    from euxis_publisher.judge import citations as cit
-    from euxis_publisher.judge import local_llm as ll
+    from inclusio.judge import citations as cit
+    from inclusio.judge import local_llm as ll
 
     tex = (
         r"\documentclass{article}\begin{document}"
@@ -220,7 +220,7 @@ def test_citation_grounding_records_fallback_only_once(monkeypatch):
 
 def test_import_resume_to_mmyyyy_empty_is_present():
     """import_resume.py:75 — empty/None date returns 'Present'."""
-    from euxis_publisher.cli import import_resume as ir
+    from inclusio.cli import import_resume as ir
 
     # _format_date_range with both dates → triggers to_mmyyyy("") path
     assert ir._format_date_range("2020-01-01", "") == "01/2020 – Present"
@@ -229,7 +229,7 @@ def test_import_resume_to_mmyyyy_empty_is_present():
 
 def test_import_resume_work_with_url():
     """import_resume.py:132 — work item with `url` attaches it."""
-    from euxis_publisher.cli import import_resume as ir
+    from inclusio.cli import import_resume as ir
 
     out = ir._convert_work([{"name": "Acme", "position": "Eng", "url": "https://acme.example"}])
     assert out[0]["url"] == "https://acme.example"
@@ -237,7 +237,7 @@ def test_import_resume_work_with_url():
 
 def test_import_resume_volunteer_with_summary():
     """import_resume.py:153 — volunteer item with `summary` becomes context."""
-    from euxis_publisher.cli import import_resume as ir
+    from inclusio.cli import import_resume as ir
 
     out = ir._convert_volunteer(
         [{"organization": "Crisis", "position": "Counsellor", "summary": "Did good"}]
@@ -247,7 +247,7 @@ def test_import_resume_volunteer_with_summary():
 
 def test_import_resume_projects_passthrough():
     """import_resume.py:294 — `projects` array surfaces verbatim on output."""
-    from euxis_publisher.cli import import_resume as ir
+    from inclusio.cli import import_resume as ir
 
     resume = {
         "basics": {"name": "N"},
@@ -262,14 +262,14 @@ def test_import_resume_projects_passthrough():
 
 def test_tailor_escape_latex_trailing_backslash():
     """tailor.py:558-560 — trailing backslash with no follower."""
-    from euxis_publisher.cli import tailor
+    from inclusio.cli import tailor
 
     assert tailor._escape_latex_text("foo\\") == "foo\\"
 
 
 def test_tailor_escape_latex_strings_passes_through_scalars():
     """tailor.py:575 — non-str/list/dict value returns unchanged."""
-    from euxis_publisher.cli import tailor
+    from inclusio.cli import tailor
 
     assert tailor._escape_latex_strings(42) == 42
     assert tailor._escape_latex_strings(None) is None
@@ -277,21 +277,21 @@ def test_tailor_escape_latex_strings_passes_through_scalars():
 
 def test_tailor_optimise_cv_for_ats_passthrough_non_dict():
     """tailor.py:581 — `_optimise_cv_for_ats` returns non-dict unchanged."""
-    from euxis_publisher.cli import tailor
+    from inclusio.cli import tailor
 
     assert tailor._optimise_cv_for_ats([1, 2, 3]) == [1, 2, 3]
 
 
 def test_tailor_stamp_publisher_metadata_passthrough_non_dict():
     """tailor.py:599 — `_stamp_publisher_metadata` returns non-dict unchanged."""
-    from euxis_publisher.cli import tailor
+    from inclusio.cli import tailor
 
     assert tailor._stamp_publisher_metadata([1, 2], "cv", "id", Path("x")) == [1, 2]
 
 
 def test_tailor_rewrite_bullet_for_impact_returns_empty_unchanged():
     """tailor.py:613 — empty / non-str text returns as-is."""
-    from euxis_publisher.cli import tailor
+    from inclusio.cli import tailor
 
     assert tailor._rewrite_bullet_for_impact("") == ""
     assert tailor._rewrite_bullet_for_impact(None) is None
@@ -299,14 +299,14 @@ def test_tailor_rewrite_bullet_for_impact_returns_empty_unchanged():
 
 def test_tailor_clean_cv_language_passthrough_scalars():
     """tailor.py:641 — scalar value returns unchanged."""
-    from euxis_publisher.cli import tailor
+    from inclusio.cli import tailor
 
     assert tailor._clean_cv_language(99) == 99
 
 
 def test_tailor_generate_with_explicit_output_path(tmp_path, monkeypatch):
     """tailor.py:850-851 — `output_path` is honoured when supplied."""
-    from euxis_publisher.cli import tailor
+    from inclusio.cli import tailor
 
     brief = tmp_path / "brief.md"
     brief.write_text("# Brief\n\nWe need a python engineer.\n")
@@ -339,7 +339,7 @@ def test_tailor_generate_with_explicit_output_path(tmp_path, monkeypatch):
 
 def test_audit_main_warns_on_unknown_flavour(tmp_path, capsys, monkeypatch):
     """audit.py:347 — unknown flavours emit a stderr warning."""
-    from euxis_publisher.cli import audit as audit_mod
+    from inclusio.cli import audit as audit_mod
 
     # Empty target → audit returns no PDFs gracefully.
     target = tmp_path / "build"
@@ -373,7 +373,7 @@ def test_audit_main_warns_on_unknown_flavour(tmp_path, capsys, monkeypatch):
 
 def test_render_skills_dict_items_emitted():
     """render.py:449-450 — `skills` as list-of-dicts renders title:description."""
-    from euxis_publisher.cli import render as r
+    from inclusio.cli import render as r
 
     data = {
         "title": "Test",
@@ -386,7 +386,7 @@ def test_render_skills_dict_items_emitted():
 
 def test_render_plain_text_lines_nested_dict():
     """render.py:514-515 — nested dict label + recurse."""
-    from euxis_publisher.cli import render as r
+    from inclusio.cli import render as r
 
     out = r._plain_text_lines({"top": {"inner": "v"}}, indent=0)
     # Expect a `Top:` label and a nested `Inner: v` line.
@@ -401,7 +401,7 @@ def test_render_plain_text_lines_nested_dict():
 def test_mcp_list_docs_handles_non_dict_doc_entry(tmp_path, monkeypatch):
     """mcp/server.py:97 — manifest entry that isn't a dict is tolerated."""
     pytest.importorskip("mcp")
-    from euxis_publisher.mcp import server as srv
+    from inclusio.mcp import server as srv
 
     content = tmp_path
     (content / "data").mkdir()
@@ -426,7 +426,7 @@ def test_stamp_pdfs_watermark_creates_xobject_resources(tmp_path):
     pytest.importorskip("pikepdf")
     import pikepdf
 
-    from euxis_publisher.tools import stamp_pdfs
+    from inclusio.tools import stamp_pdfs
 
     pdf_path = tmp_path / "x.pdf"
     pdf = pikepdf.new()
@@ -446,7 +446,7 @@ def test_post_process_tagged_pdf_with_secure_pdf_applies_encryption(tmp_path):
     pytest.importorskip("pikepdf")
     import pikepdf
 
-    from euxis_publisher.cli import build
+    from inclusio.cli import build
 
     pdf_path = tmp_path / "tagged.pdf"
     pdf = pikepdf.new()

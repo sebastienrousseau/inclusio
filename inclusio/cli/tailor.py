@@ -13,9 +13,9 @@ Primary path: Claude CLI (claude -p) for intelligent rewriting.
 Fallback: keyword-based theme extraction + template composition.
 
 Usage:
-    python -m euxis_publisher.cli.tailor data/jobs/revolut-pm.txt
-    python -m euxis_publisher.cli.tailor data/jobs/brief.docx --type cv --id my-cv
-    python -m euxis_publisher.cli.tailor data/jobs/brief.md --no-ai
+    python -m inclusio.cli.tailor data/jobs/revolut-pm.txt
+    python -m inclusio.cli.tailor data/jobs/brief.docx --type cv --id my-cv
+    python -m inclusio.cli.tailor data/jobs/brief.md --no-ai
 """
 
 import argparse
@@ -859,7 +859,7 @@ def generate(
 
 
 def main(argv=None):
-    """Entry point for `python -m euxis_publisher.cli.tailor`.
+    """Entry point for `python -m inclusio.cli.tailor`.
 
     Reads a brief / job description, derives the document type,
     generates tailored YAML data via the LLM (or keyword fallback when
@@ -908,7 +908,7 @@ def main(argv=None):
             try:
                 render_module = __import__("render")
             except ModuleNotFoundError:
-                from euxis_publisher.cli import render as render_module
+                from inclusio.cli import render as render_module
 
             render_module.render_document(output_id, fmt="latex", build_mode="draft")
         except ImportError:
@@ -920,7 +920,7 @@ def main(argv=None):
             try:
                 build_module = __import__("build")
             except ModuleNotFoundError:
-                from euxis_publisher.cli import build as build_module
+                from inclusio.cli import build as build_module
 
             meta = build_module.load_meta()
             doc_config = {

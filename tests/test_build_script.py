@@ -9,7 +9,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 import yaml
 
-from euxis_publisher.cli import build
+from inclusio.cli import build
 
 sys.modules["build"] = build
 
@@ -944,7 +944,7 @@ class TestCmdRender:
     def test_import_render_module_falls_back_to_package(self, monkeypatch):
         import builtins
 
-        from euxis_publisher.cli import render as package_render
+        from inclusio.cli import render as package_render
 
         real_import = builtins.__import__
 
@@ -1283,7 +1283,7 @@ class TestCmdTailor:
     def test_import_tailor_module_falls_back_to_package(self, monkeypatch):
         import builtins
 
-        from euxis_publisher.cli import tailor as package_tailor
+        from inclusio.cli import tailor as package_tailor
 
         real_import = builtins.__import__
 

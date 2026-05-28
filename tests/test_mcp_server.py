@@ -24,7 +24,7 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from euxis_publisher.mcp import server as mcp_server
+from inclusio.mcp import server as mcp_server
 
 pytestmark = pytest.mark.skipif(
     mcp_server.FastMCP is None,
@@ -96,7 +96,7 @@ def test_content_root_honours_env_var(tmp_path, monkeypatch):
 
 def test_content_root_default_when_env_unset(monkeypatch):
     monkeypatch.delenv("EUXIS_CONTENT_DIR", raising=False)
-    from euxis_publisher.cli import build
+    from inclusio.cli import build
 
     assert mcp_server._content_root() == build.CONTENT_ROOT
 

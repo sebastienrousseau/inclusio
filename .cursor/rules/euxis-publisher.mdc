@@ -14,10 +14,10 @@ the engine's CLI over hand-running `latexmk`.
 ## Core commands
 
 ```bash
-python -m euxis_publisher.cli.build list                          # enumerate
-python -m euxis_publisher.cli.build build --mode camera-ready     # build all
-python -m euxis_publisher.cli.audit --strict                      # EAA gate
-python -m euxis_publisher.cli.render --doc cv --format text       # ATS .txt
+python -m inclusio.cli.build list                          # enumerate
+python -m inclusio.cli.build build --mode camera-ready     # build all
+python -m inclusio.cli.audit --strict                      # EAA gate
+python -m inclusio.cli.render --doc cv --format text       # ATS .txt
 ```
 
 `make publish CONTENT_DIR=/path/to/content/repo` for split-repo layouts.

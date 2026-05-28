@@ -55,7 +55,7 @@ Build and validate any document with:
 
 ```bash
 # Build camera-ready (engages tagging via \DocumentMetadata)
-python -m euxis_publisher.cli.build build --doc my-paper --mode camera-ready
+python -m inclusio.cli.build build --doc my-paper --mode camera-ready
 
 # Check structure tagging is present
 pdfinfo build/papers/my-paper.pdf | grep Tagged   # expect: Tagged: yes
@@ -144,13 +144,13 @@ make audit
 make audit-strict
 
 # audit a specific PDF
-python -m euxis_publisher.cli.audit build/papers/foo.pdf
+python -m inclusio.cli.audit build/papers/foo.pdf
 
 # audit every PDF, including non-registered (e.g. recruiter inputs)
-python -m euxis_publisher.cli.audit --all
+python -m inclusio.cli.audit --all
 
 # choose flavours
-python -m euxis_publisher.cli.audit --flavours ua2,4f
+python -m inclusio.cli.audit --flavours ua2,4f
 ```
 
 By default the audit applies a **registry filter**: only PDFs whose

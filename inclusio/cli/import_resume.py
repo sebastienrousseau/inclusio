@@ -325,7 +325,7 @@ def dump_yaml(data: dict[str, Any], path: Path) -> None:
 
 
 def main(argv: list[str] | None = None) -> int:
-    """Entry point for `python -m euxis_publisher.cli.import_resume`.
+    """Entry point for `python -m inclusio.cli.import_resume`.
 
     Parses `<input>` + `--output`, converts a JSON Resume document
     into the Euxis CV YAML schema, and writes the result to stdout

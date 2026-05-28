@@ -24,7 +24,7 @@ The merge rules are intentionally simple and explicit:
 - `None` in the overlay deletes the key from the result.
 
 This module has no runtime dependencies beyond stdlib. Content repos
-import it via `from euxis_publisher.tools.overlay import merge,
+import it via `from inclusio.tools.overlay import merge,
 resolve` after `pip install euxis-publisher`.
 """
 

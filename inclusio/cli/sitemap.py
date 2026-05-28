@@ -10,9 +10,9 @@ registered document, suitable for static-site search, LLM ingestion,
 or CI artifact indexing.
 
 Usage:
-    python -m euxis_publisher.cli.sitemap              # write to build/site-map.json
-    python -m euxis_publisher.cli.sitemap --pretty     # human-readable JSON
-    python -m euxis_publisher.cli.sitemap --stdout     # print to stdout instead of file
+    python -m inclusio.cli.sitemap              # write to build/site-map.json
+    python -m inclusio.cli.sitemap --pretty     # human-readable JSON
+    python -m inclusio.cli.sitemap --stdout     # print to stdout instead of file
 """
 
 import argparse
@@ -178,7 +178,7 @@ def write_sitemap(sitemap, output_path=None, pretty=False, stdout=False):
 
 
 def main(argv=None):
-    """Entry point for `python -m euxis_publisher.cli.sitemap`.
+    """Entry point for `python -m inclusio.cli.sitemap`.
 
     Reads `data/meta.yaml`, builds a semantic-search index of every
     registered document, writes JSON to `build/site-map.json` (or

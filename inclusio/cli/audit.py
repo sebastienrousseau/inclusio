@@ -15,19 +15,19 @@ any of the three gates. Local users get the same report by running
 
 Usage:
     # Audit one PDF
-    python -m euxis_publisher.cli.audit build/papers/foo.pdf
+    python -m inclusio.cli.audit build/papers/foo.pdf
 
     # Audit every PDF under build/ (default)
-    python -m euxis_publisher.cli.audit
+    python -m inclusio.cli.audit
 
     # Strict mode: non-zero exit on any failure
-    python -m euxis_publisher.cli.audit --strict
+    python -m inclusio.cli.audit --strict
 
     # Specific report path
-    python -m euxis_publisher.cli.audit --json out.json --markdown out.md
+    python -m inclusio.cli.audit --json out.json --markdown out.md
 
     # Subset of flavours
-    python -m euxis_publisher.cli.audit --flavours ua2,4f
+    python -m inclusio.cli.audit --flavours ua2,4f
 
 Requires: `verapdf` on PATH. Install via `brew install verapdf` on
 macOS or the official installer (see .github/workflows/verapdf.yml).
@@ -286,7 +286,7 @@ def _is_blocking(report: dict, status_set=("FAIL", "ERROR")) -> bool:
 
 
 def main(argv=None):
-    """Entry point for `python -m euxis_publisher.cli.audit`.
+    """Entry point for `python -m inclusio.cli.audit`.
 
     Parses the audit CLI flags, resolves the PDF set, runs veraPDF over
     every (pdf, flavour) pair, writes JSON + Markdown reports, and

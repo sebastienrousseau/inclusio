@@ -20,9 +20,9 @@ Public documentation for the `euxis-publisher` engine.
 - `bin/README.md`
 - `core/README.md`
 - `data/README.md`
-- `euxis_publisher/README.md`
-- `euxis_publisher/cli/README.md`
-- `euxis_publisher/tools/README.md`
+- `inclusio/README.md`
+- `inclusio/cli/README.md`
+- `inclusio/tools/README.md`
 - `scripts/README.md`
 - `src/README.md`
 - `templates/README.md`
