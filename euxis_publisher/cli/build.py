@@ -1108,16 +1108,14 @@ def cmd_judge(args, meta):
         templates = meta.get("templates", {}) or {}
         if doc_id not in templates:
             print(
-                f"ERROR: {doc_id} is not a registered template "
-                "(see `templates:` in meta.yaml)",
+                f"ERROR: {doc_id} is not a registered template (see `templates:` in meta.yaml)",
                 file=sys.stderr,
             )
             sys.exit(2)
         doc_type = templates[doc_id].get("type", doc_id)
         if doc_type != "cv":
             print(
-                f"ERROR: jd_fit judge only scores CVs; "
-                f"{doc_id} has type {doc_type!r}",
+                f"ERROR: jd_fit judge only scores CVs; {doc_id} has type {doc_type!r}",
                 file=sys.stderr,
             )
             sys.exit(2)
@@ -1135,9 +1133,7 @@ def cmd_judge(args, meta):
         if args.llm_url:
             from euxis_publisher.judge import local_llm
 
-            llm = local_llm.LocalLLM(
-                base_url=args.llm_url, timeout=args.llm_timeout
-            )
+            llm = local_llm.LocalLLM(base_url=args.llm_url, timeout=args.llm_timeout)
             report = jd_fit_judge.score_jd_fit_with_llm(jd_text, cv_text, llm)
         else:
             report = jd_fit_judge.score_jd_fit(jd_text, cv_text)
@@ -1532,10 +1528,7 @@ Commands:
     judge_parser.add_argument(
         "--brief",
         default=None,
-        help=(
-            "Job-description brief path (txt/md). Required when "
-            "--judge jd_fit."
-        ),
+        help=("Job-description brief path (txt/md). Required when --judge jd_fit."),
     )
     judge_parser.add_argument(
         "--json", default=None, help="Optional path to write the JSON report to."
