@@ -82,7 +82,7 @@ jobs:
       - name: Install test dependencies
         run: |
           uv venv
-          uv pip install pyyaml jinja2 pikepdf pytest pytest-cov sphinx myst-parser furo "mcp[cli]>=1.27.0"
+          uv pip install pyyaml jinja2 pikepdf pytest pytest-cov pytest-benchmark "interrogate>=1.7" sphinx myst-parser furo "mcp[cli]>=1.27.0"
           echo "$PWD/.venv/bin" >> "$GITHUB_PATH"
 
       - name: Show Python interpreter
@@ -99,6 +99,18 @@ jobs:
       - name: Measure coverage (3.12 only)
         if: matrix.python-version == '3.12'
         run: make coverage PYTHON=python
+
+      - name: Verify 100% docstring coverage (3.12 only)
+        if: matrix.python-version == '3.12'
+        run: make docstrings PYTHON=python
+
+      - name: Run hot-path benchmarks (3.12 only)
+        if: matrix.python-version == '3.12'
+        # Observational by default — surfaces the per-call cost of
+        # render_text, score_cv, score_jd_fit, parse_citations, etc.
+        # in the workflow log. Promote to a regression gate when a
+        # baseline JSON gets checked in.
+        run: make benchmark PYTHON=python
 
       - name: Build documentation with Sphinx (3.12 only)
         if: matrix.python-version == '3.12'

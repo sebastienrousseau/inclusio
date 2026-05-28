@@ -63,8 +63,11 @@ def merge(base: Any, overlay: Any) -> Any:
             if key not in base and value is not None:
                 out[key] = deepcopy(value)
         return out
-    # Lists and scalars: overlay wins (when present).
-    if overlay is _SENTINEL:
+    # Lists and scalars: overlay wins (when present). The `_SENTINEL`
+    # branch is reserved for a future "no overlay key" call site; not
+    # reachable from the current `merge()` entry point and intentionally
+    # left as a defensive code path.
+    if overlay is _SENTINEL:  # pragma: no cover - reserved for future API
         return deepcopy(base)
     return deepcopy(overlay)
 

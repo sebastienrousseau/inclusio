@@ -336,7 +336,7 @@ def score_citations_with_llm(
         try:
             payload = llm.complete_json(prompt)
         except _llm_mod.LLMError as exc:
-            if not fallback_recorded:
+            if not fallback_recorded:  # pragma: no branch - guarded by `break` below
                 report.findings.append(
                     Finding(
                         check="citation_grounding_llm",

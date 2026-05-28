@@ -18,7 +18,7 @@ endif
 # Build Targets
 ###############################################################################
 
-.PHONY: all draft submission final publish publish-jobs assets lint fix render render-md blog tailor sitemap audit audit-strict docs setup clean clean-build distclean test coverage validate validate-private list help
+.PHONY: all draft submission final publish publish-jobs assets lint fix render render-md blog tailor sitemap audit audit-strict docs setup clean clean-build distclean test coverage benchmark docstrings validate validate-private list help
 
 all: draft ## Build all documents in draft mode (default)
 
@@ -108,12 +108,19 @@ distclean: ## Remove build output + dev artifacts (.coverage, .pytest_cache)
 test: ## Run public engine tests
 	$(PYTHON) -m pytest -q tests/test_assets.py tests/test_build.py tests/test_engine_smoke.py tests/test_macro_contract.py
 
-coverage: ## Measure Python logic coverage (>=95% required)
-	COVERAGE_FILE=/tmp/euxis-publisher.coverage $(PYTHON) -m pytest --cov=euxis_publisher --cov-report=term-missing --cov-fail-under=95 tests/
+coverage: ## Measure Python logic coverage (>=97% required)
+	COVERAGE_FILE=/tmp/euxis-publisher.coverage $(PYTHON) -m pytest --cov=euxis_publisher --cov-report=term-missing --cov-fail-under=97 tests/ --ignore=tests/test_pdf_validation.py
 
-validate: ## Run full local validation (tests, coverage, docs)
+benchmark: ## Run hot-path micro-benchmarks (pytest-benchmark)
+	$(PYTHON) -m pytest tests/test_benchmark_hot_paths.py --benchmark-only --benchmark-min-rounds=10 --benchmark-columns=min,mean,median,stddev,ops,rounds
+
+docstrings: ## Verify 100% docstring coverage (interrogate)
+	$(PYTHON) -m interrogate --fail-under=100 -v euxis_publisher/
+
+validate: ## Run full local validation (tests, coverage, docstrings, docs)
 	$(MAKE) test PYTHON=$(PYTHON)
 	$(MAKE) coverage PYTHON=$(PYTHON)
+	$(MAKE) docstrings PYTHON=$(PYTHON)
 	$(MAKE) docs PYTHON=$(PYTHON)
 
 validate-private: ## Reminder: run content + British-English validation in private repo

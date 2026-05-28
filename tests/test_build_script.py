@@ -1143,6 +1143,7 @@ class TestCmdTailor:
         monkeypatch.setattr(build, "CACHE_DIR", fake_root / "build" / ".cache")
         monkeypatch.setattr(build, "RENDERED_DIR",
                             fake_root / "build" / ".cache" / "rendered")
+        monkeypatch.setattr(build, "TAILORED_DIR", fake_root / "data" / "tailored")
         mock_tailor_mod = MagicMock()
         mock_tailor_mod.generate.return_value = yaml_file
         mock_render_mod = MagicMock()
@@ -1182,7 +1183,9 @@ class TestCmdTailor:
              patch.object(build, "CACHE_DIR",
                           fake_root / "build" / ".cache"), \
              patch.object(build, "RENDERED_DIR",
-                          fake_root / "build" / ".cache" / "rendered"):
+                          fake_root / "build" / ".cache" / "rendered"), \
+             patch.object(build, "TAILORED_DIR",
+                          fake_root / "data" / "tailored"):
             args = Namespace(
                 brief="data/jobs/test.txt", type="paper", id=None,
                 base=None, render=True, build=False, mode="draft",

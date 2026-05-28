@@ -465,6 +465,7 @@ def lint_cv_data(data):
     warnings = []
 
     def _scan_string(field, text):
+        """Flag banned phrases or jargon clusters inside *text*."""
         text_lower = text.lower()
         # Check banned phrases
         for phrase in BANNED_PHRASES:
@@ -858,6 +859,12 @@ def generate(
 
 
 def main(argv=None):
+    """Entry point for `python -m euxis_publisher.cli.tailor`.
+
+    Reads a brief / job description, derives the document type,
+    generates tailored YAML data via the LLM (or keyword fallback when
+    `--no-ai` is set), and optionally renders + builds the PDF.
+    """
     parser = argparse.ArgumentParser(
         description="Generate tailored documents from briefs/job descriptions"
     )

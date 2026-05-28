@@ -1471,6 +1471,13 @@ def cmd_tailor(args, meta):
 
 
 def main(argv=None):
+    """Entry point for `python -m euxis_publisher.cli.build`.
+
+    Parses the top-level subcommand (build / render / blog / tailor /
+    fix / sitemap / assets / lint / clean / distclean / list / emit /
+    judge / provenance / import-resume) and dispatches to the matching
+    `cmd_*` handler. With no subcommand, prints help and exits 0.
+    """
     parser = argparse.ArgumentParser(
         description="Publications build orchestrator",
         formatter_class=argparse.RawDescriptionHelpFormatter,

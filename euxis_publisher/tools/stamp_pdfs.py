@@ -224,6 +224,12 @@ def stamp_pdf(pdf_path, commit_hash, build_date):
 
 
 def main(argv=None):
+    """Entry point for `python -m euxis_publisher.tools.stamp_pdfs`.
+
+    Walks the requested build directory, embeds git provenance (commit
+    SHA, branch, dirty flag, build timestamp) into each PDF's XMP
+    metadata, and optionally overlays a draft watermark across pages.
+    """
     parser = argparse.ArgumentParser(
         description="Stamp PDFs with git provenance and optional watermark",
     )
