@@ -1,13 +1,13 @@
 ---
-description: Build, render, lint, and audit LaTeX-first documents through the Euxis Publisher engine
+description: Build, render, lint, and audit LaTeX-first documents through the Inclusio engine
 globs: ["**/*.tex", "**/*.cls", "**/*.sty", "**/meta.yaml", "**/*-data.yaml"]
 alwaysApply: false
 ---
 
-# Euxis Publisher — Cursor rule
+# Inclusio — Cursor rule
 
 This repository (or a sibling content repo) is built by the
-[Euxis Publisher](https://github.com/sebastienrousseau/inclusio)
+[Inclusio](https://github.com/sebastienrousseau/inclusio)
 engine. When editing `.tex`, `.cls`, `.sty`, or `data/meta.yaml`, prefer
 the engine's CLI over hand-running `latexmk`.
 

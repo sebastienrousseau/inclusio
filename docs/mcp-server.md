@@ -1,7 +1,7 @@
 # MCP server — `inclusio-mcp`
 
 Sprint 6 (S6.4) ships an MCP (Model Context Protocol) server that
-exposes the Euxis Publisher engine's read + audit surface to AI
+exposes the Inclusio engine's read + audit surface to AI
 clients (Claude Code, Cursor, the MCP Inspector). Forcing Function #4
 in [`strategy-2026.md`](strategy-2026.md): the AI authoring layer.
 

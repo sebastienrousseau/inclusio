@@ -1,11 +1,19 @@
 <p align="center">
-  <img src="https://kura.pro/euxis/images/logos/euxis.svg" alt="Euxis Publisher logo" width="128" />
+  <img src="https://kura.pro/euxis/images/logos/euxis.svg" alt="Inclusio logo" width="128" />
 </p>
 
-<h1 align="center">Euxis Publisher</h1>
+<h1 align="center">Inclusio</h1>
 
 <p align="center">
-  <strong>Public publishing engine for LaTeX-first documents, packaged as a Python CLI and built for macOS, Linux, and WSL.</strong>
+  <strong>Publishing that includes everyone.</strong>
+</p>
+
+<p align="center">
+  Accessibility-first publishing engine for LaTeX, packaged as a
+  Python CLI. PDF/UA-2 + WTPDF + PDF/A-4f triple-conformance,
+  C2PA + PAdES + SLSA provenance, multi-format emission (HTML5 /
+  JATS / EPUB3), LLM-augmented judges, and an MCP server for agent
+  integration. Built for macOS, Linux, and WSL.
 </p>
 
 <p align="center">

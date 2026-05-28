@@ -1,4 +1,4 @@
-"""Multi-format emitters for the Euxis Publisher engine.
+"""Multi-format emitters for the Inclusio engine.
 
 Sprint 6 (S6.2, S6.3, S6.6) — closes Forcing Function #3
 (single-source multi-format) in docs/strategy-2026.md.

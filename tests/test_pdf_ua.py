@@ -30,7 +30,7 @@ TAGGED_SMOKE_TEX = r"""\DocumentMetadata{
 }
 \documentclass[final,tagged]{pub-base}
 \title{Tagged PDF smoke test}
-\author{Euxis Publisher}
+\author{Inclusio}
 \begin{document}
 \maketitle
 \section{First heading}

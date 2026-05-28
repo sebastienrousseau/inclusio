@@ -1,1 +1,1 @@
-"""Supporting tools for Euxis Publisher."""
+"""Supporting tools for Inclusio."""

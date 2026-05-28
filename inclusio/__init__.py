@@ -1,1 +1,1 @@
-"""Euxis Publisher package."""
+"""Inclusio package."""

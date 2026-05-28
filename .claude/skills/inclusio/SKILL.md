@@ -1,11 +1,11 @@
 ---
 name: inclusio
-description: Build, render, lint, and audit LaTeX-first documents (CVs, papers, patents, FAQs, guides) through the Euxis Publisher engine. Use when the user mentions LaTeX, tagged PDFs, PDF/UA-2, PDF/A-4f, WCAG accessibility, the European Accessibility Act (EAA), or asks about building/auditing documents in a repository that has a `data/meta.yaml` manifest.
+description: Build, render, lint, and audit LaTeX-first documents (CVs, papers, patents, FAQs, guides) through the Inclusio engine. Use when the user mentions LaTeX, tagged PDFs, PDF/UA-2, PDF/A-4f, WCAG accessibility, the European Accessibility Act (EAA), or asks about building/auditing documents in a repository that has a `data/meta.yaml` manifest.
 ---
 
-# Euxis Publisher — Claude skill
+# Inclusio — Claude skill
 
-Use the Euxis Publisher engine (`inclusio` Python package) to build
+Use the Inclusio engine (`inclusio` Python package) to build
 camera-ready tagged PDFs, lint LaTeX, and audit accessibility conformance
 (PDF/UA-2 + WTPDF + PDF/A-4f). The engine is split across two repos:
 

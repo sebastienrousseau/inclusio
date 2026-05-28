@@ -1,7 +1,7 @@
 # Copyright (c) 2026 Sebastien Rousseau
 # Licensed under the MIT License
 # See LICENSE file for details
-"""FastMCP server exposing the Euxis Publisher engine over MCP.
+"""FastMCP server exposing the Inclusio engine over MCP.
 
 Run with:
     inclusio-mcp                       # stdio transport (Claude Code default)
@@ -164,7 +164,7 @@ def create_server() -> Any:
     app = FastMCP(
         "inclusio",
         instructions=(
-            "Euxis Publisher MCP server — list, render, lint, and audit "
+            "Inclusio MCP server — list, render, lint, and audit "
             "documents in a LaTeX-first publishing repository. Honours "
             "INCLUSIO_CONTENT_DIR. Use list_docs first to see what's available."
         ),
@@ -272,7 +272,7 @@ def main(
     """
     parser = argparse.ArgumentParser(
         prog="inclusio-mcp",
-        description="MCP server for the Euxis Publisher engine.",
+        description="MCP server for the Inclusio engine.",
     )
     parser.add_argument(
         "--http",

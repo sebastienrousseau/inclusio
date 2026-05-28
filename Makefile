@@ -1,5 +1,5 @@
 ###############################################################################
-# Root Makefile for Euxis Publisher — Thin wrapper around the packaged build CLI
+# Root Makefile for Inclusio — Thin wrapper around the packaged build CLI
 ###############################################################################
 
 .DEFAULT_GOAL := help

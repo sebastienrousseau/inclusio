@@ -1,7 +1,7 @@
 # Copyright (c) 2026 Sebastien Rousseau
 # Licensed under the MIT License
 # See LICENSE file for details
-"""C2PA Content Credentials for the Euxis Publisher pipeline (S8.x).
+"""C2PA Content Credentials for the Inclusio pipeline (S8.x).
 
 C2PA (Coalition for Content Provenance and Authenticity) is the
 industry-standard cryptographic chain-of-custody manifest for digital
@@ -90,7 +90,7 @@ def _require_c2patool() -> str:
 def build_manifest_json(
     title: str,
     author: str,
-    publisher: str = "Euxis Publisher",
+    publisher: str = "Inclusio",
     claim_generator: str = "inclusio",
     claim_generator_version: str = "0.1.0",
     date_published: str | None = None,

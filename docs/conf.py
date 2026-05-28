@@ -1,6 +1,6 @@
 from datetime import datetime
 
-project = "Euxis Publisher"
+project = "Inclusio"
 author = "Sebastien Rousseau"
 copyright = f"{datetime.now().year}, {author}"
 

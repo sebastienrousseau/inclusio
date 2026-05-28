@@ -55,7 +55,7 @@ from pathlib import Path
 manifest = build_manifest_json(
     title="Whisper Paper",
     author="Sebastien Rousseau",
-    publisher="Euxis Publisher",
+    publisher="Inclusio",
     date_published="2026-05-28",
     ai_disclosure="Drafted by Llama 3 8B; author edited.",
 )
@@ -86,7 +86,7 @@ The minimal manifest the engine emits:
         "@type": "CreativeWork",
         "name": "Whisper Paper",
         "author": [{"@type": "Person", "name": "Sebastien Rousseau"}],
-        "publisher": {"@type": "Organization", "name": "Euxis Publisher"},
+        "publisher": {"@type": "Organization", "name": "Inclusio"},
         "datePublished": "2026-05-28"
       }
     },

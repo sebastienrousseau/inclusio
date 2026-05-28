@@ -1,4 +1,4 @@
-"""Model Context Protocol (MCP) server for the Euxis Publisher engine.
+"""Model Context Protocol (MCP) server for the Inclusio engine.
 
 Exposes the engine's CLI surface as MCP tools + resources so Claude
 Code, Cursor, and other MCP clients can invoke it directly:

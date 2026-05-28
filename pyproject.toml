@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "inclusio"
 version = "0.1.0"
-description = "Professional document publishing engine for the Euxis Agent Framework"
+description = "Accessibility-first publishing engine — PDF/UA-2 + WTPDF + PDF/A-4f, C2PA + PAdES + SLSA provenance, multi-format emission, MCP server."
 readme = "README.md"
 # 3.11 is the floor: 3.9 EOL'd Oct-2025, 3.10 EOLs Oct-2026.
 # Keeps one-minor gap against the private content repo (>=3.12) so

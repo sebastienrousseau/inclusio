@@ -1,4 +1,4 @@
-"""LLM-judge bridges for the Euxis Publisher engine.
+"""LLM-judge bridges for the Inclusio engine.
 
 Sprint 7 (S7.1 - S7.3) — closes Forcing Function #5 (LLM judges in
 the build) in docs/strategy-2026.md.

@@ -3,7 +3,7 @@
 # See LICENSE file for details
 """Deep-merge data + overlay for CV / paper / patent variants.
 
-Content repositories that author with Euxis Publisher (e.g. the
+Content repositories that author with Inclusio (e.g. the
 companion `inclusio-private`) tend to grow CV / paper / patent
 variants quickly: an author may keep a base CV and tailor it for
 JP Morgan, Citi, or a specific job description. Each variant

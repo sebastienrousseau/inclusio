@@ -1,4 +1,4 @@
-# Euxis Publisher Docs
+# Inclusio Docs
 
 Public documentation for the `inclusio` engine.
 

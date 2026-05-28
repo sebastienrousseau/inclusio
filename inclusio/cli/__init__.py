@@ -1,1 +1,1 @@
-"""CLI entrypoints for Euxis Publisher."""
+"""CLI entrypoints for Inclusio."""

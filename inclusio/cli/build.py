@@ -1133,7 +1133,7 @@ def cmd_provenance(args, meta):
     manifest_json = c2pa_mod.build_manifest_json(
         title=doc.get("title", args.doc),
         author=author_block.get("name", ""),
-        publisher=author_block.get("publisher", "Euxis Publisher"),
+        publisher=author_block.get("publisher", "Inclusio"),
         date_published=doc.get("filing_date") or None,
         ai_disclosure=doc.get("ai_disclosure") or meta.get("ai_disclosure") or "",
     )

@@ -1,4 +1,4 @@
-# Euxis Publisher Package
+# Inclusio Package
 
 Python package containing the engine CLIs and helper tools.
 
