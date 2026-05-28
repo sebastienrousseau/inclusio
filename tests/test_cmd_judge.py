@@ -243,3 +243,91 @@ def test_judge_ats_llm_url_falls_back_on_unreachable(
     )
     captured = capsys.readouterr()
     assert "ATS (cv)" in captured.out
+
+
+# ── jd_fit path ────────────────────────────────────────────────────────
+
+
+def test_judge_jd_fit_requires_brief(content_root, capsys):
+    """--judge jd_fit without --brief exits 2."""
+    with pytest.raises(SystemExit) as excinfo:
+        build_mod.main(["judge", "--doc", "cv", "--judge", "jd_fit"])
+    assert excinfo.value.code == 2
+    assert "--brief" in capsys.readouterr().err
+
+
+def test_judge_jd_fit_missing_brief_exits_one(content_root, tmp_path, capsys):
+    with pytest.raises(SystemExit) as excinfo:
+        build_mod.main(
+            [
+                "judge", "--doc", "cv", "--judge", "jd_fit",
+                "--brief", str(tmp_path / "ghost.md"),
+            ]
+        )
+    assert excinfo.value.code == 1
+    assert "not found" in capsys.readouterr().err
+
+
+def test_judge_jd_fit_rejects_non_cv_template(content_root, tmp_path, capsys):
+    """jd_fit needs a CV template; paper templates rejected with exit 2."""
+    meta = (content_root / "data" / "meta.yaml").read_text()
+    meta += "  paper:\n    template: paper.tex.j2\n    data: paper-data.yaml\n    type: paper\n"
+    (content_root / "data" / "meta.yaml").write_text(meta)
+    brief = tmp_path / "jd.md"
+    brief.write_text("Senior Backend Engineer needed. Required: Python.")
+    with pytest.raises(SystemExit) as excinfo:
+        build_mod.main(
+            [
+                "judge", "--doc", "paper", "--judge", "jd_fit",
+                "--brief", str(brief),
+            ]
+        )
+    assert excinfo.value.code == 2
+    assert "only scores CVs" in capsys.readouterr().err
+
+
+def test_judge_jd_fit_unregistered_doc_exits_two(content_root, tmp_path, capsys):
+    brief = tmp_path / "jd.md"
+    brief.write_text("anything")
+    with pytest.raises(SystemExit) as excinfo:
+        build_mod.main(
+            [
+                "judge", "--doc", "ghost", "--judge", "jd_fit",
+                "--brief", str(brief),
+            ]
+        )
+    assert excinfo.value.code == 2
+    assert "not a registered template" in capsys.readouterr().err
+
+
+def test_judge_jd_fit_happy_path(content_root, tmp_path, capsys):
+    brief = tmp_path / "jd.md"
+    brief.write_text(
+        "Senior Backend Engineer.\n"
+        "Required: Python, Django, PostgreSQL.\n"
+    )
+    build_mod.main(
+        [
+            "judge", "--doc", "cv", "--judge", "jd_fit",
+            "--brief", str(brief),
+        ]
+    )
+    captured = capsys.readouterr()
+    assert "JD_FIT (cv)" in captured.out
+    assert "Grade:" in captured.out
+
+
+def test_judge_jd_fit_llm_url_falls_back(content_root, tmp_path, monkeypatch, capsys):
+    """--llm-url + server down → graceful fallback through jd_fit path."""
+    _stub_unreachable(monkeypatch)
+    brief = tmp_path / "jd.md"
+    brief.write_text("Senior Backend Engineer. Required: Python.")
+    build_mod.main(
+        [
+            "judge", "--doc", "cv", "--judge", "jd_fit",
+            "--brief", str(brief),
+            "--llm-url", "http://localhost:8080",
+        ]
+    )
+    captured = capsys.readouterr()
+    assert "JD_FIT (cv)" in captured.out

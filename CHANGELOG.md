@@ -8,6 +8,46 @@ and [Conventional Commits](https://www.conventionalcommits.org/).
 
 ### Added
 
+- **Sprint 7 (S7.4) — JD-to-CV fit judge (2026-05-28)**:
+  - `euxis_publisher/judge/jd_fit.py` — third judge in the pipeline.
+    Compares a job-description brief against a candidate CV; flags
+    missing-required keywords (block), role-level mismatch (warn at
+    gap ≥2, block at gap ≥3), low-overlap (warn at Jaccard <0.10).
+  - Keyword extractor preserves tech sigils (`c++`, `c#`, `node.js`),
+    strips trailing punctuation, defaults to `min_len=2` so short
+    tech tokens (ai, ml, ui, ux) survive.
+  - Required-keyword harvest stops at paragraph break, preventing
+    "Required:" sections from bleeding into adjacent "Bonus:" lists.
+  - Seniority ladder (intern → junior → engineer → senior → staff →
+    principal → director → vp → cto) uses first-match semantics so
+    "Junior Engineer" ranks as junior, not engineer.
+  - Stepped Jaccard→score curve (>=0.45 → 95, >=0.30 → 85, >=0.15
+    → 70, >=0.05 → 55, else 35) calibrated against real JD-CV
+    pairs.
+  - LLM rerank (`score_jd_fit_with_llm`) asks for top strength +
+    top gap; deduction clamped to [0, 15]; invalid severity falls
+    back to `warn`; LLMError graceful fallback with info
+    breadcrumb.
+  - CLI: `--judge jd_fit --brief <path>` reads the brief, renders
+    the CV via `render --format text`, runs the score (with
+    optional `--llm-url` rerank).
+  - 34 tests in `tests/test_judge_jd_fit.py` covering extract_keywords
+    (lowercasing, dedup, stopword pruning, tech sigils, 2-char
+    tokens, min_len override, pure-numeric drop), jaccard edge
+    cases, required-keyword harvesting (paragraph-break stop,
+    must-have phrasing, dedupe across triggers), seniority ladder
+    (first-match, word-boundary safety), heuristic score (clean
+    match, missing-required block, role-mismatch warn/block by gap
+    size, low-overlap warn, metrics shape, score clamp to 0), LLM
+    rerank (strength+gap merge, deduction clamp, invalid-severity
+    fallback, empty-payload, LLMError fallback), prompt builder
+    (truncation, schema/system text presence).
+  - Docs (`docs/judges.md`) updated with JD-fit section + Python
+    API examples; Sprint 7.4 marked done in roadmap.
+
+  Closes Sprint 7 (S7.4) — 4 of 5 Sprint 7 items shipped. Only
+  S7.5 (MCP-broker BYO-key cloud opt-in) remains.
+
 - **Sprint 7 (S7.2) — citation-grounding judge (2026-05-28)**:
   - `euxis_publisher/judge/citations.py` — heuristic + LLM-backed
     `\cite` / `\bibitem` consistency check for scientific papers.
