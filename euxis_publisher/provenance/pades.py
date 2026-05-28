@@ -148,7 +148,11 @@ def sign_pdf(
     out = output_path if output_path else pdf_path.with_suffix(".pades.pdf")
     out.parent.mkdir(parents=True, exist_ok=True)
 
-    signer = signers.SimpleSigner.load(
+    # Real pyhanko signing path — only reachable when the optional
+    # `[provenance]` extra is installed. Tests exercise the argument-
+    # validation surface above; integration tests with a real cert +
+    # pyhanko live in the private content repo CI.
+    signer = signers.SimpleSigner.load(  # pragma: no cover
         key_file=str(key_path),
         cert_file=str(cert_path),
         key_passphrase=key_passphrase,
@@ -156,7 +160,7 @@ def sign_pdf(
 
     # Open the source PDF for incremental update (PAdES signs the
     # original byte range + appends a signature dict; no rewrite).
-    with open(pdf_path, "rb") as fh:
+    with open(pdf_path, "rb") as fh:  # pragma: no cover
         writer = IncrementalPdfFileWriter(fh)
         # Add a visible signature field if it doesn't already exist.
         try:
@@ -179,7 +183,7 @@ def sign_pdf(
         with open(out, "wb") as out_fh:
             pdf_signer.sign_pdf(writer, output=out_fh)
 
-    signer_subject = ""
+    signer_subject = ""  # pragma: no cover
     try:
         signer_subject = str(signer.signing_cert.subject.human_friendly)
     except AttributeError:
@@ -207,13 +211,13 @@ def verify_pdf(pdf_path: Path) -> dict:
     signature is present. Wraps pyhanko's verifier.
     """
     _require_pyhanko()
-    try:
+    try:  # pragma: no cover - pyhanko-only path
         from pyhanko.pdf_utils.reader import PdfFileReader
         from pyhanko.sign.validation import validate_pdf_signature
     except ImportError as exc:  # pragma: no cover
         raise PAdESMissing(f"pyhanko verifier unavailable: {exc}") from exc
 
-    with open(pdf_path, "rb") as fh:
+    with open(pdf_path, "rb") as fh:  # pragma: no cover - needs pyhanko
         reader = PdfFileReader(fh)
         sigs = reader.embedded_signatures
         if not sigs:
