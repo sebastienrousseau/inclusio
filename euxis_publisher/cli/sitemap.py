@@ -178,6 +178,12 @@ def write_sitemap(sitemap, output_path=None, pretty=False, stdout=False):
 
 
 def main(argv=None):
+    """Entry point for `python -m euxis_publisher.cli.sitemap`.
+
+    Reads `data/meta.yaml`, builds a semantic-search index of every
+    registered document, writes JSON to `build/site-map.json` (or
+    stdout when `--stdout` is passed).
+    """
     parser = argparse.ArgumentParser(description="Generate semantic search metadata from meta.yaml")
     parser.add_argument("--pretty", action="store_true", help="Pretty-print JSON output")
     parser.add_argument(

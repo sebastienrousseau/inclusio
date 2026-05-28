@@ -122,8 +122,10 @@ def extract_keywords(text: str, min_len: int = 2) -> set[str]:
             continue
         if lc in STOPWORDS:
             continue
-        # Pure-numeric tokens add no signal.
-        if not any(c.isalpha() for c in lc):
+        # Pure-numeric tokens add no signal. Defensive: `_WORD_RE`
+        # already requires a leading letter, so this branch is only
+        # reached if the regex is loosened in the future.
+        if not any(c.isalpha() for c in lc):  # pragma: no cover - defensive
             continue
         out.add(lc)
     return out
@@ -134,7 +136,9 @@ def jaccard(a: set[str], b: set[str]) -> float:
     if not a and not b:
         return 1.0
     union = a | b
-    if not union:
+    # Defensive: `a | b` is empty iff both `a` and `b` are empty, which
+    # the line above already catches. Kept as a structural safety net.
+    if not union:  # pragma: no cover - defensive
         return 1.0
     return len(a & b) / len(union)
 
@@ -187,7 +191,10 @@ def _seniority_rank(text: str) -> int | None:
     for term, rank in _SENIORITY_LADDER:
         if term == matched:
             return rank
-    return None
+    # Defensive: the regex alternation is built from the ladder above,
+    # so any successful match equals a ladder entry. Unreachable in
+    # practice.
+    return None  # pragma: no cover - defensive
 
 
 # ── Heuristic scoring ──────────────────────────────────────────────────
@@ -315,6 +322,7 @@ def _jaccard_to_base_score(j: float) -> int:
 
 
 def _build_inputs(jd_text: str, cv_text: str) -> FitInputs:
+    """Extract every input the heuristic + LLM paths need from raw text."""
     jd_kw = extract_keywords(jd_text)
     cv_kw = extract_keywords(cv_text)
     required = extract_required_keywords(jd_text)

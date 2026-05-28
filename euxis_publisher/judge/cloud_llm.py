@@ -80,6 +80,7 @@ class CloudLLM:
         return "openai"
 
     def _resolved_api_key(self) -> str:
+        """Return the API key, preferring the explicit one over env vars."""
         if self.api_key:
             return self.api_key
         env_key = _ENV_KEYS[self.provider]
@@ -89,11 +90,13 @@ class CloudLLM:
         return key
 
     def _endpoint(self) -> str:
+        """Return the provider-specific completion endpoint URL."""
         if self.provider == "anthropic":
             return f"{self.base_url.rstrip('/')}/v1/messages"
         return f"{self.base_url.rstrip('/')}/v1/chat/completions"
 
     def _headers(self, api_key: str) -> dict[str, str]:
+        """Compose provider-specific auth + content headers."""
         if self.provider == "anthropic":
             return {
                 "x-api-key": api_key,
@@ -114,6 +117,7 @@ class CloudLLM:
         temperature: float,
         stop: list[str] | None,
     ) -> dict[str, Any]:
+        """Build the JSON request body in the provider's expected shape."""
         if self.provider == "anthropic":
             body: dict[str, Any] = {
                 "model": self.model,
@@ -171,6 +175,12 @@ class CloudLLM:
         )
 
     def _post(self, body: dict[str, Any]) -> dict[str, Any]:
+        """POST the request body to the resolved endpoint and decode the JSON response.
+
+        Maps every transport failure into the shared `LLMError` taxonomy
+        so judge callers can fall back to heuristic-only on a single
+        except clause.
+        """
         url = self._endpoint()
         api_key = self._resolved_api_key()
         data = json.dumps(body).encode("utf-8")

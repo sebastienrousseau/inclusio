@@ -166,6 +166,28 @@ def test_audit_pdf_returns_empty_summary_when_no_pdfs(content_root):
     assert rep["summary"]["pdfs"] == 0
 
 
+# ── Tool: render ───────────────────────────────────────────────────────
+
+
+def test_render_tool_invokes_impl(content_root, monkeypatch):
+    """Drive the FastMCP-decorated `render` tool through `call_tool`."""
+    rendered_dir = content_root / "build" / ".cache" / "rendered"
+    rendered_dir.mkdir(parents=True)
+    (rendered_dir / "cv.tex").write_text("\\documentclass{pub-cv}")
+    monkeypatch.setattr(
+        mcp_server.render_mod, "render_document", lambda *a, **k: None
+    )
+    app = mcp_server.create_server()
+    import asyncio
+
+    result = asyncio.run(
+        app.call_tool("render", {"doc_id": "cv", "fmt": "latex", "mode": "draft"})
+    )
+    rep = _extract_structured(result)
+    assert rep["doc_id"] == "cv"
+    assert rep["format"] == "latex"
+
+
 # ── Resources ──────────────────────────────────────────────────────────
 
 
@@ -234,6 +256,100 @@ def test_create_server_without_mcp_installed_raises(monkeypatch):
     monkeypatch.setattr(mcp_server, "FastMCP", None)
     with pytest.raises(RuntimeError, match="not installed"):
         mcp_server.create_server()
+
+
+# ── Module-level impls (direct unit tests, FastMCP-free) ──────────────
+# The FastMCP-decorated closures dispatch through the SDK runtime in a
+# way that coverage doesn't trace. The thin module-level helpers below
+# carry the real logic — exercise them directly so coverage stays honest.
+
+
+def test_list_docs_impl_returns_manifest_records(content_root):
+    docs = mcp_server._list_docs_impl()
+    ids = {d["id"] for d in docs}
+    assert {"whisper-paper", "cv"} <= ids
+    cv = next(d for d in docs if d["id"] == "cv")
+    assert cv["pdf_a"] == "a-4f"
+
+
+def test_list_docs_impl_returns_empty_without_manifest(tmp_path, monkeypatch):
+    monkeypatch.setenv("EUXIS_CONTENT_DIR", str(tmp_path))
+    assert mcp_server._list_docs_impl() == []
+
+
+def test_doc_count_impl(content_root):
+    assert mcp_server._doc_count_impl() == 2
+
+
+def test_audit_pdf_impl_returns_empty_summary_when_no_pdfs(content_root):
+    rep = mcp_server._audit_pdf_impl()
+    assert rep["summary"]["pdfs"] == 0
+
+
+def test_meta_resource_impl_returns_yaml_text(content_root):
+    text = mcp_server._meta_resource_impl()
+    assert "whisper-paper" in text
+
+
+def test_meta_resource_impl_returns_empty_when_no_yaml(tmp_path, monkeypatch):
+    monkeypatch.setenv("EUXIS_CONTENT_DIR", str(tmp_path))
+    assert mcp_server._meta_resource_impl() == ""
+
+
+def test_audit_latest_resource_impl_returns_empty_object_when_absent(tmp_path, monkeypatch):
+    monkeypatch.setenv("EUXIS_CONTENT_DIR", str(tmp_path))
+    assert mcp_server._audit_latest_resource_impl() == "{}"
+
+
+def test_audit_latest_resource_impl_returns_existing_json(content_root):
+    audit_dir = content_root / "build" / ".audit"
+    audit_dir.mkdir(parents=True)
+    (audit_dir / "latest.json").write_text('{"pdfs": 7}')
+    assert mcp_server._audit_latest_resource_impl() == '{"pdfs": 7}'
+
+
+def test_version_resource_impl(content_root):
+    payload = json.loads(mcp_server._version_resource_impl())
+    assert payload["name"] == "euxis-publisher"
+    assert payload["mcp_spec"] == "0.1"
+
+
+def test_render_impl_returns_metadata_dict(content_root, monkeypatch):
+    """Stub render_document so we don't need a registered template fixture."""
+    rendered_dir = content_root / "build" / ".cache" / "rendered"
+    rendered_dir.mkdir(parents=True)
+    (rendered_dir / "cv.tex").write_text("\\documentclass{pub-cv}")
+
+    def fake_render(doc_id, fmt, build_mode, content_root):
+        # No-op: the test pre-creates the output file above.
+        pass
+
+    monkeypatch.setattr(mcp_server.render_mod, "render_document", fake_render)
+    out = mcp_server._render_impl("cv", fmt="latex", mode="draft")
+    assert out["doc_id"] == "cv"
+    assert out["format"] == "latex"
+    assert out["bytes"] > 0
+
+
+def test_audit_pdf_impl_with_pdfs_runs_audit(content_root, tmp_path, monkeypatch):
+    """Exercise the post-empty-check path with a stub audit."""
+    build_dir = content_root / "build"
+    build_dir.mkdir()
+    pdf_path = build_dir / "x.pdf"
+    pdf_path.write_bytes(b"%PDF-1.7\n%fake\n")
+
+    monkeypatch.setattr(
+        mcp_server.audit_mod, "collect_pdfs", lambda target, build, stems: [pdf_path]
+    )
+    monkeypatch.setattr(
+        mcp_server.audit_mod,
+        "audit",
+        lambda pdfs: {"summary": {"pdfs": 1, "fail": 0}, "by_pdf": {}, "by_flavour": {}},
+    )
+    monkeypatch.setattr(mcp_server.audit_mod, "_is_blocking", lambda r: False)
+    rep = mcp_server._audit_pdf_impl(strict=True)
+    assert rep["summary"]["pdfs"] == 1
+    assert rep["blocking_failure"] is False
 
 
 # ── Helpers ────────────────────────────────────────────────────────────

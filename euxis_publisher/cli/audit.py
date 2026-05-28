@@ -44,7 +44,7 @@ from pathlib import Path
 
 try:
     import yaml  # type: ignore
-except ImportError:
+except ImportError:  # pragma: no cover - PyYAML is a hard dep at install time
     yaml = None
 
 
@@ -69,6 +69,7 @@ DEFAULT_FLAVOURS = [
 
 
 def _have_verapdf() -> bool:
+    """True iff `verapdf` is resolvable on PATH."""
     return shutil.which("verapdf") is not None
 
 
@@ -285,6 +286,13 @@ def _is_blocking(report: dict, status_set=("FAIL", "ERROR")) -> bool:
 
 
 def main(argv=None):
+    """Entry point for `python -m euxis_publisher.cli.audit`.
+
+    Parses the audit CLI flags, resolves the PDF set, runs veraPDF over
+    every (pdf, flavour) pair, writes JSON + Markdown reports, and
+    returns the process exit code (0 success, 1 blocking failure in
+    `--strict` mode).
+    """
     parser = argparse.ArgumentParser(
         description="Euxis EAA / accessibility audit for built PDFs.",
     )

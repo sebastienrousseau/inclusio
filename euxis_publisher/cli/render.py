@@ -499,6 +499,12 @@ def _render_generic_text(data, doc_type):
 
 
 def _plain_text_lines(value, indent=0):
+    """Recursively flatten *value* into ATS-safe plain-text lines.
+
+    Used by `_render_generic_text` to emit dict / list / scalar /
+    None branches with the correct indentation level for nested
+    structures.
+    """
     pad = "  " * indent
     if isinstance(value, dict):
         out = []
@@ -753,6 +759,11 @@ def render_blog(blog_id, blog_config, content_root=None):
 
 
 def main(argv=None):
+    """Entry point for `python -m euxis_publisher.cli.render`.
+
+    Parses `--doc`, `--format`, `--mode`, and renders the matching
+    template through Jinja2 to LaTeX / Markdown / JSON / plain-text.
+    """
     parser = argparse.ArgumentParser(description="Render Jinja2 templates to LaTeX/Markdown/JSON")
     parser.add_argument(
         "--doc",

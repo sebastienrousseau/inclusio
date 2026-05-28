@@ -104,6 +104,7 @@ class JudgeReport:
     metrics: dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
+        """Return a JSON-serialisable view of this report."""
         return {
             "score": self.score,
             "grade": self.grade,

@@ -44,3 +44,14 @@ __pycache__/
 .coverage
 .pytest_cache/
 docs/_build/
+
+# Test artefacts from the tailor / build test suites (output paths
+# without a content-repo overlay; these tests legitimately create
+# per-run YAMLs and .tex stubs under the project tree).
+/data/tailored/
+/src/cvs/test/
+/src/papers/guide/
+/src/papers/paper/
+
+# pytest-benchmark output
+.benchmarks/

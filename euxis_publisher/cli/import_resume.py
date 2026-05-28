@@ -70,7 +70,8 @@ def _format_date_range(start: str | None, end: str | None) -> str:
     """JSON Resume uses ISO `YYYY-MM-DD`. Normalise to MM/YYYY for ATS."""
 
     def to_mmyyyy(d: str | None) -> str:
-        if not d:
+        """Convert an ISO date to MM/YYYY (or the year alone)."""
+        if not d:  # pragma: no cover - callers gate on truthiness already
             return "Present"
         parts = d.split("-")
         if len(parts) >= 2:
@@ -155,6 +156,7 @@ def _convert_volunteer(volunteer: list[dict[str, Any]] | None) -> list[dict[str,
 
 
 def _convert_education(education: list[dict[str, Any]] | None) -> list[dict[str, Any]]:
+    """Map `education[]` → Euxis `education[]` (degree, institution, year, gpa)."""
     if not education:
         return []
     out = []
@@ -323,6 +325,12 @@ def dump_yaml(data: dict[str, Any], path: Path) -> None:
 
 
 def main(argv: list[str] | None = None) -> int:
+    """Entry point for `python -m euxis_publisher.cli.import_resume`.
+
+    Parses `<input>` + `--output`, converts a JSON Resume document
+    into the Euxis CV YAML schema, and writes the result to stdout
+    (default) or the requested path.
+    """
     parser = argparse.ArgumentParser(
         prog="euxis-publisher import",
         description=(
