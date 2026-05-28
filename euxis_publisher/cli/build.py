@@ -1074,14 +1074,53 @@ def cmd_judge(args, meta):
     Future judges (citations via ScholarCopilot pattern, local llama.cpp
     re-score) plug into the same dispatch table.
     """
-    if args.judge != "ats":
-        print(f"ERROR: unknown judge {args.judge!r} (expected: ats)", file=sys.stderr)
+    if args.judge not in ("ats", "citations"):
+        print(
+            f"ERROR: unknown judge {args.judge!r} (expected: ats, citations)",
+            file=sys.stderr,
+        )
         sys.exit(2)
 
     from euxis_publisher.cli import render as render_module
     from euxis_publisher.judge import ats as ats_judge
+    from euxis_publisher.judge import citations as cit_judge
 
     doc_id = args.doc
+
+    if args.judge == "citations":
+        # Sprint 7 (S7.2): score `\cite` / `\bibitem` consistency.
+        # Citations judge reads the .tex source directly — no Jinja2
+        # render step required. Accept either a registered document
+        # in meta.documents (uses its `src:`) or a raw .tex path
+        # via --src-path.
+        documents = meta.get("documents", {}) or {}
+        if doc_id in documents:
+            src_rel = documents[doc_id].get("src")
+            if not src_rel:
+                print(f"ERROR: {doc_id} in meta has no `src:` field", file=sys.stderr)
+                sys.exit(2)
+            tex_path = CONTENT_ROOT / src_rel
+        else:
+            print(
+                f"ERROR: {doc_id} not in documents: in meta.yaml. "
+                "citations judge needs a .tex source.",
+                file=sys.stderr,
+            )
+            sys.exit(2)
+        if not tex_path.exists():
+            print(f"ERROR: {tex_path} not found", file=sys.stderr)
+            sys.exit(1)
+        tex_source = tex_path.read_text(encoding="utf-8")
+        if args.llm_url:
+            from euxis_publisher.judge import local_llm
+
+            llm = local_llm.LocalLLM(base_url=args.llm_url, timeout=args.llm_timeout)
+            report = cit_judge.score_citations_with_llm(tex_source, llm)
+        else:
+            report = cit_judge.score_citations(tex_source)
+        _print_and_persist_report(report, doc_id, args)
+        return
+
     templates = meta.get("templates", {}) or {}
     if doc_id not in templates:
         print(
@@ -1118,7 +1157,13 @@ def cmd_judge(args, meta):
         report = ats_judge.score_cv_with_llm(plain_text, llm)
     else:
         report = ats_judge.score_cv(plain_text)
-    print(f"ATS Score: {report.score}/100  Grade: {report.grade}\n")
+    _print_and_persist_report(report, doc_id, args)
+
+
+def _print_and_persist_report(report, doc_id, args):
+    """Render JudgeReport to stdout + optional JSON path. Shared by ats + citations."""
+    judge_label = args.judge.upper()
+    print(f"{judge_label} ({doc_id}) — Score: {report.score}/100  Grade: {report.grade}\n")
     for f in report.findings:
         marker = {"block": "✗", "warn": "⚠", "info": "ℹ"}.get(f.severity, "•")
         print(f"  {marker} [{f.severity}] {f.check}: {f.message}  (-{f.deduction})")
@@ -1417,7 +1462,14 @@ Commands:
         "--doc", required=True, help="Registered template id (must be type=cv for ats)."
     )
     judge_parser.add_argument(
-        "--judge", default="ats", choices=["ats"], help="Which judge to run (default: ats)."
+        "--judge",
+        default="ats",
+        choices=["ats", "citations"],
+        help=(
+            "Which judge to run. `ats` scores a CV against Workday/"
+            "Greenhouse/Lever heuristics; `citations` checks `\\cite` "
+            "/ `\\bibitem` consistency on a paper. Default: ats."
+        ),
     )
     judge_parser.add_argument(
         "--json", default=None, help="Optional path to write the JSON report to."
