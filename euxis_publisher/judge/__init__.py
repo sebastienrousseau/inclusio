@@ -20,6 +20,14 @@ Initial judges:
 from __future__ import annotations
 
 from .ats import JudgeReport, score_cv
+from .citations import (
+    BibItem,
+    Citation,
+    parse_bibitems,
+    parse_citations,
+    score_citations,
+    score_citations_with_llm,
+)
 from .local_llm import (
     LLMError,
     LLMParseError,
@@ -33,6 +41,12 @@ from .local_llm import (
 __all__ = [
     "JudgeReport",
     "score_cv",
+    "score_citations",
+    "score_citations_with_llm",
+    "parse_citations",
+    "parse_bibitems",
+    "Citation",
+    "BibItem",
     "LocalLLM",
     "LLMResponse",
     "LLMError",

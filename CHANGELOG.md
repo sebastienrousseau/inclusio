@@ -8,6 +8,39 @@ and [Conventional Commits](https://www.conventionalcommits.org/).
 
 ### Added
 
+- **Sprint 7 (S7.2) — citation-grounding judge (2026-05-28)**:
+  - `euxis_publisher/judge/citations.py` — heuristic + LLM-backed
+    `\cite` / `\bibitem` consistency check for scientific papers.
+    Catches LLM-generated papers with hallucinated references and
+    ScholarCopilot-style mis-attribution.
+  - Parses `\cite`, `\citep`, `\citet`, `\citeauthor`, `\citeyear`
+    (with optional `[label]` and multi-key `\cite{a,b,c}` forms),
+    and `\bibitem{key}` / `\bibitem[label]{key}` with light inline
+    markup cleanup so the LLM sees authors/titles not LaTeX.
+  - Heuristic findings: `dangling_citation` (block, -15/key, cap
+    -60), `unused_bibitem` (warn, -5/key, cap -20),
+    `duplicate_bibitem` (warn, -10/key), `missing_bibliography`
+    (block, -50), `no_citations` (info / warn depending on context).
+  - LLM grounding (`score_citations_with_llm`): for up to 10
+    matched citations, asks the LLM whether the in-text claim
+    matches the bibitem body. Flags `supported: false` +
+    `confidence >= 0.6` as warn (-5, deduped per key). Graceful
+    fallback on LLMError.
+  - CLI `--judge citations` on the existing `judge` subcommand;
+    reads the doc's `.tex` source from `meta.documents.<id>.src`.
+  - `tests/test_judge_citations.py` — 29 tests covering parsers
+    (every cite/bibitem variant + line numbers + context),
+    heuristic findings (clean, dangling, unused, duplicate, missing
+    bibliography, no-citations branches, dangling-cap), LLM
+    grounding (supported / unsupported / low-confidence / dedup /
+    no-matched-citations / cap honour / unavailable fallback),
+    and `build_grounding_prompt` shape.
+  - Docs (`docs/judges.md`) expanded with citation-judge heuristic
+    table, LLM grounding section, and Python API examples.
+
+  Closes Sprint 7 (S7.2). Layered on top of S7.1's `LocalLLM`
+  adapter; no new runtime dependencies.
+
 - **Sprint 7 (S7.1) — local llama.cpp HTTP adapter for LLM judges (2026-05-28)**:
   - `euxis_publisher/judge/local_llm.py` — stdlib-only HTTP client
     over llama.cpp's `/completion` endpoint. No `httpx` / `requests`

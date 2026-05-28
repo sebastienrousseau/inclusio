@@ -118,12 +118,75 @@ The LLM client is stdlib-only (`urllib.request` + `json`) — no
 `LLMUnavailable`, `LLMTimeout`, `LLMParseError`; callers can catch
 the umbrella `LLMError`.
 
+## Citation-grounding judge — `euxis_publisher.judge.citations` (S7.2)
+
+Detects two failure modes in scientific papers:
+
+1. **Hallucinated keys** — `\cite{smith2025}` with no matching
+   `\bibitem{smith2025}`. Always-on heuristic; catches every LLM-
+   generated paper that invented references whole-cloth.
+2. **Mis-attributed claims** — `\cite{smith2025}` matched to a real
+   bibitem, but the in-text claim around the citation isn't supported
+   by what `smith2025` actually says. LLM-only (ScholarCopilot
+   pattern), uses the same `LocalLLM` adapter as S7.1.
+
+### Heuristic checks
+
+| Check | Severity | Deduction |
+|---|---|---|
+| `dangling_citation` (cite key with no bibitem) | block | 15 each, cap 60 |
+| `unused_bibitem` (bibitem never cited) | warn | 5 each, cap 20 |
+| `duplicate_bibitem` (same key twice) | warn | 10 each |
+| `missing_bibliography` (cites exist but no bibitems) | block | 50 |
+| `no_citations` + bibitems (entries but no `\cite`) | warn | 10 |
+| `no_citations` + no bibitems | info | 0 (review note) |
+
+Sprint 7 scope: inline `\bibitem{key}` entries. `.bib` files via
+BibTeX are Sprint 8 work — they need a BibTeX-aware parser (biber
+tool-mode) we don't yet ship.
+
+### LLM grounding (opt-in)
+
+```bash
+python -m euxis_publisher.cli.build judge \
+    --doc whisper-paper --judge citations \
+    --llm-url http://localhost:8080
+```
+
+The judge:
+1. Runs the heuristic first.
+2. For up to 10 matched citations (key found in `\bibitem`), sends the
+   in-text context + bibitem body to the LLM with the prompt:
+
+   > Does the in-text claim around this citation accurately reflect
+   > what the bibitem describes? Reply JSON: `{supported, confidence, reason}`.
+
+3. Flags any `supported: false` with `confidence ≥ 0.6` as a `warn`
+   finding (-5 each, deduped per key).
+
+When the LLM is unreachable, a single info breadcrumb is recorded and
+the heuristic result is preserved.
+
+### Python API
+
+```python
+from euxis_publisher.judge import score_citations, score_citations_with_llm
+from euxis_publisher.judge import LocalLLM
+
+tex = Path("src/papers/whisper.tex").read_text()
+report = score_citations(tex)              # heuristic only
+
+llm = LocalLLM(base_url="http://localhost:8080")
+report = score_citations_with_llm(tex, llm, max_checks=10)
+```
+
 ## Roadmap
 
 | Sprint | Item | Status |
 |---|---|---|
 | S7.3 | ATS-scoring heuristic | ✅ done |
 | S7.1 | llama.cpp HTTP adapter (local LLM backend) | ✅ done |
-| S7.2 | Citation-grounding judge (ScholarCopilot pattern) | ⏸️ Sprint 7.5 |
+| S7.2 | Citation-grounding judge (ScholarCopilot pattern) | ✅ done |
 | S7.4 | Job-description fit scorer (re-rank tailored CVs vs JD) | ⏸️ Sprint 8 |
 | S7.5 | MCP-broker BYO-key for Claude / GPT-5 | ⏸️ Sprint 8 |
+| S8.x | BibTeX `.bib` support in citations judge | ⏸️ Sprint 8 |
