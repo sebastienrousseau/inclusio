@@ -8,8 +8,8 @@ wheel + sdist via `actions/attest-build-provenance` (see
 | Layer | Status | What it proves |
 |---|---|---|
 | SLSA L3 build provenance | ✅ shipped (S4) | Wheel + sdist were built by *this* GitHub workflow from *this* commit. |
-| **C2PA Content Credentials** | ✅ **just shipped (S8)** | Per-PDF chain of custody: who, when, with which tools, AI disclosure. |
-| PAdES signature (eIDAS) | ⏸️ Sprint 8.5 | Cryptographic signature over the PDF for legal admissibility in EU jurisdictions. |
+| **C2PA Content Credentials** | ✅ **shipped (S8)** | Per-PDF chain of custody: who, when, with which tools, AI disclosure. |
+| **PAdES signature (eIDAS)** | ✅ **shipped (S8.5)** | Cryptographic signature over the PDF for legal admissibility in EU jurisdictions. B-B / B-T / B-LT / B-LTA baselines via pyhanko. |
 
 ## C2PA — `euxis_publisher.provenance.c2pa`
 
@@ -130,12 +130,65 @@ verify_manifest(Path("build/papers/whisper.c2pa.pdf"))
 without binary Python deps — `c2patool` is a single static binary
 that the operator can install at their own pace.
 
-## PAdES — Sprint 8.5
+## PAdES — `euxis_publisher.provenance.pades` (Sprint 8.5)
 
-The eIDAS-aligned PAdES signature (cryptographic signature over the
-PDF that's admissible in EU courts) is Sprint 8.5 work. Planned
-backend: [`pyhanko`](https://pyhanko.readthedocs.io/) as an optional
+eIDAS-aligned PDF signature for legal admissibility in EU
+jurisdictions (Regulation EU 910/2014 + ETSI EN 319 142). Wraps
+[`pyhanko`](https://pyhanko.readthedocs.io/) as an optional
 `[provenance]` extra.
+
+### Install
+
+```bash
+pip install 'euxis-publisher[provenance]'   # adds pyhanko>=0.22
+```
+
+### Baselines
+
+| Baseline | What it includes | Use when |
+|---|---|---|
+| `B-B` | Signature + signer cert | Quick proof-of-author |
+| `B-T` (default) | B-B + RFC 3161 trusted timestamp | Survives cert expiration; tier-1 publications |
+| `B-LT` | B-T + revocation data (CRL/OCSP) | Long-term archival |
+| `B-LTA` | B-LT + document timestamp re-signing | Decades-long archival; legal records |
+
+### Python API
+
+```python
+from pathlib import Path
+from euxis_publisher.provenance.pades import sign_pdf
+
+result = sign_pdf(
+    pdf_path=Path("build/papers/whisper.pdf"),
+    cert_path=Path("certs/euxis-prod.crt"),
+    key_path=Path("certs/euxis-prod.key"),
+    baseline="B-T",
+    timestamp_url="http://timestamp.digicert.com",
+    reason="Camera-ready publication",
+    location="London, UK",
+)
+print(result.pdf_path, result.baseline, result.signed_with_test_cert)
+```
+
+### Verify
+
+```python
+from euxis_publisher.provenance.pades import verify_pdf
+status = verify_pdf(Path("build/papers/whisper.pades.pdf"))
+print(status["intact"], status["valid"], status["trusted"])
+```
+
+### Generating a development cert
+
+```bash
+openssl req -x509 -newkey rsa:4096 -days 365 -nodes \
+    -keyout key.pem -out cert.pem \
+    -subj "/CN=Euxis Dev/O=Acme/C=GB"
+```
+
+The wrapper sets `signed_with_test_cert: true` when the CN contains
+`test`, `sample`, `dev`, `demo`, or `localhost` — so CI gates with
+`--strict` refuse to publish a dev-signed artefact.
 
 ## Reference
 

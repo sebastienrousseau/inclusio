@@ -61,6 +61,14 @@ dev = [
 mcp = [
     "mcp[cli]>=1.27.0",
 ]
+# Sprint 8.5 (#11 / F7 closure): PAdES eIDAS-aligned PDF signing
+# via pyhanko. Optional because pyhanko pulls in a small dependency
+# tree (asn1crypto, oscrypto, cryptography). Callers that only need
+# C2PA Content Credentials (S8) don't need it — c2patool stays a
+# subprocess shell-out.
+provenance = [
+    "pyhanko>=0.22",
+]
 
 [project.urls]
 Homepage = "https://github.com/sebastienrousseau/euxis-publisher"

@@ -1063,6 +1063,18 @@ def cmd_list(args, meta):
         print(f"{doc_id:<20} {config['class']:<15} {src:<55} {desc}")
 
 
+def cmd_import_resume(args, meta):  # noqa: ARG001 (meta unused, dispatcher signature)
+    """Convert a JSON Resume document to Euxis CV YAML (Sprint 5, #6)."""
+    from euxis_publisher.cli import import_resume
+
+    cmd = [args.input]
+    if args.output:
+        cmd += ["--output", args.output]
+    rc = import_resume.main(cmd)
+    if rc:
+        sys.exit(rc)
+
+
 def cmd_provenance(args, meta):
     """Embed C2PA Content Credentials in a registered document's PDF (S8).
 
@@ -1593,6 +1605,18 @@ Commands:
     )
 
     # assets
+    import_parser = subparsers.add_parser(
+        "import-resume",
+        help="Convert a JSON Resume document to Euxis CV YAML (#6)",
+    )
+    import_parser.add_argument("input", help="Path to the JSON Resume file (.json).")
+    import_parser.add_argument(
+        "--output",
+        "-o",
+        default=None,
+        help="Output YAML path. Omit to print to stdout.",
+    )
+
     provenance_parser = subparsers.add_parser(
         "provenance",
         help="Embed C2PA Content Credentials in a registered PDF (S8.x F7)",
@@ -1732,6 +1756,7 @@ Commands:
         "emit": cmd_emit,
         "judge": cmd_judge,
         "provenance": cmd_provenance,
+        "import-resume": cmd_import_resume,
     }
 
     commands[args.command](args, meta)

@@ -24,6 +24,13 @@ from .c2pa import (
     embed_manifest,
     verify_manifest,
 )
+from .pades import (
+    VALID_BASELINES,
+    PAdESMissing,
+    PAdESResult,
+    sign_pdf,
+    verify_pdf,
+)
 
 __all__ = [
     "C2PAMissing",
@@ -31,4 +38,9 @@ __all__ = [
     "build_manifest_json",
     "embed_manifest",
     "verify_manifest",
+    "PAdESMissing",
+    "PAdESResult",
+    "VALID_BASELINES",
+    "sign_pdf",
+    "verify_pdf",
 ]
