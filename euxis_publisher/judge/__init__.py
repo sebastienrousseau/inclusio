@@ -18,3 +18,26 @@ Initial judges:
 """
 
 from __future__ import annotations
+
+from .ats import JudgeReport, score_cv
+from .local_llm import (
+    LLMError,
+    LLMParseError,
+    LLMResponse,
+    LLMTimeout,
+    LLMUnavailable,
+    LocalLLM,
+    build_ats_rerank_prompt,
+)
+
+__all__ = [
+    "JudgeReport",
+    "score_cv",
+    "LocalLLM",
+    "LLMResponse",
+    "LLMError",
+    "LLMTimeout",
+    "LLMUnavailable",
+    "LLMParseError",
+    "build_ats_rerank_prompt",
+]

@@ -1108,7 +1108,16 @@ def cmd_judge(args, meta):
         print(f"ERROR: render produced no {out_path}", file=sys.stderr)
         sys.exit(1)
 
-    report = ats_judge.score_cv(out_path.read_text(encoding="utf-8"))
+    plain_text = out_path.read_text(encoding="utf-8")
+    if args.llm_url:
+        # Sprint 7 (S7.1): optional local-LLM rerank. Falls back to
+        # heuristic-only when the server is unreachable.
+        from euxis_publisher.judge import local_llm
+
+        llm = local_llm.LocalLLM(base_url=args.llm_url, timeout=args.llm_timeout)
+        report = ats_judge.score_cv_with_llm(plain_text, llm)
+    else:
+        report = ats_judge.score_cv(plain_text)
     print(f"ATS Score: {report.score}/100  Grade: {report.grade}\n")
     for f in report.findings:
         marker = {"block": "✗", "warn": "⚠", "info": "ℹ"}.get(f.severity, "•")
@@ -1417,6 +1426,21 @@ Commands:
         "--strict",
         action="store_true",
         help="Exit 1 if the grade is D or F (CI gate).",
+    )
+    judge_parser.add_argument(
+        "--llm-url",
+        default=None,
+        help=(
+            "Optional local LLM server URL for ATS rerank "
+            "(default off; e.g. http://localhost:8080 for llama.cpp). "
+            "Falls back to heuristic-only when unreachable."
+        ),
+    )
+    judge_parser.add_argument(
+        "--llm-timeout",
+        type=int,
+        default=30,
+        help="Seconds to wait for the local LLM (default 30).",
     )
 
     emit_parser = subparsers.add_parser(
