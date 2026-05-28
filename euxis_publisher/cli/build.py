@@ -1430,8 +1430,8 @@ Commands:
     )
     emit_parser.add_argument(
         "--formats",
-        default="html,jats",
-        help="Comma-separated subset of {html, jats}. Default: both.",
+        default="html,jats,epub",
+        help="Comma-separated subset of {html, jats, epub}. Default: all three.",
     )
     emit_parser.add_argument(
         "--strict",

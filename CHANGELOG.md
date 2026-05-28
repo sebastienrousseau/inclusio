@@ -8,6 +8,26 @@ and [Conventional Commits](https://www.conventionalcommits.org/).
 
 ### Added
 
+- **Sprint 6 (S6.6) — EPUB3 emitter (2026-05-28)**:
+  - `euxis_publisher/emit/pandoc.py::emit_epub` — Pandoc `--to epub3
+    --standalone --mathjax` with BCP-47 language metadata. Closes
+    the multi-format triad (HTML + JATS + EPUB), fully closing
+    Forcing Function #3.
+  - `SUPPORTED_FORMATS` extended to `("html", "jats", "epub")`;
+    `emit_all` routes the new format through the same dispatch
+    surface.
+  - CLI default updated: `python -m euxis_publisher.cli.build emit`
+    now emits all three formats by default.
+  - 4 new tests in `tests/test_emit_pandoc.py` (epub3 argv, lang
+    override, blank-title omission, real-pandoc end-to-end with
+    PK-magic-bytes + size check). `tests/test_cmd_emit.py` stub
+    extended to handle the epub extension.
+  - Docs (`docs/multi-format.md`): full EPUB section with what's
+    bundled (TOC, lang, MathJax) and what's deferred to Sprint 8
+    (DAISY ACE, Schema.org a11y metadata, cover-image extraction).
+  - Local verification: real pandoc produces a 4951-byte valid
+    EPUB3 archive on a 5-line smoke fixture.
+
 - **Sprint 7 (S7.3) — ATS-scoring judge (2026-05-28)**:
   - `euxis_publisher/judge/ats.py` — Workday / Greenhouse / Lever
     heuristic scoring for CV variants. Local, deterministic, sub-ms.
