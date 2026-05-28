@@ -25,6 +25,13 @@ from pathlib import Path
 
 import pytest
 
+# Skip the whole module when pytest-benchmark isn't installed. The
+# Build-Documents workflow intentionally doesn't pull the plugin (it
+# only runs the LaTeX-shadow suites); the Engine-Validation workflow
+# does. This guard keeps the former green without disabling
+# benchmarks on the latter.
+pytest.importorskip("pytest_benchmark")
+
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 
