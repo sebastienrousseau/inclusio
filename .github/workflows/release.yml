@@ -33,6 +33,10 @@ jobs:
         uses: astral-sh/setup-uv@8d55fbecc275b1c35dbe060458839f8d30439ccf  # v3
         with:
           enable-cache: true
+          # Match the glob used by engine-validation.yml so the action
+          # doesn't fall back to the default `**/uv.lock` (which we
+          # don't have) and fail with "No matches found for glob".
+          cache-dependency-glob: pyproject.toml
           python-version: "3.12"
 
       - name: Install build dependencies
