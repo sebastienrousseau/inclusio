@@ -180,6 +180,49 @@ llm = LocalLLM(base_url="http://localhost:8080")
 report = score_citations_with_llm(tex, llm, max_checks=10)
 ```
 
+## JD-to-CV fit judge — `euxis_publisher.judge.jd_fit` (S7.4)
+
+Compares a CV against a job-description brief and surfaces:
+1. **Missing required keywords** — clauses introduced by "required",
+   "must have", "minimum", "essential", "you have" get harvested; any
+   key term not present in the CV is a block.
+2. **Role-level mismatch** — a seniority ladder
+   (intern → junior → engineer → senior → staff → principal → director
+   → vp → cto) is matched on both sides; gaps of 2 levels warn, 3+
+   block.
+3. **Low keyword overlap** — Jaccard < 0.10 warns ("stretch role").
+
+Base score is mapped from raw Jaccard via a stepped curve (>=0.45 →
+95, >=0.30 → 85, >=0.15 → 70, >=0.05 → 55, else 35) — calibrated
+against realistic JD-CV pairs so a strong tailored CV lands in A/B
+and a clear mismatch lands in F.
+
+### CLI
+
+```bash
+python -m euxis_publisher.cli.build judge \
+    --doc cv --judge jd_fit \
+    --brief data/jobs/senior-backend-engineer.md \
+    --llm-url http://localhost:8080   # optional rerank
+```
+
+### Python API
+
+```python
+from euxis_publisher.judge import score_jd_fit, score_jd_fit_with_llm
+from euxis_publisher.judge import LocalLLM
+
+jd = Path("data/jobs/role.md").read_text()
+cv = Path("build/.cache/rendered/cv.txt").read_text()
+
+report = score_jd_fit(jd, cv)                          # heuristic
+report = score_jd_fit_with_llm(jd, cv, LocalLLM())     # + LLM rerank
+```
+
+LLM rerank prompt asks for *one* top strength + *one* top gap
+(severity warn/block/info, deduction capped at 15). On `LLMError`
+the heuristic report is returned with an info breadcrumb.
+
 ## Roadmap
 
 | Sprint | Item | Status |
@@ -187,6 +230,6 @@ report = score_citations_with_llm(tex, llm, max_checks=10)
 | S7.3 | ATS-scoring heuristic | ✅ done |
 | S7.1 | llama.cpp HTTP adapter (local LLM backend) | ✅ done |
 | S7.2 | Citation-grounding judge (ScholarCopilot pattern) | ✅ done |
-| S7.4 | Job-description fit scorer (re-rank tailored CVs vs JD) | ⏸️ Sprint 8 |
+| S7.4 | Job-description fit scorer (re-rank tailored CVs vs JD) | ✅ done |
 | S7.5 | MCP-broker BYO-key for Claude / GPT-5 | ⏸️ Sprint 8 |
 | S8.x | BibTeX `.bib` support in citations judge | ⏸️ Sprint 8 |

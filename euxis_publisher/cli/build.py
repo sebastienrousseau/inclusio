@@ -1074,9 +1074,9 @@ def cmd_judge(args, meta):
     Future judges (citations via ScholarCopilot pattern, local llama.cpp
     re-score) plug into the same dispatch table.
     """
-    if args.judge not in ("ats", "citations"):
+    if args.judge not in ("ats", "citations", "jd_fit"):
         print(
-            f"ERROR: unknown judge {args.judge!r} (expected: ats, citations)",
+            f"ERROR: unknown judge {args.judge!r} (expected: ats, citations, jd_fit)",
             file=sys.stderr,
         )
         sys.exit(2)
@@ -1084,8 +1084,65 @@ def cmd_judge(args, meta):
     from euxis_publisher.cli import render as render_module
     from euxis_publisher.judge import ats as ats_judge
     from euxis_publisher.judge import citations as cit_judge
+    from euxis_publisher.judge import jd_fit as jd_fit_judge
 
     doc_id = args.doc
+
+    if args.judge == "jd_fit":
+        # Sprint 7 (S7.4): score how well doc_id (a CV template) fits
+        # the brief at --brief. Renders the CV to text first, then
+        # reads the brief as plain text (passes through any txt / md /
+        # rtf the brief promotion supports — Markdown is the common case).
+        if not args.brief:
+            print(
+                "ERROR: --judge jd_fit requires --brief <path-to-job-description>",
+                file=sys.stderr,
+            )
+            sys.exit(2)
+        brief_path = Path(args.brief)
+        if not brief_path.exists():
+            print(f"ERROR: brief not found at {brief_path}", file=sys.stderr)
+            sys.exit(1)
+        jd_text = brief_path.read_text(encoding="utf-8")
+
+        templates = meta.get("templates", {}) or {}
+        if doc_id not in templates:
+            print(
+                f"ERROR: {doc_id} is not a registered template "
+                "(see `templates:` in meta.yaml)",
+                file=sys.stderr,
+            )
+            sys.exit(2)
+        doc_type = templates[doc_id].get("type", doc_id)
+        if doc_type != "cv":
+            print(
+                f"ERROR: jd_fit judge only scores CVs; "
+                f"{doc_id} has type {doc_type!r}",
+                file=sys.stderr,
+            )
+            sys.exit(2)
+        try:
+            render_module.render_document(
+                doc_id, fmt="text", build_mode="draft", content_root=CONTENT_ROOT
+            )
+        except SystemExit:
+            raise
+        cv_path = CONTENT_ROOT / "build" / ".cache" / "rendered" / f"{doc_id}.txt"
+        if not cv_path.exists():
+            print(f"ERROR: render produced no {cv_path}", file=sys.stderr)
+            sys.exit(1)
+        cv_text = cv_path.read_text(encoding="utf-8")
+        if args.llm_url:
+            from euxis_publisher.judge import local_llm
+
+            llm = local_llm.LocalLLM(
+                base_url=args.llm_url, timeout=args.llm_timeout
+            )
+            report = jd_fit_judge.score_jd_fit_with_llm(jd_text, cv_text, llm)
+        else:
+            report = jd_fit_judge.score_jd_fit(jd_text, cv_text)
+        _print_and_persist_report(report, doc_id, args)
+        return
 
     if args.judge == "citations":
         # Sprint 7 (S7.2): score `\cite` / `\bibitem` consistency.
@@ -1464,11 +1521,20 @@ Commands:
     judge_parser.add_argument(
         "--judge",
         default="ats",
-        choices=["ats", "citations"],
+        choices=["ats", "citations", "jd_fit"],
         help=(
             "Which judge to run. `ats` scores a CV against Workday/"
             "Greenhouse/Lever heuristics; `citations` checks `\\cite` "
-            "/ `\\bibitem` consistency on a paper. Default: ats."
+            "/ `\\bibitem` consistency on a paper; `jd_fit` ranks a CV "
+            "against a job-description brief. Default: ats."
+        ),
+    )
+    judge_parser.add_argument(
+        "--brief",
+        default=None,
+        help=(
+            "Job-description brief path (txt/md). Required when "
+            "--judge jd_fit."
         ),
     )
     judge_parser.add_argument(

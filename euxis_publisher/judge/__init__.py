@@ -28,6 +28,13 @@ from .citations import (
     score_citations,
     score_citations_with_llm,
 )
+from .jd_fit import (
+    extract_keywords,
+    extract_required_keywords,
+    jaccard,
+    score_jd_fit,
+    score_jd_fit_with_llm,
+)
 from .local_llm import (
     LLMError,
     LLMParseError,
@@ -47,6 +54,11 @@ __all__ = [
     "parse_bibitems",
     "Citation",
     "BibItem",
+    "score_jd_fit",
+    "score_jd_fit_with_llm",
+    "extract_keywords",
+    "extract_required_keywords",
+    "jaccard",
     "LocalLLM",
     "LLMResponse",
     "LLMError",
