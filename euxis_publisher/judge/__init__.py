@@ -28,6 +28,7 @@ from .citations import (
     score_citations,
     score_citations_with_llm,
 )
+from .cloud_llm import CloudLLM, from_url
 from .jd_fit import (
     extract_keywords,
     extract_required_keywords,
@@ -60,6 +61,8 @@ __all__ = [
     "extract_required_keywords",
     "jaccard",
     "LocalLLM",
+    "CloudLLM",
+    "from_url",
     "LLMResponse",
     "LLMError",
     "LLMTimeout",
