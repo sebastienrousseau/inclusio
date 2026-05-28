@@ -8,6 +8,54 @@ and [Conventional Commits](https://www.conventionalcommits.org/).
 
 ### Added
 
+- **Sprint 5 (#6) — JSON Resume importer (2026-05-28)**:
+  - `euxis_publisher/cli/import_resume.py` — converts a JSON Resume
+    document (jsonresume.org v1 schema) into the Euxis CV YAML
+    schema that `templates/cv.tex.j2` consumes.
+  - Maps every standard JSON Resume block: `basics` → name/role/
+    contact/summary; `work[]` + `volunteer[]` → `experience[]`;
+    `education[]` → `education[]`; `skills[]` → `competencies[]`;
+    `languages[]` → comma-joined `languages`; `awards[]` +
+    `publications[]` → `innovation[]`; `projects[]` passes through
+    unchanged; unknown keys preserved under `_jsonresume_extras`.
+  - Date ranges normalised ISO `YYYY-MM-DD` → `MM/YYYY – Present`
+    so the ATS judge (S7.3) reads them cleanly.
+  - Long summaries (>200 chars) promoted to `executive_profile`;
+    short ones land in `summary`.
+  - CLI: `python -m euxis_publisher.cli.build import-resume
+    <resume.json> [-o cv-data.yaml]`. Stdout default; `-` accepted.
+  - 38 tests in `tests/test_import_resume.py` covering every
+    mapping helper, end-to-end conversion, CLI dispatch, error
+    paths.
+
+  Closes #6.
+
+- **Sprint 8.5 (#11) — PAdES eIDAS signature (closes F7 fully) (2026-05-28)**:
+  - `euxis_publisher/provenance/pades.py` — pyhanko-based PAdES
+    signer supporting all four ETSI EN 319 142 baselines: B-B
+    (signer cert), B-T (default, adds RFC 3161 timestamp), B-LT
+    (adds revocation data), B-LTA (long-term archival).
+  - `pyhanko>=0.22` added as `[provenance]` optional extra so
+    `pip install euxis-publisher` stays minimal.
+  - `sign_pdf(pdf, cert, key, baseline, timestamp_url, ...)` →
+    `PAdESResult` with applied baseline + test-cert detection (CN
+    contains "test"/"sample"/"dev"/"demo"/"localhost" → flagged).
+  - `verify_pdf(pdf)` wraps pyhanko's verifier; returns intact /
+    valid / trusted booleans + a pretty summary.
+  - Argument validation up front: unknown baseline → ValueError;
+    missing cert/key → ValueError; B-T / B-LT / B-LTA without
+    timestamp_url → ValueError with public-TSA recommendations.
+  - 13 tests in `tests/test_provenance_pades.py` covering import
+    path, baseline validation, cert/key requirements, timestamp-
+    URL requirements for B-T/B-LT/B-LTA, B-B no-timestamp path,
+    PAdESResult shape, missing-pyhanko detection.
+  - Docs (`docs/provenance.md`) expanded with PAdES section: install,
+    baseline table, Python API, dev-cert recipe, CI-gate semantics.
+
+  Closes Forcing Function #7 fully. Three layers now in place:
+  SLSA L3 build (S4) + C2PA (S8) + PAdES (this commit). 8 of 8
+  forcing functions either closed or deferred-by-decision.
+
 - **Sprint 8 — C2PA Content Credentials (F7) (2026-05-28)**:
   - `euxis_publisher/provenance/c2pa.py` — subprocess wrapper over
     the `c2patool` reference implementation. Builds a minimal C2PA
