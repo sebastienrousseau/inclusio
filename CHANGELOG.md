@@ -5,7 +5,7 @@ are documented here. Format based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and
 [Conventional Commits](https://www.conventionalcommits.org/).
 
-## [0.2.0] — 2026-05-28
+## [0.0.2] — 2026-05-29
 
 ### Renamed — euxis-publisher → inclusio
 
