@@ -26,6 +26,30 @@
 
 ---
 
+## 60-second tour
+
+```bash
+pip install inclusio
+
+# Grab the minimal example, build + audit + emit + judge:
+git clone --depth=1 https://github.com/sebastienrousseau/inclusio
+cd inclusio/examples/01-hello-world && make
+```
+
+That single `make` produces `build/hello.pdf` (PDF/UA-2 + WTPDF +
+PDF/A-4f triple-conformance), runs veraPDF over it, and exits non-zero
+if any flavour fails. Add citations + multi-format emission with the
+[`03-paper-with-citations/`](./examples/03-paper-with-citations/)
+example, or drive the engine from an MCP client with
+[`04-mcp-agent/`](./examples/04-mcp-agent/).
+
+See [`examples/`](./examples/) for six runnable scenarios covering
+every major feature: tagged-PDF build, JSON Resume import + ATS
+scoring, multi-format emission, MCP server, C2PA signing, and PAdES
+eIDAS signing.
+
+---
+
 ## Install
 
 Run the local bootstrap:

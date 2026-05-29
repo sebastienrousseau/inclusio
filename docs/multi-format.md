@@ -3,7 +3,7 @@
 Sprint 6 (S6.2 + S6.3 + S6.6) ships HTML5, JATS XML, and EPUB3
 emitters that convert a built LaTeX document into single-source
 multi-format output. Closes Forcing Function #3 in
-[`strategy-2026.md`](strategy-2026.md): single-source PDF + HTML +
+[`audit/strategy-2026.md`](audit/strategy-2026.md): single-source PDF + HTML +
 JATS + EPUB.
 
 Both emitters wrap Pandoc — the engine doesn't reimplement a LaTeX→X
@@ -149,7 +149,7 @@ in `data/meta.yaml documents:` get emitted, and entries flagged with
 `note: This is an input file used by another` are skipped.
 
 JATS4R validation + the EPUB-A emitter (S6.6) land in Sprint 7.5;
-track [docs/audit-2026-05.md](audit-2026-05.md) §5.
+track [docs/audit/2026-05.md](audit/2026-05.md) §5.
 
 ## MCP integration
 

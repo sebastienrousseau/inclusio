@@ -385,7 +385,7 @@ A sprint is **not** done until all of the following are green:
 ## Pointers
 
 - Companion strategy: [`strategy-2026.md`](strategy-2026.md)
-- Architecture: [`architecture.md`](architecture.md)
-- Classes & styles: [`classes-and-styles.md`](classes-and-styles.md)
-- Usage: [`usage.md`](usage.md)
-- Public/private boundary: [`public-private-boundary.md`](public-private-boundary.md)
+- Architecture: [`../architecture.md`](../architecture.md)
+- Classes & styles: [`../classes-and-styles.md`](../classes-and-styles.md)
+- Usage: [`../usage.md`](../usage.md)
+- Public/private boundary: [`../public-private-boundary.md`](../public-private-boundary.md)

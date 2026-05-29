@@ -112,7 +112,7 @@ coverage: ## Measure Python logic coverage (>=97% required)
 	COVERAGE_FILE=/tmp/inclusio.coverage $(PYTHON) -m pytest --cov=inclusio --cov-report=term-missing --cov-fail-under=97 tests/ --ignore=tests/test_pdf_validation.py
 
 benchmark: ## Run hot-path micro-benchmarks (pytest-benchmark)
-	$(PYTHON) -m pytest tests/test_benchmark_hot_paths.py --benchmark-only --benchmark-min-rounds=10 --benchmark-columns=min,mean,median,stddev,ops,rounds
+	$(PYTHON) -m pytest benches/ --benchmark-only --benchmark-min-rounds=10 --benchmark-columns=min,mean,median,stddev,ops,rounds
 
 docstrings: ## Verify 100% docstring coverage (interrogate)
 	$(PYTHON) -m interrogate --fail-under=100 -v inclusio/

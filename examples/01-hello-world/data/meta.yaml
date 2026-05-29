@@ -1,0 +1,19 @@
+# Minimal `data/meta.yaml` for the hello-world example.
+#
+# `inclusio` reads this from `--content-dir` (or `INCLUSIO_CONTENT_DIR`)
+# to discover which documents to compile, audit, and emit. The
+# top-level `documents:` map is the source of truth — every registered
+# id corresponds to a `src/*.tex` file that goes through the build
+# pipeline.
+
+author:
+  name: Example Author
+  publisher: Inclusio Examples
+
+documents:
+  hello:
+    class: pub-base
+    src: src/hello.tex
+    title: Hello, tagged PDF
+    description: Minimal Inclusio example producing a PDF/UA-2 + PDF/A-4f artefact.
+    keywords: inclusio,example,tagged-pdf

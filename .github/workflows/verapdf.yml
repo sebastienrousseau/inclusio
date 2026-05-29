@@ -6,8 +6,8 @@ name: veraPDF Audit (Sprint 1+)
 # After Sprint 3: BLOCK on full EAA audit report.
 #
 # References:
-#   docs/strategy-2026.md (Forcing Function #1)
-#   docs/implementation-plan-2026.md (Sprint 1 - 3)
+#   docs/audit/strategy-2026.md (Forcing Function #1)
+#   docs/audit/implementation-plan-2026.md (Sprint 1 - 3)
 
 on:
   push:

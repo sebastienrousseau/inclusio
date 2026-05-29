@@ -1,0 +1,50 @@
+% examples/01-hello-world/src/hello.tex
+%
+% The minimal `inclusio` document. Builds to a tagged PDF that
+% passes veraPDF's PDF/UA-2 + WTPDF + PDF/A-4f profiles.
+%
+% Compile via the example's Makefile (`make` in this folder) — the
+% Makefile delegates to `python -m inclusio.cli.build --content-dir
+% $(CURDIR) build`, which is the same code path the engine's own CI
+% uses.
+
+\DocumentMetadata{
+  pdfversion = 2.0,
+  pdfstandard = ua-2,
+  pdfstandard = a-4f,
+  lang = en-GB,
+}
+
+\documentclass[final,tagged]{pub-base}
+
+\title{Hello, tagged PDF}
+\author{Example Author}
+
+\begin{document}
+
+\maketitle
+
+\section{What this is}
+
+This is the smallest possible \texttt{inclusio} document — one section,
+no figures, no bibliography. It exists to demonstrate that the
+toolchain runs end-to-end and that the produced PDF carries a valid
+\texttt{/StructTreeRoot}, a PDF/A-4f-compliant XMP packet, and the
+\texttt{pdfuaid:part=2} marker the EAA audit gate looks for.
+
+\section{Verifying it}
+
+After \texttt{make}, run \texttt{make audit} (or
+\texttt{inclusio audit --strict}) to confirm veraPDF passes on:
+
+\begin{itemize}
+  \item PDF/UA-2 (ISO 14289-2:2024)
+  \item WTPDF 1.0 (well-tagged PDF)
+  \item PDF/A-4f (archival with embedded files)
+\end{itemize}
+
+\section{Going further}
+
+See the other folders under \texttt{examples/} for richer scenarios.
+
+\end{document}

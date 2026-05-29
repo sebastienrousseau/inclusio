@@ -167,5 +167,5 @@ aren't Euxis-built artefacts. Pass `--all` to bypass.
 - LaTeX `\DocumentMetadata` — LaTeX news August 2022: https://www.latex-project.org/news/latex2e-news/ltnews36.pdf
 - `tagpdf` package: https://ctan.org/pkg/tagpdf
 - veraPDF: https://verapdf.org/
-- Euxis strategy: [`strategy-2026.md`](strategy-2026.md)
-- Sprint plan: [`implementation-plan-2026.md`](implementation-plan-2026.md)
+- Euxis strategy: [`audit/strategy-2026.md`](audit/strategy-2026.md)
+- Sprint plan: [`audit/implementation-plan-2026.md`](audit/implementation-plan-2026.md)
