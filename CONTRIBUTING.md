@@ -168,6 +168,28 @@ you agree to abide by its terms.
 Inclusio is MIT-licensed (see [`LICENSE`](./LICENSE)). By submitting
 a contribution you agree it will be released under that licence.
 
+## Releasing — PyPI Trusted Publishing runbook
+
+`release.yml` is wired to publish to PyPI on every `v*` tag, but
+the publish step is **gated off** until the maintainer completes
+the one-time setup below. Until then, every tag still produces a
+GitHub Release with the sdist + wheel attached — they just don't
+land on PyPI.
+
+| # | Where | Action |
+|---|---|---|
+| 1 | https://pypi.org/manage/account/publishing/ | Create a Trusted Publisher: project name `inclusio`, owner `sebastienrousseau`, repo `inclusio`, workflow `release.yml`, environment `pypi` |
+| 2 | Repo Settings → Environments | Confirm the `pypi` environment exists (it does as of v0.0.4). Optional: under "Deployment branches and tags" add a tag rule `v*` so non-tag pushes can never deploy |
+| 3 | Repo Settings → Secrets and variables → Actions → **Variables** tab | Add repository variable `PYPI_TRUSTED_PUBLISHING=true` |
+| 4 | `git tag -s vX.Y.Z && git push origin vX.Y.Z` | Tag pushes trigger the Release workflow; the publish step now fires |
+
+The `pypi` environment intentionally holds **no secrets and no
+variables** — Trusted Publishing exchanges short-lived OIDC tokens
+at publish time, so there's nothing to rotate. SLSA L3 attestation
+has its own gate (`SLSA_ATTESTATION_ENABLED=true`); enable it once
+the repo is public or you're on a paid plan with private-repo
+attestations.
+
 ## Getting help
 
 - **Bugs / feature requests:** open an issue.
