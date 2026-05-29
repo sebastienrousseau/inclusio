@@ -1,6 +1,6 @@
 # Provenance + signing — `inclusio.provenance`
 
-Sprint 8 closes [Forcing Function #7](strategy-2026.md) on the artefact
+Sprint 8 closes [Forcing Function #7](audit/strategy-2026.md) on the artefact
 side. The engine already ships **SLSA L3 build provenance** for the
 wheel + sdist via `actions/attest-build-provenance` (see
 `.github/workflows/release.yml`); Sprint 8 adds the per-PDF signal:
@@ -148,9 +148,17 @@ pip install 'inclusio[provenance]'   # adds pyhanko>=0.22
 | Baseline | What it includes | Use when |
 |---|---|---|
 | `B-B` | Signature + signer cert | Quick proof-of-author |
-| `B-T` (default) | B-B + RFC 3161 trusted timestamp | Survives cert expiration; tier-1 publications |
-| `B-LT` | B-T + revocation data (CRL/OCSP) | Long-term archival |
-| `B-LTA` | B-LT + document timestamp re-signing | Decades-long archival; legal records |
+| `B-T` (current default) | B-B + RFC 3161 trusted timestamp | Survives cert expiration; tier-1 publications |
+| `B-LT` | B-T + revocation data (CRL/OCSP) | Long-term archival; offline verification |
+| `B-LTA` | B-LT + document timestamp re-signing | Decades-long archival; legal records; **eIDAS 2 qualified-signature default** |
+
+> **2026 note on B-LTA:** under **eIDAS 2** (Regulation 2024/1183) B-LTA
+> is the qualified-signature baseline for EU finance, health, and
+> public-procurement archival. The inclusio default is still B-T because
+> B-LTA adds ~50–100 KB per signature and requires a trusted CRL/OCSP
+> source at sign time — pick B-LTA explicitly when your sector demands
+> it, but expect B-LTA to become the inclusio default in v0.1 once the
+> CRL fetching is wired up automatically.
 
 ### Python API
 
