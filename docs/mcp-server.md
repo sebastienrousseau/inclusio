@@ -3,7 +3,7 @@
 Sprint 6 (S6.4) ships an MCP (Model Context Protocol) server that
 exposes the Inclusio engine's read + audit surface to AI
 clients (Claude Code, Cursor, the MCP Inspector). Forcing Function #4
-in [`strategy-2026.md`](strategy-2026.md): the AI authoring layer.
+in [`audit/strategy-2026.md`](audit/strategy-2026.md): the AI authoring layer.
 
 ## Install
 
@@ -87,7 +87,7 @@ queries.
 - **Sprint 8**: provenance — sign tool outputs with SLSA + C2PA
   manifests; expose `inclusio://provenance/{doc_id}` resource.
 
-See [`audit-2026-05.md`](audit-2026-05.md) §5 for the full Sprint 6+
+See [`audit/2026-05.md`](audit/2026-05.md) §5 for the full Sprint 6+
 plan.
 
 ## Reference

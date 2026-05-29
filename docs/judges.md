@@ -57,7 +57,7 @@ for f in report.findings:
 
 ### Why heuristic-only by default
 
-Per decision D4 (`docs/strategy-2026.md`), judges are local-first.
+Per decision D4 (`docs/audit/strategy-2026.md`), judges are local-first.
 Sensitive content (unpublished CVs, draft patents, salary signals) must
 not leave the machine without explicit opt-in. The heuristic catches
 the most-common ATS-killers — adding an LLM re-score on top is Sprint
@@ -275,7 +275,7 @@ llm = from_url("https://api.anthropic.com", timeout=60)
 llm = from_url("http://localhost:8080")  # → LocalLLM
 ```
 
-Per decision D4 (`docs/strategy-2026.md`), default to `LocalLLM` for
+Per decision D4 (`docs/audit/strategy-2026.md`), default to `LocalLLM` for
 sensitive content. Cloud is the explicit opt-in.
 
 ## Roadmap

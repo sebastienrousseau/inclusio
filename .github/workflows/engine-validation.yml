@@ -7,7 +7,7 @@ name: Engine Validation
 #   2. validate      — test suite, coverage, docs, doc-id registry
 #   3. signed-commits — PR only; rejects unsigned commits in the diff
 #
-# All GitHub Actions are SHA-pinned (per docs/audit-2026-05.md
+# All GitHub Actions are SHA-pinned (per docs/audit/2026-05.md
 # action P-6); Dependabot rewrites SHAs on the weekly cycle.
 
 on:
