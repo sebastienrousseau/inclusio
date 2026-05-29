@@ -22,6 +22,15 @@ jobs:
     name: Build, attest, release
     runs-on: ubuntu-24.04
     timeout-minutes: 15
+    # Binds the job to the `pypi` GitHub environment so the PyPI
+    # Trusted Publisher exchange resolves. The environment itself
+    # holds no secrets/variables — the OIDC exchange happens at
+    # publish time. Tag-rule on the environment additionally
+    # restricts deployments to `v*` tag pushes (a belt-and-braces
+    # check against the workflow's own `on.push.tags` trigger).
+    environment:
+      name: pypi
+      url: https://pypi.org/p/inclusio
 
     steps:
       - name: Checkout
@@ -90,22 +99,13 @@ jobs:
             dist/*.whl
 
       - name: Publish to PyPI (Trusted Publishing)
-        # Gated on the `PYPI_TRUSTED_PUBLISHING` repo variable so the
-        # workflow stays green before PyPI is wired up.
+        # Gated on the `PYPI_TRUSTED_PUBLISHING` repo variable so
+        # the workflow stays green if the PyPI Trusted Publisher
+        # isn't configured yet (e.g. on a fresh fork).
         #
-        # To enable:
-        #   1. Configure a Trusted Publisher on PyPI:
-        #      https://pypi.org/manage/account/publishing/
-        #      Owner: sebastienrousseau, Repo: inclusio,
-        #      Workflow: release.yml, Environment: pypi
-        #   2. Add `pypi` to repo environments (Settings → Environments)
-        #      and re-add the `environment:` block to this job.
-        #   3. Set repo variable `PYPI_TRUSTED_PUBLISHING=true`
-        #      (Settings → Secrets and variables → Actions → Variables).
-        #
-        # Until enabled, the GitHub Release above is already published
-        # and the wheel/sdist are downloadable from the release page;
-        # a manual `twine upload` remains available as a fallback.
+        # The `pypi` environment + the publisher config on PyPI side
+        # are the other two pieces; see CONTRIBUTING.md for the
+        # full activation runbook.
         if: vars.PYPI_TRUSTED_PUBLISHING == 'true'
         uses: pypa/gh-action-pypi-publish@cef221092ed1bacb1cc03d23a2d87d1d172e277b  # v1.14.0
         with:
