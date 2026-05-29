@@ -29,20 +29,34 @@ def test_core_styles_exist(project_root):
 
 
 def test_build_script_syntax(project_root):
-    """Verify build.py exists and has valid Python syntax."""
-    build_py = project_root / "scripts" / "build.py"
-    assert build_py.exists(), "scripts/build.py not found"
+    """Verify inclusio/cli/build.py exists and has valid Python syntax.
+
+    The historical `scripts/build.py` thin shim was removed in v0.0.3
+    (it just re-exported from `inclusio.cli.build`); the canonical
+    entry point is now the package module.
+    """
+    build_py = project_root / "inclusio" / "cli" / "build.py"
+    assert build_py.exists(), "inclusio/cli/build.py not found"
     source = build_py.read_text(encoding="utf-8")
     compile(source, str(build_py), "exec")
 
 
 def test_directory_structure(project_root):
-    """Verify public engine directory structure exists."""
+    """Verify public engine directory structure exists.
+
+    The v0.0.3 directory hygiene sprint added `benches/`, `examples/`,
+    and `docs/tutorials/`, and removed the `scripts/` Python shims
+    (the shell scripts under `scripts/` remain).
+    """
     expected_dirs = [
         "core/cls",
         "core/sty",
-        "scripts",
+        "inclusio",
         "tests",
+        "benches",
+        "examples",
+        "docs/tutorials",
+        "docs/audit",
         ".github/workflows",
     ]
     for d in expected_dirs:

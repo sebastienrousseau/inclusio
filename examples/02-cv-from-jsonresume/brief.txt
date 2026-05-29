@@ -1,0 +1,16 @@
+Senior Platform Engineer — London
+
+We're hiring a senior platform engineer to scale our event pipeline.
+You will own infrastructure for our Kubernetes-based services and
+lead the team to a 99.95 % SLO.
+
+Required:
+- 8+ years of backend experience in Python or Go.
+- Production Kubernetes experience (operators, CRDs, autoscaling).
+- Strong PostgreSQL fundamentals (query plans, indexing strategy).
+- Distributed-systems intuition (consistency, idempotency, retries).
+
+Nice to have:
+- Rust experience.
+- OpenTelemetry / Prometheus operational experience.
+- Open-source contributions to relevant infrastructure.

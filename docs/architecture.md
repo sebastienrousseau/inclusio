@@ -26,5 +26,5 @@
   XeTeX are not supported. Rationale: tagged-PDF / PDF/UA-2 / EAA
   compliance work depends on `tagpdf`'s LuaLaTeX-only code paths.
   Cross-engine QA across three families would burn months without
-  buying capability. See `docs/strategy-2026.md` and
-  `docs/implementation-plan-2026.md`.
+  buying capability. See `docs/audit/strategy-2026.md` and
+  `docs/audit/implementation-plan-2026.md`.

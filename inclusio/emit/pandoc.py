@@ -206,6 +206,13 @@ def emit_jats(
     that need strict JATS4R compliance should pipe the output to
     `jats4r-validate` separately.
 
+    Note: **JATS 1.4** (ANSI/NISO Z39.96-2024) is the academic-
+    archival default as of 2026. Pandoc's `jats_archiving` writer
+    still emits JATS 1.3 as of pandoc 3.9; the upgrade to 1.4 is
+    backwards-compatible at the document level, so 1.3 output is
+    accepted everywhere 1.4 is. Track pandoc release notes for the
+    1.4 writer when it ships.
+
     Args:
         tex_path: path to the source `.tex` file.
         output_dir: directory to write `<doc_id>.xml` into.

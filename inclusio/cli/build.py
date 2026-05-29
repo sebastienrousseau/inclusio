@@ -956,13 +956,14 @@ def cmd_render(args, meta):
 
 
 def cmd_fix(args, meta):
-    """Auto-fix semantic violations in source files."""
-    script = PROJECT_ROOT / "scripts" / "fix-semantic.py"
-    if not script.exists():
-        print(f"ERROR: {script} not found", file=sys.stderr)
-        sys.exit(1)
+    """Auto-fix semantic violations in source files.
 
-    cmd = [sys.executable, str(script), "src/"]
+    Delegates to the packaged `inclusio.tools.fix_semantic` module
+    via the Python interpreter — the same surface as `python -m
+    inclusio.tools.fix_semantic`. The historical
+    `scripts/fix-semantic.py` shim was removed in v0.0.3.
+    """
+    cmd = [sys.executable, "-m", "inclusio.tools.fix_semantic", "src/"]
     if getattr(args, "dry_run", False):
         cmd.append("--dry-run")
     if getattr(args, "verbose", False):
@@ -979,13 +980,14 @@ def cmd_fix(args, meta):
 
 
 def cmd_sitemap(args, meta):
-    """Generate semantic search metadata."""
-    script = PROJECT_ROOT / "scripts" / "sitemap.py"
-    if not script.exists():
-        print(f"ERROR: {script} not found", file=sys.stderr)
-        sys.exit(1)
+    """Generate semantic search metadata.
 
-    cmd = [sys.executable, str(script)]
+    Delegates to the packaged `inclusio.cli.sitemap` module via the
+    Python interpreter — the same surface as `python -m
+    inclusio.cli.sitemap`. The historical `scripts/sitemap.py` shim
+    was removed in v0.0.3.
+    """
+    cmd = [sys.executable, "-m", "inclusio.cli.sitemap"]
     if getattr(args, "pretty", False):
         cmd.append("--pretty")
     if getattr(args, "stdout", False):

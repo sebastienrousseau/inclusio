@@ -1,0 +1,70 @@
+{
+  "basics": {
+    "name": "Jane Doe",
+    "label": "Senior Platform Engineer",
+    "email": "jane.doe@example.com",
+    "phone": "+44 20 7946 0958",
+    "location": {
+      "city": "London",
+      "countryCode": "GB"
+    },
+    "profiles": [
+      {
+        "network": "GitHub",
+        "username": "janedoe",
+        "url": "https://github.com/janedoe"
+      }
+    ],
+    "summary": "Senior platform engineer with 12 years of distributed-systems experience. Specialises in Kubernetes operators, event-sourcing pipelines, and SRE practice."
+  },
+  "work": [
+    {
+      "name": "Acme Corp",
+      "position": "Staff Engineer",
+      "startDate": "2020-01-01",
+      "summary": "Platform team lead.",
+      "highlights": [
+        "Led migration of 14-service estate to Kubernetes; cut P95 latency 40 %.",
+        "Designed event-sourcing pipeline handling 12M events/day with 99.95 % SLO.",
+        "Mentored 4 junior engineers through senior promotion."
+      ]
+    },
+    {
+      "name": "Globex Ltd",
+      "position": "Senior Engineer",
+      "startDate": "2016-03-01",
+      "endDate": "2019-12-31",
+      "highlights": [
+        "Built the PostgreSQL connection-pooling service that backs all internal APIs.",
+        "Rolled out OpenTelemetry tracing across 32 services."
+      ]
+    }
+  ],
+  "education": [
+    {
+      "institution": "Imperial College London",
+      "studyType": "MEng",
+      "area": "Computer Science",
+      "startDate": "2009-09-01",
+      "endDate": "2013-06-01"
+    }
+  ],
+  "skills": [
+    {
+      "name": "Programming",
+      "level": "Master",
+      "keywords": ["Python", "Go", "Rust"]
+    },
+    {
+      "name": "Infrastructure",
+      "level": "Master",
+      "keywords": ["Kubernetes", "PostgreSQL", "Kafka", "OpenTelemetry"]
+    }
+  ],
+  "languages": [
+    {
+      "language": "English",
+      "fluency": "Native speaker"
+    }
+  ]
+}

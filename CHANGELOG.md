@@ -5,6 +5,91 @@ are documented here. Format based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and
 [Conventional Commits](https://www.conventionalcommits.org/).
 
+## [0.0.3] — 2026-05-29
+
+First sprint train under the new name. Three of the five planned
+Q3 sprints land here; the remaining two (Q3.4 internal refactor,
+Q3.5 heavyweight trend response) ship as **v0.0.4** to keep this
+release reviewable.
+
+### Added — Q3.1 examples + quickstart
+
+- `examples/` directory with six self-contained scenarios, each
+  with a `Makefile` and a README explaining what it teaches:
+  1. **`01-hello-world/`** — minimal tagged-PDF build
+  2. **`02-cv-from-jsonresume/`** — JSON Resume → CV → ATS + JD-fit scoring
+  3. **`03-paper-with-citations/`** — scholarly paper → PDF + HTML + JATS + EPUB + citation judge
+  4. **`04-mcp-agent/`** — `inclusio-mcp` + Claude Code skill
+  5. **`05-c2pa-sign/`** — embed C2PA Content Credentials
+  6. **`06-pades-sign/`** — PAdES B-T eIDAS signature
+- `docs/quickstart.md` — 5-minute walkthrough mirroring example 1.
+- README "60-second tour" replacing the old install-only intro.
+
+### Added — Q3.3 tutorials
+
+- `docs/tutorials/` with four end-to-end walkthroughs aligned with
+  the examples:
+  - **`01-tagged-pdf.md`** — what tagged PDFs are + how inclusio
+    builds them.
+  - **`02-judge-cv.md`** — ATS + JD-fit scoring, with the 2026
+    Workday/Paradox context.
+  - **`03-mcp-agent.md`** — running `inclusio-mcp` and driving it
+    from Claude Code.
+  - **`04-camera-ready.md`** — C2PA + PAdES + SLSA layered
+    provenance.
+- `docs/index.md` reorganised into four sections: Getting started /
+  Engine / Project / Historical.
+
+### Changed — Q3.2 directory hygiene
+
+- **New `benches/` directory** — promoted `tests/test_benchmark_hot_paths.py` here.
+- **Removed `scripts/{build,render,sitemap,tailor,stamp-pdfs,fix-semantic,__init__}.py`** — 7-line thin shims that duplicated the `inclusio.cli` entry points. `scripts/asset-pipeline.sh` and `scripts/check-semantic.sh` (real shell scripts) stay.
+- **Moved historical docs to `docs/audit/`**: `audit-2026-05.md`,
+  `strategy-2026.md`, `implementation-plan-2026.md` are time-locked
+  records of the project's pre-rename strategy. Surfaced in
+  `docs/index.md` under a "Historical" section.
+- **Rewrote `CONTRIBUTING.md`** — the old document was pre-inclusio
+  and referenced scripts (`generate-cv.sh`, `merge-config.py`) that
+  never existed in this codebase. The new doc covers the actual
+  contribution flow.
+- Updated `Makefile` + `pyproject.toml` to point at the new
+  `benches/` location.
+
+**Deferred to a follow-up PR (v0.0.3.1?):** renaming `src/+data/ →
+fixtures/`. 184 references to update + the change is a public API
+break for content repos that consume inclusio. Needs its own
+deprecation cycle.
+
+### Added — Q3.5 trend response (light surface)
+
+- `docs/provenance.md` — added a 2026 eIDAS-2 callout marking PAdES
+  B-LTA as the qualified-signature default for regulated EU
+  sectors. The inclusio default remains B-T (B-LTA needs CRL/OCSP
+  wired up automatically — landing in v0.1).
+- `inclusio/emit/pandoc.py` — added a JATS 1.4 (ANSI/NISO
+  Z39.96-2024) note to the `emit_jats` docstring. The pandoc
+  `jats_archiving` writer still emits JATS 1.3 as of pandoc 3.9;
+  the upgrade is backwards-compatible at the document level.
+
+### Deferred to v0.0.4
+
+- **Q3.4 internal refactor** — splitting `inclusio/cli/build.py`
+  (1700 lines, 15 subcommands) into per-command modules; extracting
+  a `Judge` ABC; parameterising the pandoc emitters; extracting
+  `inclusio/pdf/post_process.py`. Each is a non-trivial refactor
+  with regression risk; merits its own PR + test pass.
+- **Q3.5 (heavyweight items)** — DAISY ACE validation in the EPUB
+  emit path; citation-judge retrieval mode (CiteGuard-style RAG).
+  Both are new features with new optional deps.
+
+### Internal
+
+- `docs/index.md` reorganised; tutorials added to the Getting
+  Started TOC; historical docs gathered under a single section.
+- All references to the moved historical docs (in
+  `.github/workflows/`, `Makefile`, `docs/**.md`, `README.md`)
+  updated to the new paths.
+
 ## [0.0.2] — 2026-05-29
 
 ### Renamed — euxis-publisher → inclusio
