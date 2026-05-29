@@ -1,0 +1,55 @@
+% examples/03-paper-with-citations/src/paper.tex
+
+\DocumentMetadata{
+  pdfversion = 2.0,
+  pdfstandard = ua-2,
+  pdfstandard = a-4f,
+  lang = en-GB,
+}
+
+\documentclass[final,tagged]{pub-paper}
+
+\title{A Short Note on Accessible Publishing}
+\author{Example Author}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+We outline three forces shaping tagged-PDF tooling in 2026: the EU
+EAA's first audit year~\cite{eaa-2025}, the maturation of
+\texttt{tagpdf} v1~\cite{tagpdf-v1}, and the convergence of agentic
+publishing pipelines on the Model Context Protocol~\cite{mcp-2026}.
+\end{abstract}
+
+\section{Background}
+
+The accessibility, archival, and authenticity floors of digital
+publishing rose dramatically over 2024--2026. Inclusio sits at
+their intersection.
+
+\section{Forces}
+
+\paragraph{EAA.} The European Accessibility Act started enforcement
+on 28 June 2025~\cite{eaa-2025}; 2026 is the first full audit year.
+
+\paragraph{tagpdf.} The LaTeX kernel's per-class tagging support
+shipped general-availability in \texttt{tagpdf} v1.0b in April
+2026~\cite{tagpdf-v1}.
+
+\paragraph{MCP.} The Model Context Protocol release candidate
+(July 2026) introduces \emph{Tasks} for long-running pipelines, a
+natural fit for typeset $\rightarrow$ audit $\rightarrow$ sign
+chains~\cite{mcp-2026}.
+
+\begin{thebibliography}{9}
+  \bibitem{eaa-2025} European Commission,
+  \emph{European Accessibility Act}, 2025.
+  \bibitem{tagpdf-v1} U. Fischer, \emph{The tagpdf package, version
+  1.0b}, 24 April 2026.
+  \bibitem{mcp-2026} Anthropic et al.,
+  \emph{Model Context Protocol — 2026-07-28 RC}, 2026.
+\end{thebibliography}
+
+\end{document}

@@ -1,0 +1,11 @@
+author:
+  name: Example Author
+  publisher: Inclusio Examples
+
+documents:
+  paper:
+    class: pub-paper
+    src: src/paper.tex
+    title: A Short Note on Accessible Publishing
+    description: Example paper demonstrating multi-format emission and the citation judge.
+    keywords: accessibility,pdf-ua,jats,epub
