@@ -1,7 +1,7 @@
 # CITATION.cff — Citation File Format (cff-version 1.2.0)
 # https://citation-file-format.github.io/
 #
-# Describes how to cite the Euxis Publisher engine as a whole. GitHub
+# Describes how to cite the Inclusio engine as a whole. GitHub
 # renders this as a "Cite this repository" button on the repo page,
 # and DataCite / Zenodo forward citation credit to the author ORCID.
 #
@@ -9,8 +9,8 @@
 # pointing at the Zenodo DOI minted by the GitHub→Zenodo webhook.
 
 cff-version: 1.2.0
-message: "If you use Euxis Publisher in your research or workflow, please cite it as below."
-title: "Euxis Publisher"
+message: "If you use Inclusio in your research or workflow, please cite it as below."
+title: "Inclusio"
 abstract: >-
   Public LaTeX-first document publishing engine packaged as a Python
   CLI. Produces tagged PDF/UA-2, PDF/A-4f, and WTPDF-1.0 archival
@@ -24,8 +24,8 @@ authors:
     email: contact@sebastienrousseau.com
     affiliation: Independent Researcher
     orcid: "https://orcid.org/0009-0005-1434-284X"
-repository-code: "https://github.com/sebastienrousseau/euxis-publisher"
-url: "https://github.com/sebastienrousseau/euxis-publisher"
+repository-code: "https://github.com/sebastienrousseau/inclusio"
+url: "https://github.com/sebastienrousseau/inclusio"
 license: MIT
 keywords:
   - latex

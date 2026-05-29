@@ -7,4 +7,4 @@ Public, non-sensitive fixture data used by the engine and its tests.
 - `blog/`: sample blog metadata used by blog rendering tests
 - `jobs/`: sample briefs for tailoring tests
 
-Sensitive or client-owned datasets belong in `euxis-publisher-private`.
+Sensitive or client-owned datasets belong in `inclusio-private`.

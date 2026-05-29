@@ -3,7 +3,7 @@
 # See LICENSE file for details
 """Sprint 7 (S7.3): ATS-scoring judge for CV variants.
 
-Exercises every check in `euxis_publisher.judge.ats.score_cv`:
+Exercises every check in `inclusio.judge.ats.score_cv`:
 
   - canonical headings: present / missing / partial-match
   - contact info: email-only, phone-only, neither, both
@@ -21,7 +21,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from euxis_publisher.judge import ats
+from inclusio.judge import ats
 
 # ── Fixtures: minimal CVs in plain text ────────────────────────────────
 

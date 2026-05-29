@@ -1,4 +1,4 @@
-"""Shared fixtures for Euxis Publisher tests."""
+"""Shared fixtures for Inclusio tests."""
 
 from pathlib import Path
 

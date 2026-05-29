@@ -1,19 +1,27 @@
 <p align="center">
-  <img src="https://kura.pro/euxis/images/logos/euxis.svg" alt="Euxis Publisher logo" width="128" />
+  <img src="https://kura.pro/euxis/images/logos/euxis.svg" alt="Inclusio logo" width="128" />
 </p>
 
-<h1 align="center">Euxis Publisher</h1>
+<h1 align="center">Inclusio</h1>
 
 <p align="center">
-  <strong>Public publishing engine for LaTeX-first documents, packaged as a Python CLI and built for macOS, Linux, and WSL.</strong>
+  <strong>Publishing that includes everyone.</strong>
 </p>
 
 <p align="center">
-  <a href="https://github.com/sebastienrousseau/euxis-publisher/actions/workflows/engine-validation.yml"><img src="https://img.shields.io/github/actions/workflow/status/sebastienrousseau/euxis-publisher/engine-validation.yml?style=for-the-badge&logo=github" alt="Engine Validation" /></a>
-  <a href="https://github.com/sebastienrousseau/euxis-publisher/actions/workflows/verapdf.yml"><img src="https://img.shields.io/github/actions/workflow/status/sebastienrousseau/euxis-publisher/verapdf.yml?style=for-the-badge&logo=github&label=veraPDF" alt="veraPDF Audit" /></a>
-  <a href="https://github.com/sebastienrousseau/euxis-publisher"><img src="https://img.shields.io/badge/Python-%3E%3D3.11-3776AB?style=for-the-badge&logo=python&logoColor=white" alt="Python >= 3.11" /></a>
-  <a href="https://github.com/sebastienrousseau/euxis-publisher"><img src="https://img.shields.io/badge/PDF%2FUA--2%20%7C%20WTPDF%20%7C%20PDF%2FA--4f-blue?style=for-the-badge" alt="PDF/UA-2 | WTPDF | PDF/A-4f" /></a>
-  <a href="https://github.com/sebastienrousseau/euxis-publisher/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-MIT-black?style=for-the-badge" alt="License" /></a>
+  Accessibility-first publishing engine for LaTeX, packaged as a
+  Python CLI. PDF/UA-2 + WTPDF + PDF/A-4f triple-conformance,
+  C2PA + PAdES + SLSA provenance, multi-format emission (HTML5 /
+  JATS / EPUB3), LLM-augmented judges, and an MCP server for agent
+  integration. Built for macOS, Linux, and WSL.
+</p>
+
+<p align="center">
+  <a href="https://github.com/sebastienrousseau/inclusio/actions/workflows/engine-validation.yml"><img src="https://img.shields.io/github/actions/workflow/status/sebastienrousseau/inclusio/engine-validation.yml?style=for-the-badge&logo=github" alt="Engine Validation" /></a>
+  <a href="https://github.com/sebastienrousseau/inclusio/actions/workflows/verapdf.yml"><img src="https://img.shields.io/github/actions/workflow/status/sebastienrousseau/inclusio/verapdf.yml?style=for-the-badge&logo=github&label=veraPDF" alt="veraPDF Audit" /></a>
+  <a href="https://github.com/sebastienrousseau/inclusio"><img src="https://img.shields.io/badge/Python-%3E%3D3.11-3776AB?style=for-the-badge&logo=python&logoColor=white" alt="Python >= 3.11" /></a>
+  <a href="https://github.com/sebastienrousseau/inclusio"><img src="https://img.shields.io/badge/PDF%2FUA--2%20%7C%20WTPDF%20%7C%20PDF%2FA--4f-blue?style=for-the-badge" alt="PDF/UA-2 | WTPDF | PDF/A-4f" /></a>
+  <a href="https://github.com/sebastienrousseau/inclusio/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-MIT-black?style=for-the-badge" alt="License" /></a>
 </p>
 
 ---
@@ -42,20 +50,20 @@ make coverage
 Publish against the private content repository with the shell-agnostic form:
 
 ```bash
-make publish CONTENT_DIR=/absolute/path/to/euxis-publisher-private
+make publish CONTENT_DIR=/absolute/path/to/inclusio-private
 ```
 
 Use the shell-specific form only when you need it:
 
 ```bash
 # Bash / Zsh / POSIX sh
-EUXIS_CONTENT_DIR=/absolute/path/to/euxis-publisher-private make publish
+INCLUSIO_CONTENT_DIR=/absolute/path/to/inclusio-private make publish
 
 # fish
-env EUXIS_CONTENT_DIR=/absolute/path/to/euxis-publisher-private make publish
+env INCLUSIO_CONTENT_DIR=/absolute/path/to/inclusio-private make publish
 
 # PowerShell
-$env:EUXIS_CONTENT_DIR = "/absolute/path/to/euxis-publisher-private"
+$env:INCLUSIO_CONTENT_DIR = "/absolute/path/to/inclusio-private"
 make publish
 ```
 
@@ -71,16 +79,16 @@ compiling PDFs.
 ## Overview
 
 Use this repository as the public engine layer of the Euxis publishing stack.
-Keep private content in `euxis-publisher-private`.
+Keep private content in `inclusio-private`.
 
 You get:
 
 - **LaTeX classes and styles** through `core/cls/` and `core/sty/`
-- **Packaged Python entrypoints** through `euxis_publisher/cli/`
-- **Operator utilities** through `euxis_publisher/tools/`
+- **Packaged Python entrypoints** through `inclusio/cli/`
+- **Operator utilities** through `inclusio/tools/`
 - **Compatibility wrappers** through `scripts/`
 - **Public fixture content** through `data/`, `src/`, and `templates/`
-- **100% package coverage** over `euxis_publisher`
+- **100% package coverage** over `inclusio`
 
 ---
 
@@ -90,7 +98,7 @@ First, render or tailor content. Then compile camera-ready output from the same 
 
 ```mermaid
 graph TD
-    A[Private or Public Content] --> B{euxis_publisher.cli.build}
+    A[Private or Public Content] --> B{inclusio.cli.build}
     B --> C[Render: Jinja2 to LaTeX or Markdown]
     B --> D[Build: latexmk or TeX compiler]
     B --> E[Tailor: Brief to structured YAML]
@@ -111,7 +119,7 @@ graph TD
 | **Build Modes** | Draft, submission, and camera-ready flows managed from one orchestration layer |
 | **Publishing** | PDF/A-oriented metadata flow with provenance stamping support |
 | **Fixtures** | Public sample content for engine validation without exposing private briefs or templates |
-| **Coverage** | 100% package coverage across `euxis_publisher` |
+| **Coverage** | 100% package coverage across `inclusio` |
 | **Platforms** | macOS, Linux, and WSL |
 | **Docs** | Sphinx docs plus folder-level READMEs for every major public surface |
 
@@ -124,7 +132,7 @@ graph TD
 | `make list` | inspect registered documents |
 | `make draft` | compile all public documents in draft mode |
 | `make final` | compile camera-ready output from the current content root |
-| `make publish CONTENT_DIR=/absolute/path/to/euxis-publisher-private` | auto-tailor briefs from `data/jobs/` and compile the full private set |
+| `make publish CONTENT_DIR=/absolute/path/to/inclusio-private` | auto-tailor briefs from `data/jobs/` and compile the full private set |
 | `make render` | render Jinja2 templates to LaTeX |
 | `make render-md` | render Markdown output |
 | `make blog` | render blog posts |
@@ -137,10 +145,10 @@ graph TD
 Use the packaged CLIs directly when you need lower-level control:
 
 ```bash
-python3 -m euxis_publisher.cli.build list
-python3 -m euxis_publisher.cli.render --doc cv
-python3 -m euxis_publisher.cli.sitemap --pretty
-python3 -m euxis_publisher.cli.tailor data/jobs/test.txt --no-ai
+python3 -m inclusio.cli.build list
+python3 -m inclusio.cli.render --doc cv
+python3 -m inclusio.cli.sitemap --pretty
+python3 -m inclusio.cli.tailor data/jobs/test.txt --no-ai
 ```
 
 For bulk private publishing, prefer `make publish`. It scans `data/jobs/`,
@@ -153,7 +161,7 @@ refreshes stale tailored YAML, and compiles the resulting PDFs in one pass.
 Keep these surfaces public:
 
 - `core/`
-- `euxis_publisher/`
+- `inclusio/`
 - `scripts/`
 - `tests/`
 - non-sensitive fixtures in `data/`, `src/`, and `templates/`
@@ -187,9 +195,9 @@ Folder guides:
 - [bin/README.md](bin/README.md)
 - [core/README.md](core/README.md)
 - [data/README.md](data/README.md)
-- [euxis_publisher/README.md](euxis_publisher/README.md)
-- [euxis_publisher/cli/README.md](euxis_publisher/cli/README.md)
-- [euxis_publisher/tools/README.md](euxis_publisher/tools/README.md)
+- [inclusio/README.md](inclusio/README.md)
+- [inclusio/cli/README.md](inclusio/cli/README.md)
+- [inclusio/tools/README.md](inclusio/tools/README.md)
 - [scripts/README.md](scripts/README.md)
 - [src/README.md](src/README.md)
 - [templates/README.md](templates/README.md)

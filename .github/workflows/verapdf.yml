@@ -130,8 +130,8 @@ jobs:
           # The build step is allowed to fail individual docs (one
           # malformed fixture shouldn't deny the audit of the others);
           # the authoritative gate is the audit CLI in --strict mode.
-          python -m euxis_publisher.cli.build build --mode camera-ready --force || echo "::warning::build step had failures; audit gate is authoritative"
-          python -m euxis_publisher.cli.audit --strict
+          python -m inclusio.cli.build build --mode camera-ready --force || echo "::warning::build step had failures; audit gate is authoritative"
+          python -m inclusio.cli.audit --strict
 
       # The block below activates once the Sprint 1 smoke is green on CI.
       # Until then it WARNS only (`|| true`) so we can land the workflow
@@ -143,7 +143,7 @@ jobs:
           # The authoritative gate is `Tagged-PDF smoke tests` above, which
           # exercises every pub-*.cls class via `tests/test_pdf_ua_classes.py`
           # and is BLOCKing as of Sprint 2.
-          python -m euxis_publisher.cli.build build --doc whisper-paper --mode camera-ready --force || true
+          python -m inclusio.cli.build build --doc whisper-paper --mode camera-ready --force || true
           shopt -s nullglob
           for pdf in build/papers/*.pdf; do
             echo "::group::veraPDF $pdf"

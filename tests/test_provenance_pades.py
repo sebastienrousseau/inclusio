@@ -18,7 +18,7 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from euxis_publisher.provenance import pades
+from inclusio.provenance import pades
 
 # ── _require_pyhanko ──────────────────────────────────────────────────
 

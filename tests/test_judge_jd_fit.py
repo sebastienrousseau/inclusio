@@ -27,8 +27,8 @@ from unittest import mock
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from euxis_publisher.judge import jd_fit
-from euxis_publisher.judge import local_llm as llm_mod
+from inclusio.judge import jd_fit
+from inclusio.judge import local_llm as llm_mod
 
 # ── extract_keywords ───────────────────────────────────────────────────
 

@@ -9,7 +9,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ENGINE_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
-CONTENT_ROOT="${EUXIS_CONTENT_DIR:-$ENGINE_ROOT}"
+CONTENT_ROOT="${INCLUSIO_CONTENT_DIR:-$ENGINE_ROOT}"
 ASSETS_DIR="$CONTENT_ROOT/assets"
 
 # Configurable options (overridable via environment)

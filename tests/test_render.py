@@ -6,7 +6,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from euxis_publisher.cli import render
+from inclusio.cli import render
 
 sys.modules["render"] = render
 

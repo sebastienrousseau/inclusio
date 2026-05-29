@@ -54,7 +54,7 @@ jobs:
         # as their owning features get touched.
         run: |
           ruff format --check \
-            euxis_publisher/ \
+            inclusio/ \
             tests/test_overlay.py \
             tests/test_citation.py \
             tests/test_render_text.py \
@@ -119,13 +119,13 @@ jobs:
       - name: Verify expected doc IDs (3.12 only)
         if: matrix.python-version == '3.12'
         run: |
-          # Use the package CLI directly (`python -m euxis_publisher.cli.build`)
+          # Use the package CLI directly (`python -m inclusio.cli.build`)
           # instead of the `scripts/build.py` thin shim — the shim imports
-          # `euxis_publisher`, which requires the package to be installed
+          # `inclusio`, which requires the package to be installed
           # (and we don't `pip install -e .` in this workflow on purpose,
           # to keep the CI tests verifying the in-tree code, not an
           # installed copy).
-          python -m euxis_publisher.cli.build list | tee /tmp/euxis-doc-list.txt
+          python -m inclusio.cli.build list | tee /tmp/euxis-doc-list.txt
           for id in cv whisper-paper patent-paper patent-application faq user-guide-doc bio arxiv-paper preprint-paper prime-paper; do
             grep -q "${id}" /tmp/euxis-doc-list.txt || { echo "Missing expected doc id: ${id}"; exit 1; }
           done
@@ -134,33 +134,45 @@ jobs:
     name: Signed-commit gate (PR only)
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
     steps:
       - name: Checkout
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4
         with:
           fetch-depth: 0
 
-      - name: Reject unsigned commits in the PR diff
+      - name: Reject unverified commits in the PR diff
         env:
           BASE_REF: ${{ github.base_ref }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
         run: |
-          # `%G?` is one of:
-          #   G  good signature
-          #   B  bad signature
-          #   U  good signature with unknown validity
-          #   X  good signature but expired
-          #   Y  good signature with expired key
-          #   R  good signature with revoked key
-          #   E  signature can't be checked (e.g. missing key)
-          #   N  no signature
-          # We only fail on `N` — missing keys (E) are tolerated because
-          # the runner doesn't import the author's public key.
-          unsigned=$(git log --format='%H %G?' "origin/${BASE_REF}..HEAD" | grep ' N$' || true)
-          if [ -n "$unsigned" ]; then
-            echo "::error::Unsigned commits detected in this PR:"
-            echo "$unsigned"
+          # Use the GitHub commits API (`.commit.verification.verified`)
+          # — same signal the web UI's "Verified" badge surfaces.
+          # The local `git log %G?` approach needs
+          # `gpg.ssh.allowedSignersFile` populated on the runner, which
+          # we don't ship; that path returns `N` for every SSH-signed
+          # commit and produces false negatives.
+          unverified=""
+          while read -r sha; do
+            verified=$(gh api "repos/${REPO}/commits/${sha}" \
+              --jq '.commit.verification.verified // false' 2>/dev/null || echo "false")
+            if [ "$verified" != "true" ]; then
+              reason=$(gh api "repos/${REPO}/commits/${sha}" \
+                --jq '.commit.verification.reason // "unknown"' 2>/dev/null || echo "api-error")
+              unverified="${unverified}${sha} ${reason}\n"
+            fi
+          done < <(git log --format='%H' "origin/${BASE_REF}..HEAD")
+          if [ -n "$unverified" ]; then
+            echo "::error::Unverified commits detected in this PR:"
+            printf "$unverified"
             echo ""
             echo "See CONTRIBUTING.md for GPG / SSH signing setup."
+            echo "The web UI's commit-list view shows the same"
+            echo "verification status — investigate any commit not"
+            echo "showing the green 'Verified' badge."
             exit 1
           fi
-          echo "All commits in this PR are signed."
+          echo "All commits in this PR are GitHub-verified."

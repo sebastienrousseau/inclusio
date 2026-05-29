@@ -96,7 +96,7 @@ jobs:
         # To enable:
         #   1. Configure a Trusted Publisher on PyPI:
         #      https://pypi.org/manage/account/publishing/
-        #      Owner: sebastienrousseau, Repo: euxis-publisher,
+        #      Owner: sebastienrousseau, Repo: inclusio,
         #      Workflow: release.yml, Environment: pypi
         #   2. Add `pypi` to repo environments (Settings → Environments)
         #      and re-add the `environment:` block to this job.

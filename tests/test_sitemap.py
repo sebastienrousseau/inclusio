@@ -7,7 +7,7 @@ from unittest.mock import patch
 
 import pytest
 
-from euxis_publisher.cli import sitemap
+from inclusio.cli import sitemap
 
 sys.modules["sitemap"] = sitemap
 

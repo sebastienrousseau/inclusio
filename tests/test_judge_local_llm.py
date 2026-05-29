@@ -29,8 +29,8 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from euxis_publisher.judge import ats as ats_judge
-from euxis_publisher.judge import local_llm as llm_mod
+from inclusio.judge import ats as ats_judge
+from inclusio.judge import local_llm as llm_mod
 
 # ── Helpers ────────────────────────────────────────────────────────────
 

@@ -25,7 +25,7 @@ import yaml
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from euxis_publisher.cli import import_resume as imp
+from inclusio.cli import import_resume as imp
 
 CANONICAL = {
     "basics": {

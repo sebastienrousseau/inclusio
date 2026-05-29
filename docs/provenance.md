@@ -1,4 +1,4 @@
-# Provenance + signing — `euxis_publisher.provenance`
+# Provenance + signing — `inclusio.provenance`
 
 Sprint 8 closes [Forcing Function #7](strategy-2026.md) on the artefact
 side. The engine already ships **SLSA L3 build provenance** for the
@@ -11,7 +11,7 @@ wheel + sdist via `actions/attest-build-provenance` (see
 | **C2PA Content Credentials** | ✅ **shipped (S8)** | Per-PDF chain of custody: who, when, with which tools, AI disclosure. |
 | **PAdES signature (eIDAS)** | ✅ **shipped (S8.5)** | Cryptographic signature over the PDF for legal admissibility in EU jurisdictions. B-B / B-T / B-LT / B-LTA baselines via pyhanko. |
 
-## C2PA — `euxis_publisher.provenance.c2pa`
+## C2PA — `inclusio.provenance.c2pa`
 
 ### Install `c2patool`
 
@@ -33,10 +33,10 @@ tar xf c2patool.tar.gz && sudo mv c2patool /usr/local/bin/
 
 ```bash
 # Embed a C2PA manifest in a registered document
-python -m euxis_publisher.cli.build provenance --doc whisper-paper
+python -m inclusio.cli.build provenance --doc whisper-paper
 
 # Production: sign with your own cert + key
-python -m euxis_publisher.cli.build provenance \
+python -m inclusio.cli.build provenance \
     --doc whisper-paper \
     --cert /path/to/cert.pem \
     --key  /path/to/key.pem \
@@ -49,13 +49,13 @@ original PDF is preserved.
 ### Python API
 
 ```python
-from euxis_publisher.provenance.c2pa import build_manifest_json, embed_manifest
+from inclusio.provenance.c2pa import build_manifest_json, embed_manifest
 from pathlib import Path
 
 manifest = build_manifest_json(
     title="Whisper Paper",
     author="Sebastien Rousseau",
-    publisher="Euxis Publisher",
+    publisher="Inclusio",
     date_published="2026-05-28",
     ai_disclosure="Drafted by Llama 3 8B; author edited.",
 )
@@ -75,7 +75,7 @@ The minimal manifest the engine emits:
 
 ```json
 {
-  "claim_generator": "euxis-publisher/0.1.0",
+  "claim_generator": "inclusio/0.1.0",
   "title": "Whisper Paper",
   "format": "application/pdf",
   "assertions": [
@@ -86,7 +86,7 @@ The minimal manifest the engine emits:
         "@type": "CreativeWork",
         "name": "Whisper Paper",
         "author": [{"@type": "Person", "name": "Sebastien Rousseau"}],
-        "publisher": {"@type": "Organization", "name": "Euxis Publisher"},
+        "publisher": {"@type": "Organization", "name": "Inclusio"},
         "datePublished": "2026-05-28"
       }
     },
@@ -118,7 +118,7 @@ parameter — e.g. a Crossref DOI, an arXiv id, or an ORCID identifier.
 c2patool --detailed build/papers/whisper.c2pa.pdf
 
 # Or via the Python API
-from euxis_publisher.provenance.c2pa import verify_manifest
+from inclusio.provenance.c2pa import verify_manifest
 verify_manifest(Path("build/papers/whisper.c2pa.pdf"))
 # → {"active_manifest": "...", "manifests": {...}}
 ```
@@ -130,7 +130,7 @@ verify_manifest(Path("build/papers/whisper.c2pa.pdf"))
 without binary Python deps — `c2patool` is a single static binary
 that the operator can install at their own pace.
 
-## PAdES — `euxis_publisher.provenance.pades` (Sprint 8.5)
+## PAdES — `inclusio.provenance.pades` (Sprint 8.5)
 
 eIDAS-aligned PDF signature for legal admissibility in EU
 jurisdictions (Regulation EU 910/2014 + ETSI EN 319 142). Wraps
@@ -140,7 +140,7 @@ jurisdictions (Regulation EU 910/2014 + ETSI EN 319 142). Wraps
 ### Install
 
 ```bash
-pip install 'euxis-publisher[provenance]'   # adds pyhanko>=0.22
+pip install 'inclusio[provenance]'   # adds pyhanko>=0.22
 ```
 
 ### Baselines
@@ -156,7 +156,7 @@ pip install 'euxis-publisher[provenance]'   # adds pyhanko>=0.22
 
 ```python
 from pathlib import Path
-from euxis_publisher.provenance.pades import sign_pdf
+from inclusio.provenance.pades import sign_pdf
 
 result = sign_pdf(
     pdf_path=Path("build/papers/whisper.pdf"),
@@ -173,7 +173,7 @@ print(result.pdf_path, result.baseline, result.signed_with_test_cert)
 ### Verify
 
 ```python
-from euxis_publisher.provenance.pades import verify_pdf
+from inclusio.provenance.pades import verify_pdf
 status = verify_pdf(Path("build/papers/whisper.pades.pdf"))
 print(status["intact"], status["valid"], status["trusted"])
 ```

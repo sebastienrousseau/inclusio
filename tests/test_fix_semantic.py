@@ -5,7 +5,7 @@ from unittest.mock import patch
 
 import pytest
 
-from euxis_publisher.tools import fix_semantic
+from inclusio.tools import fix_semantic
 
 sys.modules["fix_semantic"] = fix_semantic
 fix_file = fix_semantic.fix_file

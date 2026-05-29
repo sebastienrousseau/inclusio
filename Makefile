@@ -1,17 +1,17 @@
 ###############################################################################
-# Root Makefile for Euxis Publisher — Thin wrapper around the packaged build CLI
+# Root Makefile for Inclusio — Thin wrapper around the packaged build CLI
 ###############################################################################
 
 .DEFAULT_GOAL := help
 
 PYTHON := $(shell command -v mise >/dev/null 2>&1 && mise which python3 2>/dev/null || echo python3)
-BUILD  := $(PYTHON) -m euxis_publisher.cli.build
+BUILD  := $(PYTHON) -m inclusio.cli.build
 
-# External content directory (set via EUXIS_CONTENT_DIR env var)
-CONTENT_DIR ?= $(EUXIS_CONTENT_DIR)
+# External content directory (set via INCLUSIO_CONTENT_DIR env var)
+CONTENT_DIR ?= $(INCLUSIO_CONTENT_DIR)
 ifneq ($(CONTENT_DIR),)
   BUILD += --content-dir $(CONTENT_DIR)
-  export EUXIS_CONTENT_DIR := $(CONTENT_DIR)
+  export INCLUSIO_CONTENT_DIR := $(CONTENT_DIR)
 endif
 
 ###############################################################################
@@ -31,16 +31,16 @@ submission: ## Build all documents in submission mode
 final: ## Build all documents in camera-ready mode (PDF/A-2b)
 	$(BUILD) build --mode camera-ready
 
-publish: ## Camera-ready build using external content dir (requires EUXIS_CONTENT_DIR)
+publish: ## Camera-ready build using external content dir (requires INCLUSIO_CONTENT_DIR)
 ifeq ($(CONTENT_DIR),)
-	@echo "ERROR: publish requires EUXIS_CONTENT_DIR or CONTENT_DIR=<path>"
+	@echo "ERROR: publish requires INCLUSIO_CONTENT_DIR or CONTENT_DIR=<path>"
 	@exit 1
 endif
 	$(BUILD) build --mode camera-ready
 
 publish-jobs: ## Camera-ready build for tailored/job documents only
 ifeq ($(CONTENT_DIR),)
-	@echo "ERROR: publish-jobs requires EUXIS_CONTENT_DIR or CONTENT_DIR=<path>"
+	@echo "ERROR: publish-jobs requires INCLUSIO_CONTENT_DIR or CONTENT_DIR=<path>"
 	@exit 1
 endif
 	$(BUILD) build --mode camera-ready --jobs-only
@@ -52,7 +52,7 @@ lint: ## Run quality checks (semantic, chktex, vale)
 	$(BUILD) lint
 
 fix: ## Auto-fix semantic violations in src/
-	$(PYTHON) -m euxis_publisher.tools.fix_semantic src/
+	$(PYTHON) -m inclusio.tools.fix_semantic src/
 
 render: ## Render Jinja2 templates to LaTeX
 	$(BUILD) render
@@ -84,10 +84,10 @@ emit-jats: ## Emit JATS XML only
 	$(BUILD) emit --formats jats
 
 audit: ## Run EAA / accessibility audit (veraPDF UA-2 + WTPDF + PDF/A-4f) on build/
-	$(PYTHON) -m euxis_publisher.cli.audit
+	$(PYTHON) -m inclusio.cli.audit
 
 audit-strict: ## Audit in CI-strict mode (non-zero exit on blocking FAIL/ERROR)
-	$(PYTHON) -m euxis_publisher.cli.audit --strict
+	$(PYTHON) -m inclusio.cli.audit --strict
 
 docs: ## Build Sphinx documentation (HTML)
 	@$(PYTHON) -c "import importlib.util,sys;mods=['sphinx','myst_parser','furo'];missing=[m for m in mods if importlib.util.find_spec(m) is None];print('Missing docs deps: ' + ', '.join(missing) + '. Install with: ' + '$(PYTHON) -m pip install --user sphinx myst-parser furo') if missing else None;sys.exit(1 if missing else 0)"
@@ -109,13 +109,13 @@ test: ## Run public engine tests
 	$(PYTHON) -m pytest -q tests/test_assets.py tests/test_build.py tests/test_engine_smoke.py tests/test_macro_contract.py
 
 coverage: ## Measure Python logic coverage (>=97% required)
-	COVERAGE_FILE=/tmp/euxis-publisher.coverage $(PYTHON) -m pytest --cov=euxis_publisher --cov-report=term-missing --cov-fail-under=97 tests/ --ignore=tests/test_pdf_validation.py
+	COVERAGE_FILE=/tmp/inclusio.coverage $(PYTHON) -m pytest --cov=inclusio --cov-report=term-missing --cov-fail-under=97 tests/ --ignore=tests/test_pdf_validation.py
 
 benchmark: ## Run hot-path micro-benchmarks (pytest-benchmark)
 	$(PYTHON) -m pytest tests/test_benchmark_hot_paths.py --benchmark-only --benchmark-min-rounds=10 --benchmark-columns=min,mean,median,stddev,ops,rounds
 
 docstrings: ## Verify 100% docstring coverage (interrogate)
-	$(PYTHON) -m interrogate --fail-under=100 -v euxis_publisher/
+	$(PYTHON) -m interrogate --fail-under=100 -v inclusio/
 
 validate: ## Run full local validation (tests, coverage, docstrings, docs)
 	$(MAKE) test PYTHON=$(PYTHON)
@@ -124,8 +124,8 @@ validate: ## Run full local validation (tests, coverage, docstrings, docs)
 	$(MAKE) docs PYTHON=$(PYTHON)
 
 validate-private: ## Reminder: run content + British-English validation in private repo
-	@echo "Run private validations in ../euxis-publisher-private"
-	@echo "Example: python3 -m euxis_publisher.cli.tailor data/jobs/brief.txt --type cv --id be-check --no-ai"
+	@echo "Run private validations in ../inclusio-private"
+	@echo "Example: python3 -m inclusio.cli.tailor data/jobs/brief.txt --type cv --id be-check --no-ai"
 
 list: ## List all registered documents
 	$(BUILD) list

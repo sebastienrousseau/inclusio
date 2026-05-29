@@ -1,14 +1,14 @@
 # Public Private Boundary
 
-## Public (`euxis-publisher`)
+## Public (`inclusio`)
 
 - Engine code (`core/`, `scripts/`)
-- Packaged Python logic (`euxis_publisher/`)
+- Packaged Python logic (`inclusio/`)
 - Public tests and CI configuration
 - Generic non-sensitive fixtures used only for engine validation
 - Public documentation
 
-## Private (`euxis-publisher-private`)
+## Private (`inclusio-private`)
 
 - Real document sources (`src/`)
 - Real metadata and content datasets (`data/`)

@@ -14,7 +14,7 @@ PDFs. These tests document the shadow's contract:
 
 from __future__ import annotations
 
-from euxis_publisher.cli import render
+from inclusio.cli import render
 
 
 def _make_cv_data() -> dict:

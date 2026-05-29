@@ -6,7 +6,7 @@ Please report suspected vulnerabilities privately, not via a public
 issue or pull request.
 
 - **Email:** contact@sebastienrousseau.com
-- **Subject prefix:** `[SECURITY] euxis-publisher`
+- **Subject prefix:** `[SECURITY] inclusio`
 - **Include:** affected file or path, reproduction steps, and the
   impact you observed. A minimal proof-of-concept is welcome.
 
@@ -17,15 +17,15 @@ elapsed without response.
 ## Scope
 
 This repository ships the **public publishing engine**: a Python
-CLI (`euxis-publisher`), LaTeX document classes and style packages
+CLI (`inclusio`), LaTeX document classes and style packages
 under `core/`, and a Jinja2 rendering layer. In-scope concerns:
 
-- **Template injection** in the Jinja2 renderer (`euxis_publisher.cli.render`).
-- **Path traversal** in the build orchestrator (`euxis_publisher.cli.build`)
-  or the audit CLI (`euxis_publisher.cli.audit`) — particularly via
-  the `EUXIS_CONTENT_DIR` env var or `--content-dir` flag.
+- **Template injection** in the Jinja2 renderer (`inclusio.cli.render`).
+- **Path traversal** in the build orchestrator (`inclusio.cli.build`)
+  or the audit CLI (`inclusio.cli.audit`) — particularly via
+  the `INCLUSIO_CONTENT_DIR` env var or `--content-dir` flag.
 - **Command injection** in the tailor CLI's subprocess paths
-  (`euxis_publisher.cli.tailor`) or the asset pipeline shell helpers.
+  (`inclusio.cli.tailor`) or the asset pipeline shell helpers.
 - **Arbitrary code execution** through unsafe YAML loading or
   unchecked LaTeX `\write18` shell-escape.
 - **Supply-chain risks** introduced by `pyproject.toml` dependencies
@@ -53,7 +53,7 @@ unsigned commits block the merge. Signing setup is documented in
 
 The engine itself ships no credentials. The companion private
 content repository
-([`euxis-publisher-private`](https://github.com/sebastienrousseau/euxis-publisher-private),
+([`inclusio-private`](https://github.com/sebastienrousseau/inclusio-private),
 not public) holds author PII, draft patents, and tailored CV data.
 Reports concerning leakage from the private repo should also be
 filed via the channel above.
