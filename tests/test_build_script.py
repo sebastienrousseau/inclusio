@@ -961,17 +961,20 @@ class TestCmdRender:
 
 
 class TestCmdFix:
+    """In v0.0.3 `cmd_fix` invokes `python -m inclusio.tools.fix_semantic`
+    instead of shelling out to the (deleted) `scripts/fix-semantic.py`
+    file."""
+
     @patch("build.subprocess.run")
-    def test_fix_delegates_to_script(self, mock_run):
+    def test_fix_delegates_to_module(self, mock_run):
         mock_run.return_value = MagicMock(returncode=0)
         meta = build.load_meta()
         args = Namespace(dry_run=False, verbose=False)
         with pytest.raises(SystemExit) as exc:
             build.cmd_fix(args, meta)
         assert exc.value.code == 0
-        # Verify fix-semantic.py was called
         cmd = mock_run.call_args[0][0]
-        assert "fix-semantic.py" in cmd[1]
+        assert cmd[1:3] == ["-m", "inclusio.tools.fix_semantic"]
 
     @patch("build.subprocess.run")
     def test_fix_dry_run(self, mock_run):
@@ -1005,8 +1008,12 @@ class TestCmdFix:
 
 
 class TestCmdSitemap:
+    """In v0.0.3 `cmd_sitemap` invokes `python -m inclusio.cli.sitemap`
+    instead of shelling out to the (deleted) `scripts/sitemap.py`
+    file. The tests below pin the new invocation surface."""
+
     @patch("build.subprocess.run")
-    def test_sitemap_delegates_to_script(self, mock_run):
+    def test_sitemap_delegates_to_module(self, mock_run):
         mock_run.return_value = MagicMock(returncode=0)
         meta = build.load_meta()
         args = Namespace(pretty=False, stdout=False)
@@ -1014,7 +1021,7 @@ class TestCmdSitemap:
             build.cmd_sitemap(args, meta)
         assert exc.value.code == 0
         cmd = mock_run.call_args[0][0]
-        assert "sitemap.py" in cmd[1]
+        assert cmd[1:3] == ["-m", "inclusio.cli.sitemap"]
 
     @patch("build.subprocess.run")
     def test_sitemap_pretty(self, mock_run):
@@ -1035,13 +1042,6 @@ class TestCmdSitemap:
             build.cmd_sitemap(args, meta)
         cmd = mock_run.call_args[0][0]
         assert "--stdout" in cmd
-
-    def test_sitemap_missing_script_exits(self, monkeypatch):
-        monkeypatch.setattr(build, "PROJECT_ROOT", Path("/nonexistent"))
-        meta = {}
-        args = Namespace(pretty=False, stdout=False)
-        with pytest.raises(SystemExit):
-            build.cmd_sitemap(args, meta)
 
 
 # ── cmd_blog ─────────────────────────────────────────────────────────
