@@ -55,7 +55,7 @@ def _tex_for(cls, opts):
         }}
         \documentclass{opts_block}{{{cls}}}
         \title{{Per-class smoke for {cls}}}
-        \author{{Euxis Publisher}}
+        \author{{Inclusio}}
         \begin{{document}}
         \maketitle
         \section{{First heading}}

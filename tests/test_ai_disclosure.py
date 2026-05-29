@@ -15,7 +15,7 @@ Description panel renders it without a custom namespace.
 
 from __future__ import annotations
 
-from euxis_publisher.cli import build
+from inclusio.cli import build
 
 
 def _xmp_kwargs(**overrides):

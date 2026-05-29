@@ -1,5 +1,5 @@
 {
-  description = "Euxis Publisher — Public document publishing engine";
+  description = "Inclusio — Public document publishing engine";
 
   inputs = {
     # Bumped from nixos-24.05 (May-2024) on 2026-05-27.
@@ -43,7 +43,7 @@
           ];
 
           shellHook = ''
-            echo "Euxis Publisher dev shell ready."
+            echo "Inclusio dev shell ready."
             if kpsewhich tagpdf.sty >/dev/null 2>&1; then
               echo "  tagpdf: available"
             else

@@ -8,7 +8,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 import yaml
 
-from euxis_publisher.cli import tailor
+from inclusio.cli import tailor
 
 sys.modules["tailor"] = tailor
 
@@ -1380,7 +1380,7 @@ class TestTailorMain:
 
         import builtins
 
-        from euxis_publisher.cli import render as package_render
+        from inclusio.cli import render as package_render
         real_import = builtins.__import__
 
         def mock_import(name, *args, **kwargs):
@@ -1410,7 +1410,7 @@ class TestTailorMain:
 
         import builtins
 
-        from euxis_publisher.cli import build as package_build
+        from inclusio.cli import build as package_build
         real_import = builtins.__import__
 
         def mock_import(name, *args, **kwargs):

@@ -45,8 +45,8 @@ MCP-native (P2, 18-24 months).
 |---|---|---|---|
 | 1 | EAA enforcement live | EN 301 549 / WCAG 2.2 AA mandatory for in-scope products to EU consumers since 28 Jun 2025 | `core/sty/pub-metadata.sty`, `core/cls/pub-base.cls`, all `pub-*.cls` |
 | 2 | PDF/A-2u to PDF/A-4 + PDF/UA-2 + WTPDF | ISO 14289-2:2024 published; PDF/A-2u is "Unicode-mapped" but not tagged; WTPDF 1.0 baseline expected of new producers | `pub-metadata.sty` (pdfx call), `meta.yaml` `pdf_a` schema |
-| 3 | Single-source multi-format | Quarto/MyST/Jupyter Book 2 ship PDF+HTML+JATS+DOCX from one source; tier-1 publishers accept the Quarto manuscript bundle directly | `euxis_publisher/cli/build.py`, `templates/paper.tex.j2`, no JATS/HTML emitter exists |
-| 4 | AI authoring layer | Cursor/Claude Code are where 2026 authors live; MCP is the brokered-access protocol per NISO Plus 2026 | No `euxis-mcp` server, no Claude skill, no Cursor rules |
+| 3 | Single-source multi-format | Quarto/MyST/Jupyter Book 2 ship PDF+HTML+JATS+DOCX from one source; tier-1 publishers accept the Quarto manuscript bundle directly | `inclusio/cli/build.py`, `templates/paper.tex.j2`, no JATS/HTML emitter exists |
+| 4 | AI authoring layer | Cursor/Claude Code are where 2026 authors live; MCP is the brokered-access protocol per NISO Plus 2026 | No `inclusio-mcp` server, no Claude skill, no Cursor rules |
 | 5 | LLM judges in the build | ScholarCopilot/FACTUM-class citation grounding now SOTA; ATS-scoring for CVs is one-click in JobSprout/Rezi | `chktex`+`vale` are the only quality gates; no LLM judge stage |
 | 6 | STM AI-disclosure metadata | STM Sept 2025 classification; portal enforcement expected 2026-2027 | `meta.yaml` schema has no `ai_disclosure:` block |
 | 7 | PAdES / C2PA / SLSA provenance | eIDAS-aligned PDF signing; C2PA Content Credentials on documents; Sigstore-signed wheels expected in OSS supply chain | `stamp_pdfs.py` does git-hash stamping only |
@@ -86,7 +86,7 @@ Any one of these going unaddressed in 2026 deletes a different audience.
 | PAdES signing | Missing | `stamp_pdfs.py` does pikepdf metadata only |
 | C2PA Content Credentials | Missing | No manifest emission |
 | SLSA L2 + Sigstore + in-toto attestation | Missing | No release attestation in CI |
-| MCP server | Missing | No `euxis-mcp` |
+| MCP server | Missing | No `inclusio-mcp` |
 | Claude Code / Cursor skill | Missing | Not published |
 | Real-time collaboration / web editor | Missing | Local-first only |
 | LSP for YAML/Jinja2 schemas | Missing | No `euxis-lsp` |
@@ -157,7 +157,7 @@ patents is the worst outcome.
 |---|---|---|
 | P1.1 | **ROR + ORCID + CRediT** in YAML to XMP + JATS | `meta.schema.yaml`, `pub-metadata.sty`, JATS emitter |
 | P1.2 | **Schema.org `ScholarlyArticle` JSON-LD** | HTML template |
-| P1.3 | **`euxis-mcp` MCP server** | new `cli/mcp.py` |
+| P1.3 | **`inclusio-mcp` MCP server** | new `cli/mcp.py` |
 | P1.4 | **Claude Code skill + Cursor rules pack** | new `skills/euxis-publishing/` |
 | P1.5 | **LLM-judge `validate` stage** | new `tools/llm_judge.py` |
 | P1.6 | **Citation hallucination detector** | new `test_citations.py` |
@@ -225,7 +225,7 @@ new-author market starting ~2028.
    veraPDF in CI. Kills EAA exposure even partially.
 2. **`ai_disclosure:` block in `data/meta.schema.yaml`** mapped to STM
    Sept-2025 categories. Cheap; future-proofs schema.
-3. **`euxis-mcp` server skeleton** exposing `list`, `build`, `validate`
+3. **`inclusio-mcp` server skeleton** exposing `list`, `build`, `validate`
    as MCP tools. Cheapest possible distribution channel today.
 
 Three days of work. Addresses Forcing Functions #1, #6, and #4

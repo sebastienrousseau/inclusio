@@ -1,4 +1,4 @@
-# Euxis Publisher Documentation
+# Inclusio Documentation
 
 ```{toctree}
 :maxdepth: 2

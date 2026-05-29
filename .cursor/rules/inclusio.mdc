@@ -1,0 +1,72 @@
+---
+description: Build, render, lint, and audit LaTeX-first documents through the Inclusio engine
+globs: ["**/*.tex", "**/*.cls", "**/*.sty", "**/meta.yaml", "**/*-data.yaml"]
+alwaysApply: false
+---
+
+# Inclusio — Cursor rule
+
+This repository (or a sibling content repo) is built by the
+[Inclusio](https://github.com/sebastienrousseau/inclusio)
+engine. When editing `.tex`, `.cls`, `.sty`, or `data/meta.yaml`, prefer
+the engine's CLI over hand-running `latexmk`.
+
+## Core commands
+
+```bash
+python -m inclusio.cli.build list                          # enumerate
+python -m inclusio.cli.build build --mode camera-ready     # build all
+python -m inclusio.cli.audit --strict                      # EAA gate
+python -m inclusio.cli.render --doc cv --format text       # ATS .txt
+```
+
+`make publish CONTENT_DIR=/path/to/content/repo` for split-repo layouts.
+
+## Tagged PDF preamble (MANDATORY for camera-ready)
+
+```latex
+\DocumentMetadata{
+  pdfversion   = 2.0,
+  pdfstandard  = ua-2,
+  pdfstandard  = a-4f,
+  lang         = en-GB,
+  testphase    = {phase-III, table, math, sec-latex},
+}
+\documentclass[final,tagged]{pub-<class>}
+```
+
+`\DocumentMetadata` MUST precede `\documentclass`. Omitting `[tagged]`
+defaults to untagged (which fails the EAA gate). Use `[final-untagged]`
+as an explicit opt-out — never just remove `[tagged]`.
+
+## Avoid these untagged-content traps (veraPDF rule §8.2.2)
+
+- `\maketitle` on pub-paper/arxiv/preprint emits untagged rules → omit
+  or use class-specific title macros.
+- `\titleformat[\titlerule]` on pub-cv/pub-faq → use class semantic
+  macros, not raw `\section{...}`.
+- `\linenumbers` on pub-preprint → call `\nolinenumbers` for tagged.
+
+## Forbidden commands inside the document body
+
+`chktex` + the semantic-check script reject:
+`\textbf`, `\textit`, `\vspace`, `\hspace`, `\fontsize`, `\color{`,
+`\centering` (except inside `figure` / `table` / `minipage` floats).
+
+Use `\emph`, the class's spacing controls, and the `cv-section`-family
+macros instead.
+
+## MCP server
+
+`pip install 'inclusio[mcp]'` then `inclusio-mcp` exposes the engine
+as an MCP server with tools `list_docs`, `audit_pdf`, `render`,
+`doc_count` and resources `inclusio://meta`, `inclusio://audit/latest`,
+`inclusio://version`. Use it when the agent needs structured access to the
+manifest or audit reports rather than shelling out.
+
+## Reference
+
+- `docs/audit-2026-05.md` — current 2026-H2 plan
+- `docs/tagged-pdf.md` — PDF/UA-2 authoring guide
+- `docs/classes-and-styles.md` — `pub-*` class reference
+- `docs/strategy-2026.md` — the eight forcing functions

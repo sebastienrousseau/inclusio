@@ -1,6 +1,6 @@
 # Macro Reference
 
-Canonical macro contract for `euxis-publisher` class files.
+Canonical macro contract for `inclusio` class files.
 
 ## Academic and Research
 

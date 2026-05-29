@@ -148,7 +148,7 @@ def cv_render_data() -> dict:
 
 def test_bench_score_cv(benchmark, cv_text):
     """ATS heuristic scoring — runs on every `make judge` call."""
-    from euxis_publisher.judge import ats
+    from inclusio.judge import ats
 
     result = benchmark(ats.score_cv, cv_text)
     assert result.score >= 0
@@ -156,7 +156,7 @@ def test_bench_score_cv(benchmark, cv_text):
 
 def test_bench_score_citations(benchmark, tex_with_citations):
     """Citation grounding — runs on every `make judge JUDGE=citations`."""
-    from euxis_publisher.judge import citations
+    from inclusio.judge import citations
 
     result = benchmark(citations.score_citations, tex_with_citations)
     assert result.score >= 0
@@ -164,7 +164,7 @@ def test_bench_score_citations(benchmark, tex_with_citations):
 
 def test_bench_extract_keywords(benchmark, cv_text):
     """Hot loop inside `score_jd_fit` — runs once per judge invocation."""
-    from euxis_publisher.judge import jd_fit
+    from inclusio.judge import jd_fit
 
     out = benchmark(jd_fit.extract_keywords, cv_text)
     assert isinstance(out, set)
@@ -173,7 +173,7 @@ def test_bench_extract_keywords(benchmark, cv_text):
 
 def test_bench_jaccard(benchmark):
     """Set similarity — called once per `score_jd_fit`. Tiny but ubiquitous."""
-    from euxis_publisher.judge import jd_fit
+    from inclusio.judge import jd_fit
 
     a = {f"term{i}" for i in range(200)}
     b = {f"term{i}" for i in range(100, 300)}
@@ -183,7 +183,7 @@ def test_bench_jaccard(benchmark):
 
 def test_bench_parse_citations(benchmark, tex_with_citations):
     """\\cite extraction — runs first in every citations judge pass."""
-    from euxis_publisher.judge import citations
+    from inclusio.judge import citations
 
     out = benchmark(citations.parse_citations, tex_with_citations)
     assert len(out) >= 12
@@ -191,7 +191,7 @@ def test_bench_parse_citations(benchmark, tex_with_citations):
 
 def test_bench_parse_bibitems(benchmark, tex_with_citations):
     """\\bibitem extraction — paired with parse_citations on every audit."""
-    from euxis_publisher.judge import citations
+    from inclusio.judge import citations
 
     out = benchmark(citations.parse_bibitems, tex_with_citations)
     assert len(out) >= 8
@@ -199,7 +199,7 @@ def test_bench_parse_bibitems(benchmark, tex_with_citations):
 
 def test_bench_score_jd_fit(benchmark, jd_text, cv_text):
     """End-to-end JD↔CV fit scoring. Dominant judge cost when present."""
-    from euxis_publisher.judge import jd_fit
+    from inclusio.judge import jd_fit
 
     result = benchmark(jd_fit.score_jd_fit, jd_text, cv_text)
     assert result.score >= 0
@@ -207,7 +207,7 @@ def test_bench_score_jd_fit(benchmark, jd_text, cv_text):
 
 def test_bench_render_text(benchmark, cv_render_data):
     """Plain-text render path — drives ATS-shadow generation on every build."""
-    from euxis_publisher.cli import render
+    from inclusio.cli import render
 
     out = benchmark(render.render_text, cv_render_data, "cv")
     assert isinstance(out, str)
@@ -216,7 +216,7 @@ def test_bench_render_text(benchmark, cv_render_data):
 
 def test_bench_build_manifest_json(benchmark, tmp_path):
     """C2PA manifest assembly — runs once per camera-ready PDF."""
-    from euxis_publisher.provenance import c2pa
+    from inclusio.provenance import c2pa
 
     out = benchmark(
         c2pa.build_manifest_json,

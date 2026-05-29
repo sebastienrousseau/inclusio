@@ -1,35 +1,35 @@
-# MCP server — `euxis-mcp`
+# MCP server — `inclusio-mcp`
 
 Sprint 6 (S6.4) ships an MCP (Model Context Protocol) server that
-exposes the Euxis Publisher engine's read + audit surface to AI
+exposes the Inclusio engine's read + audit surface to AI
 clients (Claude Code, Cursor, the MCP Inspector). Forcing Function #4
 in [`strategy-2026.md`](strategy-2026.md): the AI authoring layer.
 
 ## Install
 
 ```bash
-pip install 'euxis-publisher[mcp]'
+pip install 'inclusio[mcp]'
 ```
 
 The `mcp` extra pulls in `mcp[cli]>=1.27.0` (the official Python SDK
-with FastMCP + inspector). Without the extra, `euxis-mcp` prints a
+with FastMCP + inspector). Without the extra, `inclusio-mcp` prints a
 clear install hint and exits 1.
 
 ## Run
 
 ```bash
 # stdio transport (Claude Code default)
-euxis-mcp
+inclusio-mcp
 
 # Streamable HTTP transport
-euxis-mcp --http                       # 127.0.0.1:8000
-euxis-mcp --http --port 9090
+inclusio-mcp --http                       # 127.0.0.1:8000
+inclusio-mcp --http --port 9090
 
 # Or directly through Python
-python -m euxis_publisher.mcp.server
+python -m inclusio.mcp.server
 ```
 
-The server honours `EUXIS_CONTENT_DIR` like every other engine CLI.
+The server honours `INCLUSIO_CONTENT_DIR` like every other engine CLI.
 
 ## Tools
 
@@ -44,13 +44,13 @@ The server honours `EUXIS_CONTENT_DIR` like every other engine CLI.
 
 | URI | MIME | Contents |
 |---|---|---|
-| `euxis://meta` | `text/yaml` | Raw `data/meta.yaml`. Empty string when absent. |
-| `euxis://audit/latest` | `application/json` | `build/.audit/latest.json`. Empty JSON object when no audit has run. |
-| `euxis://version` | `application/json` | Engine version + MCP Server Card (`name`, `version`, `mcp_spec`, `content_root`, `homepage`). |
+| `inclusio://meta` | `text/yaml` | Raw `data/meta.yaml`. Empty string when absent. |
+| `inclusio://audit/latest` | `application/json` | `build/.audit/latest.json`. Empty JSON object when no audit has run. |
+| `inclusio://version` | `application/json` | Engine version + MCP Server Card (`name`, `version`, `mcp_spec`, `content_root`, `homepage`). |
 
 ## Claude Code integration
 
-The repo ships a Claude skill at `.claude/skills/euxis-publisher/SKILL.md`
+The repo ships a Claude skill at `.claude/skills/inclusio/SKILL.md`
 that documents the engine's CLI surface. The MCP server complements the
 skill: the skill tells Claude what's possible; the server provides
 typed structured access.
@@ -61,10 +61,10 @@ To register the server with Claude Code:
 # Add to ~/.config/claude-code/mcp.json (or platform equivalent)
 {
   "mcpServers": {
-    "euxis-publisher": {
-      "command": "euxis-mcp",
+    "inclusio": {
+      "command": "inclusio-mcp",
       "env": {
-        "EUXIS_CONTENT_DIR": "/path/to/content/repo"
+        "INCLUSIO_CONTENT_DIR": "/path/to/content/repo"
       }
     }
   }
@@ -73,7 +73,7 @@ To register the server with Claude Code:
 
 ## Cursor integration
 
-`.cursor/rules/euxis-publisher.mdc` ships in this repo and auto-loads
+`.cursor/rules/inclusio.mdc` ships in this repo and auto-loads
 when `.tex`, `.cls`, `.sty`, `meta.yaml`, or `*-data.yaml` files are
 open. The rule points Cursor at the MCP tools above for structured
 queries.
@@ -85,7 +85,7 @@ queries.
   + chktex + vale), LLM judge bridge (citation grounding, ATS
   scoring).
 - **Sprint 8**: provenance — sign tool outputs with SLSA + C2PA
-  manifests; expose `euxis://provenance/{doc_id}` resource.
+  manifests; expose `inclusio://provenance/{doc_id}` resource.
 
 See [`audit-2026-05.md`](audit-2026-05.md) §5 for the full Sprint 6+
 plan.

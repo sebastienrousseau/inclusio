@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# bin/setup — Bootstrap script for Euxis Publisher development.
+# bin/setup — Bootstrap script for Inclusio development.
 #
 # Checks for required tools and surfaces install hints. Intentionally
 # non-mutating: this script does NOT install anything. It is safe to
@@ -37,7 +37,7 @@ check_optional() {
   fi
 }
 
-echo "Euxis Publisher — bootstrap check"
+echo "Inclusio — bootstrap check"
 echo
 
 echo "Required:"

@@ -2,12 +2,12 @@
 
 ## Public Package Surfaces
 
-- `euxis_publisher/cli/`
+- `inclusio/cli/`
   - `build.py`: primary orchestration entrypoint
   - `render.py`: rendering engine entrypoint
   - `sitemap.py`: search/index metadata entrypoint
   - `tailor.py`: tailoring entrypoint
-- `euxis_publisher/tools/`
+- `inclusio/tools/`
   - `fix_semantic.py`: semantic fixer
   - `stamp_pdfs.py`: PDF stamping and watermarking
 
@@ -16,9 +16,9 @@
 - `bin/README.md`
 - `core/README.md`
 - `data/README.md`
-- `euxis_publisher/README.md`
-- `euxis_publisher/cli/README.md`
-- `euxis_publisher/tools/README.md`
+- `inclusio/README.md`
+- `inclusio/cli/README.md`
+- `inclusio/tools/README.md`
 - `scripts/README.md`
 - `src/README.md`
 - `templates/README.md`

@@ -17,7 +17,7 @@ def test_pub_base_smoke_compile(project_root, tmp_path):
     tex.write_text(
         r"""\documentclass{pub-base}
 \title{Smoke}
-\author{Euxis Publisher}
+\author{Inclusio}
 \date{\today}
 \begin{document}
 \maketitle

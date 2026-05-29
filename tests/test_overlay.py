@@ -1,7 +1,7 @@
 # Copyright (c) 2026 Sebastien Rousseau
 # Licensed under the MIT License
 # See LICENSE file for details
-"""Unit tests for `euxis_publisher.tools.overlay`.
+"""Unit tests for `inclusio.tools.overlay`.
 
 Covers the four documented merge rules and the `resolve()` helper:
 
@@ -17,7 +17,7 @@ import copy
 
 import pytest
 
-from euxis_publisher.tools.overlay import merge, resolve
+from inclusio.tools.overlay import merge, resolve
 
 # ── merge: dicts ────────────────────────────────────────────────────────
 

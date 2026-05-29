@@ -1,7 +1,7 @@
 # Copyright (c) 2026 Sebastien Rousseau
 # Licensed under the MIT License
 # See LICENSE file for details
-"""Sprint 7 CLI wiring: tests for `python -m euxis_publisher.cli.build judge`.
+"""Sprint 7 CLI wiring: tests for `python -m inclusio.cli.build judge`.
 
 Covers both `--judge ats` (uses render --format text path) and
 `--judge citations` (reads .tex source directly), plus the shared
@@ -20,8 +20,8 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from euxis_publisher.cli import build as build_mod
-from euxis_publisher.judge import local_llm as llm_mod
+from inclusio.cli import build as build_mod
+from inclusio.judge import local_llm as llm_mod
 
 
 @pytest.fixture
@@ -186,7 +186,7 @@ def test_judge_strict_exits_one_on_low_grade(content_root, monkeypatch):
         rendered.mkdir(parents=True, exist_ok=True)
         (rendered / "cv.txt").write_text("nothing useful at all")  # → grade F
 
-    from euxis_publisher.cli import render as render_module
+    from inclusio.cli import render as render_module
 
     monkeypatch.setattr(render_module, "render_document", fake_render)
     with pytest.raises(SystemExit) as excinfo:

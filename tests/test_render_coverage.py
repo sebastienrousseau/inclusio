@@ -1,7 +1,7 @@
 # Copyright (c) 2026 Sebastien Rousseau
 # Licensed under the MIT License
 # See LICENSE file for details
-"""Coverage-completion tests for `euxis_publisher.cli.render`.
+"""Coverage-completion tests for `inclusio.cli.render`.
 
 The Sprint 4 audit pushed render.py to 74% (drop from ~96%) because
 the new `render_text` + `_render_cv_text` + `_render_generic_text`
@@ -14,7 +14,7 @@ This file fills both gaps in one go. Goal: render.py back above 95%.
 
 from __future__ import annotations
 
-from euxis_publisher.cli import render
+from inclusio.cli import render
 
 
 def _maximal_cv() -> dict:

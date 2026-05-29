@@ -1,6 +1,6 @@
 # Architecture
 
-`euxis-publisher` is the public engine layer of the Euxis publishing stack.
+`inclusio` is the public engine layer of the Euxis publishing stack.
 
 ## Goals
 

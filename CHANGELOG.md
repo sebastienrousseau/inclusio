@@ -1,8 +1,64 @@
 # Changelog
 
-All notable changes to **Euxis Publisher** are documented here.
-Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
-and [Conventional Commits](https://www.conventionalcommits.org/).
+All notable changes to **Inclusio** (previously *Euxis Publisher*)
+are documented here. Format based on
+[Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and
+[Conventional Commits](https://www.conventionalcommits.org/).
+
+## [0.2.0] — 2026-05-28
+
+### Renamed — euxis-publisher → inclusio
+
+The project has been renamed from `euxis-publisher` to **inclusio**.
+The new name comes from Latin *inclusio* (an enclosure / a literary
+framing device) and aligns the package with its accessibility-first
+mission. Tagline: **"Publishing that includes everyone."**
+
+#### What changed
+
+| Surface | Before | After |
+|---|---|---|
+| PyPI package | `euxis-publisher` | `inclusio` |
+| Python import | `from euxis_publisher.…` | `from inclusio.…` |
+| CLI entry point | `euxis-publisher` | `inclusio` |
+| MCP CLI | `euxis-mcp` | `inclusio-mcp` |
+| Content-dir env var | `EUXIS_CONTENT_DIR` | `INCLUSIO_CONTENT_DIR` |
+| Tailor engine env var | `EUXIS_TAILOR_ENGINE` | `INCLUSIO_TAILOR_ENGINE` |
+| MCP URI scheme | `euxis://meta` | `inclusio://meta` |
+| GitHub repo | `sebastienrousseau/euxis-publisher` | `sebastienrousseau/inclusio` |
+
+#### Compatibility window
+
+- `EUXIS_CONTENT_DIR` is still honoured for one minor cycle
+  (until **v0.3**) and emits a `DeprecationWarning`. Content
+  repositories should switch to `INCLUSIO_CONTENT_DIR` at their
+  earliest convenience.
+- All other surfaces have NO compatibility shim — they're a clean
+  break. v0.1.0 was tagged but never published to PyPI, so there
+  are no installed copies of the old name to migrate.
+
+#### Migration
+
+```bash
+# Drop the old package; install the new one.
+pip uninstall euxis-publisher
+pip install inclusio
+
+# Code changes (sed-replaceable in one pass):
+sed -i 's/euxis_publisher/inclusio/g'   your/file.py
+sed -i 's/euxis-publisher/inclusio/g'   your/file.md
+sed -i 's/euxis-mcp/inclusio-mcp/g'     your/file.toml
+sed -i 's|euxis://|inclusio://|g'       your/mcp/config.json
+```
+
+#### Historical context
+
+Past CHANGELOG entries, the strategy doc (`docs/strategy-2026.md`),
+the audit synthesis (`docs/audit-2026-05.md`), and the
+implementation plan (`docs/implementation-plan-2026.md`) are
+left unchanged — those are time-locked records of when the
+project was called *Euxis Publisher*. The technical content
+they describe is unchanged.
 
 ## [0.1.0] — 2026-05-28
 
@@ -88,7 +144,7 @@ without any private content.
 ### Added
 
 - **Sprint 5 (#6) — JSON Resume importer (2026-05-28)**:
-  - `euxis_publisher/cli/import_resume.py` — converts a JSON Resume
+  - `inclusio/cli/import_resume.py` — converts a JSON Resume
     document (jsonresume.org v1 schema) into the Euxis CV YAML
     schema that `templates/cv.tex.j2` consumes.
   - Maps every standard JSON Resume block: `basics` → name/role/
@@ -101,7 +157,7 @@ without any private content.
     so the ATS judge (S7.3) reads them cleanly.
   - Long summaries (>200 chars) promoted to `executive_profile`;
     short ones land in `summary`.
-  - CLI: `python -m euxis_publisher.cli.build import-resume
+  - CLI: `python -m inclusio.cli.build import-resume
     <resume.json> [-o cv-data.yaml]`. Stdout default; `-` accepted.
   - 38 tests in `tests/test_import_resume.py` covering every
     mapping helper, end-to-end conversion, CLI dispatch, error
@@ -110,7 +166,7 @@ without any private content.
   Closes #6.
 
 - **Sprint 8.5 (#11) — PAdES eIDAS signature (closes F7 fully) (2026-05-28)**:
-  - `euxis_publisher/provenance/pades.py` — pyhanko-based PAdES
+  - `inclusio/provenance/pades.py` — pyhanko-based PAdES
     signer supporting all four ETSI EN 319 142 baselines: B-B
     (signer cert), B-T (default, adds RFC 3161 timestamp), B-LT
     (adds revocation data), B-LTA (long-term archival).
@@ -136,7 +192,7 @@ without any private content.
   forcing functions either closed or deferred-by-decision.
 
 - **Sprint 8 — C2PA Content Credentials (F7) (2026-05-28)**:
-  - `euxis_publisher/provenance/c2pa.py` — subprocess wrapper over
+  - `inclusio/provenance/c2pa.py` — subprocess wrapper over
     the `c2patool` reference implementation. Builds a minimal C2PA
     manifest (schema.org CreativeWork + c2pa.actions + optional
     c2pa.training-mining for AI disclosure) and embeds it into a
@@ -154,7 +210,7 @@ without any private content.
     `--strict`).
   - `verify_manifest(pdf_path)` parses an embedded manifest;
     returns an empty dict for unsigned PDFs.
-  - CLI: `python -m euxis_publisher.cli.build provenance --doc X
+  - CLI: `python -m inclusio.cli.build provenance --doc X
     [--cert C] [--key K] [--strict]`.
   - 22 tests in `tests/test_provenance_c2pa.py` covering the
     binary-missing path, manifest builder (claim generator,
@@ -174,7 +230,7 @@ without any private content.
   already shipped in S4.
 
 - **Sprint 7 (S7.5) — cloud LLM adapter (Anthropic + OpenAI BYO-key) (2026-05-28)**:
-  - `euxis_publisher/judge/cloud_llm.py` — `CloudLLM` class mirroring
+  - `inclusio/judge/cloud_llm.py` — `CloudLLM` class mirroring
     `LocalLLM`'s interface (`complete()`, `complete_json()`,
     `is_available()`) against:
       - Anthropic Messages API (`/v1/messages`)
@@ -210,7 +266,7 @@ without any private content.
   (PAdES + C2PA) remains across all forcing functions.
 
 - **Sprint 7 (S7.4) — JD-to-CV fit judge (2026-05-28)**:
-  - `euxis_publisher/judge/jd_fit.py` — third judge in the pipeline.
+  - `inclusio/judge/jd_fit.py` — third judge in the pipeline.
     Compares a job-description brief against a candidate CV; flags
     missing-required keywords (block), role-level mismatch (warn at
     gap ≥2, block at gap ≥3), low-overlap (warn at Jaccard <0.10).
@@ -250,7 +306,7 @@ without any private content.
   S7.5 (MCP-broker BYO-key cloud opt-in) remains.
 
 - **Sprint 7 (S7.2) — citation-grounding judge (2026-05-28)**:
-  - `euxis_publisher/judge/citations.py` — heuristic + LLM-backed
+  - `inclusio/judge/citations.py` — heuristic + LLM-backed
     `\cite` / `\bibitem` consistency check for scientific papers.
     Catches LLM-generated papers with hallucinated references and
     ScholarCopilot-style mis-attribution.
@@ -283,7 +339,7 @@ without any private content.
   adapter; no new runtime dependencies.
 
 - **Sprint 7 (S7.1) — local llama.cpp HTTP adapter for LLM judges (2026-05-28)**:
-  - `euxis_publisher/judge/local_llm.py` — stdlib-only HTTP client
+  - `inclusio/judge/local_llm.py` — stdlib-only HTTP client
     over llama.cpp's `/completion` endpoint. No `httpx` / `requests`
     dependency. `LocalLLM` dataclass with `complete()`,
     `complete_json()` (handles ```json fenced output), and
@@ -316,14 +372,14 @@ without any private content.
   S7.4 (JD-CV reranker) on the same `LocalLLM` surface.
 
 - **Sprint 6 (S6.6) — EPUB3 emitter (2026-05-28)**:
-  - `euxis_publisher/emit/pandoc.py::emit_epub` — Pandoc `--to epub3
+  - `inclusio/emit/pandoc.py::emit_epub` — Pandoc `--to epub3
     --standalone --mathjax` with BCP-47 language metadata. Closes
     the multi-format triad (HTML + JATS + EPUB), fully closing
     Forcing Function #3.
   - `SUPPORTED_FORMATS` extended to `("html", "jats", "epub")`;
     `emit_all` routes the new format through the same dispatch
     surface.
-  - CLI default updated: `python -m euxis_publisher.cli.build emit`
+  - CLI default updated: `python -m inclusio.cli.build emit`
     now emits all three formats by default.
   - 4 new tests in `tests/test_emit_pandoc.py` (epub3 argv, lang
     override, blank-title omission, real-pandoc end-to-end with
@@ -336,7 +392,7 @@ without any private content.
     EPUB3 archive on a 5-line smoke fixture.
 
 - **Sprint 7 (S7.3) — ATS-scoring judge (2026-05-28)**:
-  - `euxis_publisher/judge/ats.py` — Workday / Greenhouse / Lever
+  - `inclusio/judge/ats.py` — Workday / Greenhouse / Lever
     heuristic scoring for CV variants. Local, deterministic, sub-ms.
     Closes Forcing Function #5 on the deterministic surface.
   - 9 checks: canonical headings, contact info, length bands,
@@ -344,7 +400,7 @@ without any private content.
     via module-level constants).
   - 0-100 score + A/B/C/D/F grade derivation; `JudgeReport.to_dict()`
     for JSON serialisation.
-  - CLI: `python -m euxis_publisher.cli.build judge --doc cv
+  - CLI: `python -m inclusio.cli.build judge --doc cv
     --judge ats [--json path] [--strict]`. Renders the CV via
     `render --format text` then scores the plain-text output.
   - `make judge DOC=cv` shortcut.
@@ -354,7 +410,7 @@ without any private content.
     Sprint 7.5+ roadmap (llama.cpp, citation grounding).
 
 - **Sprint 7 — emit CLI wiring (2026-05-28)**:
-  - `python -m euxis_publisher.cli.build emit [--doc X] [--formats html,jats] [--strict]`
+  - `python -m inclusio.cli.build emit [--doc X] [--formats html,jats] [--strict]`
     is now first-class. Defaults to `html,jats`; `--strict` exits 1 on
     any pandoc failure (CI gate).
   - Make targets: `make emit`, `make emit-html`, `make emit-jats`.
@@ -370,7 +426,7 @@ without any private content.
   - Closes Sprint 6's CLI wiring deliverable (S6.3.CLI).
 
 - **Sprint 6 (S6.2 + S6.3) — HTML5 + JATS XML emitters (2026-05-27)**:
-  - `euxis_publisher/emit/pandoc.py` — Pandoc-wrapping emitters with
+  - `inclusio/emit/pandoc.py` — Pandoc-wrapping emitters with
     `emit_html`, `emit_jats`, and `emit_all` API surface. Optional
     runtime dep (pandoc); `PandocMissing` raised with install hint
     when absent.
@@ -395,7 +451,7 @@ without any private content.
   emitter.
 
 - **Sprint 6 (S6.4 + S6.5) — MCP server + Claude skill + Cursor rule (2026-05-27)**:
-  - `euxis_publisher/mcp/server.py` — FastMCP-based MCP server exposing
+  - `inclusio/mcp/server.py` — FastMCP-based MCP server exposing
     the engine's read + audit surface:
       - Tools: `list_docs`, `audit_pdf`, `render`, `doc_count`
       - Resources: `euxis://meta`, `euxis://audit/latest`, `euxis://version`
@@ -451,7 +507,7 @@ without any private content.
     prior_experience / innovation / competencies-as-dict / skills-fallback;
     `_markdown_lines` dict / list / None / scalar paths;
     `_render_cv_text` + `_render_generic_text` branches. Pushes
-    `euxis_publisher/cli/render.py` coverage 76% → 96%.
+    `inclusio/cli/render.py` coverage 76% → 96%.
   - `tests/test_audit_edges.py` — 8 edge-case tests for the audit CLI:
     malformed veraPDF output, empty stdout, `_registry_stems` boundary
     YAML shapes, --flavours subset, --timeout propagation, custom
@@ -471,7 +527,7 @@ without any private content.
     build provenance attestation via `actions/attest-build-provenance`.
   - `.github/workflows/pre-commit-autoupdate.yml` — weekly Monday
     autoupdate, PRs signed via the create-pull-request action.
-  - `euxis_publisher/tools/overlay.py` — deep-merge helper for the
+  - `inclusio/tools/overlay.py` — deep-merge helper for the
     "shared template, overlay data" CV-variant pattern.
   - `tests/test_overlay.py` — 18 tests covering the four documented
     merge rules and the `resolve()` helper.
@@ -511,7 +567,7 @@ without any private content.
 
 ### Added
 
-- `euxis_publisher.cli.audit` — veraPDF runner for PDF/UA-2, WTPDF 1.0
+- `inclusio.cli.audit` — veraPDF runner for PDF/UA-2, WTPDF 1.0
   Accessibility, and PDF/A-4f flavours, with `--strict` CI gate, JSON
   + Markdown reports, and registry-filter mode. Forcing function #1
   (EAA enforcement) closed for private CI.
@@ -542,7 +598,7 @@ without any private content.
 ### Added
 
 - Public engine extracted from `publications` monorepo.
-- `euxis_publisher` package (`cli.build`, `cli.render`, `cli.tailor`,
+- `inclusio` package (`cli.build`, `cli.render`, `cli.tailor`,
   `cli.sitemap`, `tools.fix_semantic`, `tools.stamp_pdfs`).
 - Eleven `pub-*.cls` document classes; five `pub-*.sty` style packages.
 - Jinja2 templating with LaTeX-safe delimiters (`<<>>`, `<%%>`, `<##>`).

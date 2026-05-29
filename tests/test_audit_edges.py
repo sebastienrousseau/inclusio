@@ -1,7 +1,7 @@
 # Copyright (c) 2026 Sebastien Rousseau
 # Licensed under the MIT License
 # See LICENSE file for details
-"""Sprint 5 edge-case tests for `euxis_publisher.cli.audit`.
+"""Sprint 5 edge-case tests for `inclusio.cli.audit`.
 
 Complements `tests/test_eaa.py` (Sprint 3 unit tests) by exercising
 the failure / boundary paths the audit CLI exposes to CI:
@@ -23,7 +23,7 @@ from unittest import mock
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from euxis_publisher.cli import audit as audit_mod
+from inclusio.cli import audit as audit_mod
 
 
 def _make_pdf(path: Path, content: bytes = b"%PDF-1.7\n%dummy\n") -> Path:
