@@ -13,6 +13,18 @@ wire it into an agent without writing any glue code.
 - Claude Code, Continue, or any MCP client (the [official Claude
   Desktop](https://claude.ai/download) works too)
 
+## Quick Start
+
+```bash
+pip install 'inclusio[mcp]'
+inclusio-mcp --http --port 8765 &
+curl http://localhost:8765/mcp/list_tools | jq
+kill %1
+```
+
+You should see four registered tools: `list_docs`, `doc_count`,
+`audit_pdf`, `render`.
+
 ## Run the server
 
 ```bash

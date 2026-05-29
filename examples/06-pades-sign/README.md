@@ -39,6 +39,21 @@ make sign \
 make verify
 ```
 
+Or inline from Python:
+
+```bash
+python3 -c "
+from inclusio.provenance.pades import verify_pdf
+from pathlib import Path
+import json
+print(json.dumps(verify_pdf(Path('build/hello.pades.pdf')), indent=2))
+"
+# → { 'intact': true, 'valid': true, 'trusted': false, ... }
+```
+
+`trusted` is `False` for self-signed dev certs; CA-issued certs
+flip it to `True` once the runner's CA bundle knows the issuer.
+
 ## Baselines at a glance
 
 | Baseline | Adds | When to pick |

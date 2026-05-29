@@ -18,6 +18,25 @@ pytest benches/ --benchmark-only --benchmark-save=baseline
 pytest benches/ --benchmark-only --benchmark-compare-fail=mean:5%
 ```
 
+## Regression gating — anatomy of a comparison
+
+After saving a baseline (`--benchmark-save=baseline`), a later
+run produces a delta block:
+
+```
+Comparing against benchmark baseline:
+
+Name (time in us)         Min     Mean    Median    OPS (Kops/s)
+---------------------------------------------------------------
+test_bench_jaccard      6.04    6.45    6.10           155.04
+  (vs baseline)         5.83 → +3.6%    6.04 → +0.9%   162.59 → -4.7%
+```
+
+A `+5%` change on the `mean` column with
+`--benchmark-compare-fail=mean:5%` fails the suite. The baseline
+JSON belongs under `benches/baselines/<sha>.json` once we adopt
+regression gating in CI.
+
 ## Soft budgets (per call, on a modern laptop)
 
 | Target | Budget | Last reading |
