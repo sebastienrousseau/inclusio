@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "inclusio"
-version = "0.0.3"
+version = "0.0.4"
 description = "Accessibility-first publishing engine — PDF/UA-2 + WTPDF + PDF/A-4f, C2PA + PAdES + SLSA provenance, multi-format emission, MCP server."
 readme = "README.md"
 # 3.11 is the floor: 3.9 EOL'd Oct-2025, 3.10 EOLs Oct-2026.

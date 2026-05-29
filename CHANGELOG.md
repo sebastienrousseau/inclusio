@@ -5,6 +5,42 @@ are documented here. Format based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and
 [Conventional Commits](https://www.conventionalcommits.org/).
 
+## [0.0.4] — 2026-05-29
+
+First slice of the **Q3.4 internal refactor** flagged in v0.0.3.
+Small, contained, behaviour-preserving — designed to land cleanly
+ahead of the remaining Q3.4 work (cli/build.py split, Judge ABC,
+pandoc parameterisation) which ships in subsequent v0.0.4.x
+releases.
+
+### Added — `inclusio.pdf` sub-package
+
+- New `inclusio/pdf/` package with `inclusio.pdf.post_process`
+  module. Public surface:
+  - `build_xmp_xml(...)` — assemble the hand-crafted XMP packet
+    (legacy untagged path).
+  - `apply_encryption(pdf, pdf_path, content_hash)` — AES-256
+    save with accessibility-friendly permission flags.
+  - `post_process_pdf(pdf_path, doc_id, doc_config, meta)` — the
+    Sprint-5 tagged/untagged dispatch.
+
+### Changed — `inclusio/cli/build.py`
+
+- Removed the three function bodies (≈ 240 lines) from
+  `cli/build.py`. The legacy underscore-prefixed names
+  (`_build_xmp_xml`, `_post_process_pdf`, `_apply_encryption`)
+  are kept as **back-compat aliases** at the top of the module
+  so:
+  - every existing `@patch("build._post_process_pdf")` decorator
+    in the test suite keeps working unchanged;
+  - the in-module call site (`build_document` → `_post_process_pdf`)
+    resolves through the alias.
+
+### Internal
+
+- 890 tests still pass; coverage **98.18 %** (gate 97 %);
+  docstrings **100 %**; ruff clean.
+
 ## [0.0.3] — 2026-05-29
 
 First sprint train under the new name. Three of the five planned
