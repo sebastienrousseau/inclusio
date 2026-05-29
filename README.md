@@ -1,5 +1,6 @@
 <p align="center">
-  <img src="https://kura.pro/euxis/images/logos/euxis.svg" alt="Inclusio logo" width="128" />
+  <!-- TODO: publish inclusio.svg under https://kura.pro/inclusio/ -->
+  <img src="https://kura.pro/inclusio/images/logos/inclusio.svg" alt="Inclusio logo" width="128" />
 </p>
 
 <h1 align="center">Inclusio</h1>
@@ -11,22 +12,72 @@
 <p align="center">
   Accessibility-first publishing engine for LaTeX, packaged as a
   Python CLI. PDF/UA-2 + WTPDF + PDF/A-4f triple-conformance,
-  C2PA + PAdES + SLSA provenance, multi-format emission (HTML5 /
-  JATS / EPUB3), LLM-augmented judges, and an MCP server for agent
-  integration. Built for macOS, Linux, and WSL.
+  C2PA + PAdES + SLSA provenance, multi-format emission
+  (HTML5 / JATS / EPUB3), LLM-augmented judges, and an MCP server
+  for agent integration.
 </p>
 
 <p align="center">
-  <a href="https://github.com/sebastienrousseau/inclusio/actions/workflows/engine-validation.yml"><img src="https://img.shields.io/github/actions/workflow/status/sebastienrousseau/inclusio/engine-validation.yml?style=for-the-badge&logo=github" alt="Engine Validation" /></a>
+  <a href="https://github.com/sebastienrousseau/inclusio/actions/workflows/engine-validation.yml"><img src="https://img.shields.io/github/actions/workflow/status/sebastienrousseau/inclusio/engine-validation.yml?style=for-the-badge&logo=github&label=CI" alt="Engine Validation" /></a>
   <a href="https://github.com/sebastienrousseau/inclusio/actions/workflows/verapdf.yml"><img src="https://img.shields.io/github/actions/workflow/status/sebastienrousseau/inclusio/verapdf.yml?style=for-the-badge&logo=github&label=veraPDF" alt="veraPDF Audit" /></a>
-  <a href="https://github.com/sebastienrousseau/inclusio"><img src="https://img.shields.io/badge/Python-%3E%3D3.11-3776AB?style=for-the-badge&logo=python&logoColor=white" alt="Python >= 3.11" /></a>
-  <a href="https://github.com/sebastienrousseau/inclusio"><img src="https://img.shields.io/badge/PDF%2FUA--2%20%7C%20WTPDF%20%7C%20PDF%2FA--4f-blue?style=for-the-badge" alt="PDF/UA-2 | WTPDF | PDF/A-4f" /></a>
-  <a href="https://github.com/sebastienrousseau/inclusio/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-MIT-black?style=for-the-badge" alt="License" /></a>
+  <a href="https://github.com/sebastienrousseau/inclusio"><img src="https://img.shields.io/badge/Python-%3E%3D3.11-3776AB?style=for-the-badge&logo=python&logoColor=white" alt="Python &gt;= 3.11" /></a>
+  <a href="https://github.com/sebastienrousseau/inclusio"><img src="https://img.shields.io/badge/PDF%2FUA--2%20%7C%20WTPDF%20%7C%20PDF%2FA--4f-blue?style=for-the-badge" alt="PDF/UA-2 · WTPDF · PDF/A-4f" /></a>
+  <a href="https://github.com/sebastienrousseau/inclusio/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-MIT-black?style=for-the-badge" alt="MIT licence" /></a>
 </p>
 
 ---
 
-## 60-second tour
+## Contents
+
+- [Install](#install) — `pip`, optional extras, source
+- [Quick Start](#quick-start) — first tagged PDF in 60 seconds
+- [Features](#features) — what the engine ships
+- [Usage](#usage) — common Python + CLI recipes
+- [Architecture](#architecture) — the engine's package layout
+- [Examples](#examples) — six runnable scenarios
+- [Documentation](#documentation) — quickstart, tutorials, reference
+- [Publishing against an external content tree](#publishing-against-an-external-content-tree)
+- [Development](#development) — local validation gate
+- [Security](#security) — signed commits, provenance, audit
+- [License](#license)
+
+---
+
+## Install
+
+```bash
+pip install inclusio                       # engine + CLI
+pip install 'inclusio[mcp]'                # + FastMCP server
+pip install 'inclusio[provenance]'         # + pyhanko (PAdES)
+pip install 'inclusio[dev]'                # + pytest, ruff, sphinx, interrogate
+```
+
+**Requires** Python ≥ 3.11 and a LuaLaTeX toolchain on PATH. Linux,
+macOS, and WSL are supported (native Windows works for the Python
+surface; the LaTeX gate needs WSL or a TeX Live install).
+
+| Optional tool | Adds | Install |
+|---|---|---|
+| `verapdf` | The strict EAA / accessibility audit gate | [verapdf.org/install](https://docs.verapdf.org/install/) |
+| `pandoc` (≥ 3.0) | HTML5 / JATS XML / EPUB3 multi-format emission | `brew install pandoc` · `apt install pandoc` |
+| `c2patool` | C2PA Content Credentials | [contentauth/c2patool releases](https://github.com/contentauth/c2patool/releases) |
+| `pyhanko` (via `[provenance]`) | PAdES B-T / B-LT / B-LTA signing | Pulled by the extra |
+
+### Build from source
+
+```bash
+git clone https://github.com/sebastienrousseau/inclusio.git
+cd inclusio
+./bin/setup        # check toolchain + install dev extras
+make test          # smoke suite
+make coverage      # full suite (gate: 97 %)
+```
+
+---
+
+## Quick Start
+
+A complete worked example you can paste into a fresh directory:
 
 ```bash
 pip install inclusio
@@ -37,198 +88,216 @@ cd inclusio/examples/01-hello-world && make
 ```
 
 That single `make` produces `build/hello.pdf` (PDF/UA-2 + WTPDF +
-PDF/A-4f triple-conformance), runs veraPDF over it, and exits non-zero
-if any flavour fails. Add citations + multi-format emission with the
-[`03-paper-with-citations/`](./examples/03-paper-with-citations/)
-example, or drive the engine from an MCP client with
-[`04-mcp-agent/`](./examples/04-mcp-agent/).
+PDF/A-4f triple-conformance), runs veraPDF over it, and exits
+non-zero if any flavour fails.
 
-See [`examples/`](./examples/) for six runnable scenarios covering
-every major feature: tagged-PDF build, JSON Resume import + ATS
-scoring, multi-format emission, MCP server, C2PA signing, and PAdES
-eIDAS signing.
+Drive the same surface from Python:
 
----
+```python
+# quickstart.py
+import subprocess
+from pathlib import Path
 
-## Install
+# 1. Render + build the bundled "hello" fixture — the CLI is the
+#    canonical entry point for the LaTeX step.
+subprocess.run(
+    ["python", "-m", "inclusio.cli.build", "build", "--doc", "hello"],
+    cwd="examples/01-hello-world",
+    check=True,
+)
 
-Run the local bootstrap:
+# 2. Audit the produced PDF in-process — pure-Python, no subprocess.
+from inclusio.cli import audit
 
-```bash
-./bin/setup
-```
-
-Then validate the engine:
-
-```bash
-make test
-make coverage
-```
-
-**Requires** `python3`, `git`, and a TeX toolchain. Use WSL for full Windows support. Install `tagpdf.sty` if you need accessibility tagging.
-
----
-
-## Publish
-
-Publish against the private content repository with the shell-agnostic form:
-
-```bash
-make publish CONTENT_DIR=/absolute/path/to/inclusio-private
-```
-
-Use the shell-specific form only when you need it:
-
-```bash
-# Bash / Zsh / POSIX sh
-INCLUSIO_CONTENT_DIR=/absolute/path/to/inclusio-private make publish
-
-# fish
-env INCLUSIO_CONTENT_DIR=/absolute/path/to/inclusio-private make publish
-
-# PowerShell
-$env:INCLUSIO_CONTENT_DIR = "/absolute/path/to/inclusio-private"
-make publish
-```
-
-`EUXIS_PUBLISHER_CONTENT_DIR` is **not** supported.
-
-Drop supported briefs into `data/jobs/` in the private content repo, then run
-`publish`. The build now promotes `.txt`, `.md`, `.markdown`, `.rtf`, `.doc`,
-`.docx`, `.odt`, and `.html` briefs into `data/tailored/` automatically before
-compiling PDFs.
-
----
-
-## Overview
-
-Use this repository as the public engine layer of the Euxis publishing stack.
-Keep private content in `inclusio-private`.
-
-You get:
-
-- **LaTeX classes and styles** through `core/cls/` and `core/sty/`
-- **Packaged Python entrypoints** through `inclusio/cli/`
-- **Operator utilities** through `inclusio/tools/`
-- **Compatibility wrappers** through `scripts/`
-- **Public fixture content** through `data/`, `src/`, and `templates/`
-- **100% package coverage** over `inclusio`
-
----
-
-## Architecture
-
-First, render or tailor content. Then compile camera-ready output from the same engine.
-
-```mermaid
-graph TD
-    A[Private or Public Content] --> B{inclusio.cli.build}
-    B --> C[Render: Jinja2 to LaTeX or Markdown]
-    B --> D[Build: latexmk or TeX compiler]
-    B --> E[Tailor: Brief to structured YAML]
-    C --> F[build/.cache/rendered]
-    D --> G[PDF artifacts]
-    E --> H[data/tailored]
-    G --> I[Stamping and metadata tooling]
+pdfs = audit.collect_pdfs(
+    target=Path("examples/01-hello-world/build"),
+    build_dir=Path("examples/01-hello-world/build"),
+    registry_stems={"hello"},
+)
+report = audit.audit(pdfs)
+assert report["summary"]["fail"] == 0, "veraPDF reported a failure"
+print(f'  PASS  {report["summary"]["pdfs"]} PDF(s), '
+      f'{report["summary"]["pass"]}/{report["summary"]["total"]} checks')
+# →   PASS  1 PDF(s), 3/3 checks
 ```
 
 ---
 
 ## Features
 
-| | |
-| :--- | :--- |
-| **Engine** | Packaged Python CLI with `build`, `render`, `blog`, `tailor`, `lint`, and cleanup commands |
-| **Typography** | Shared LaTeX classes and style packages for CVs, papers, patents, FAQs, guides, and bios |
-| **Build Modes** | Draft, submission, and camera-ready flows managed from one orchestration layer |
-| **Publishing** | PDF/A-oriented metadata flow with provenance stamping support |
-| **Fixtures** | Public sample content for engine validation without exposing private briefs or templates |
-| **Coverage** | 100% package coverage across `inclusio` |
-| **Platforms** | macOS, Linux, and WSL |
-| **Docs** | Sphinx docs plus folder-level READMEs for every major public surface |
+- **Tagged PDF, by default.** Every build emits a PDF/UA-2 +
+  WTPDF + PDF/A-4f triple-conforming artefact via the LaTeX
+  kernel's `tagpdf` integration. The veraPDF audit gate is wired
+  into CI and exits non-zero on any FAIL.
+- **Multi-format emission.** The same LaTeX source produces HTML5
+  (WCAG-clean), JATS XML (1.3, JATS4R-ready), and EPUB3 via
+  Pandoc.
+- **LLM-augmented judges.** ATS (Workday / Greenhouse / Lever
+  heuristic), citation grounding, and JD-to-CV fit — local
+  `llama.cpp` or BYO-key cloud (Anthropic / OpenAI), with
+  heuristic-only fallback when the LLM is unreachable.
+- **Content provenance.** C2PA Content Credentials (via
+  `c2patool`), PAdES B-T / B-LT / B-LTA signatures (via
+  `pyhanko`), and SLSA L3 build attestation (via
+  `actions/attest-build-provenance`).
+- **MCP server.** `inclusio-mcp` exposes `list_docs`, `audit_pdf`,
+  `render`, and `doc_count` so Claude Code, Cursor, Continue, or
+  any other MCP client can drive the engine.
+- **JSON Resume importer.** `inclusio import-resume` converts a
+  jsonresume.org v1 document into the engine's CV YAML schema.
+- **Brief-driven CV tailoring.** ATS-clean variants tailored
+  against a job description with British-English cleanup and
+  consistency lint.
 
----
+## Usage
 
-## Commands
-
-| Command | Execute this to... |
-| :--- | :--- |
-| `make list` | inspect registered documents |
-| `make draft` | compile all public documents in draft mode |
-| `make final` | compile camera-ready output from the current content root |
-| `make publish CONTENT_DIR=/absolute/path/to/inclusio-private` | auto-tailor briefs from `data/jobs/` and compile the full private set |
-| `make render` | render Jinja2 templates to LaTeX |
-| `make render-md` | render Markdown output |
-| `make blog` | render blog posts |
-| `make tailor BRIEF=data/jobs/job.txt` | generate one tailored document explicitly and build it |
-| `make sitemap` | generate `build/site-map.json` |
-| `make test` | run the public engine test target |
-| `make coverage` | enforce the package coverage gate |
-| `make docs` | build the Sphinx site |
-
-Use the packaged CLIs directly when you need lower-level control:
+### Build, audit, judge a registered document
 
 ```bash
-python3 -m inclusio.cli.build list
-python3 -m inclusio.cli.render --doc cv
-python3 -m inclusio.cli.sitemap --pretty
-python3 -m inclusio.cli.tailor data/jobs/test.txt --no-ai
+inclusio build --doc cv --mode draft        # → build/cv.pdf
+inclusio audit --strict                     # → veraPDF, non-zero on FAIL
+inclusio judge --doc cv --judge ats         # → grade + findings
 ```
 
-For bulk private publishing, prefer `make publish`. It scans `data/jobs/`,
-refreshes stale tailored YAML, and compiles the resulting PDFs in one pass.
+### Score a CV against a job description
+
+```python
+# score_cv.py — fully runnable: drop into a directory with brief.txt + cv.txt
+from pathlib import Path
+from inclusio.judge import jd_fit
+
+jd_text = Path("brief.txt").read_text(encoding="utf-8")
+cv_text = Path("cv.txt").read_text(encoding="utf-8")
+
+report = jd_fit.score_jd_fit(jd_text, cv_text)
+print(f"score:   {report.score}/100   grade: {report.grade}")
+print(f"missing: {sorted(report.metrics['missing_required'])[:5]}")
+# → score:   78/100   grade: B
+# → missing: ['opentelemetry', 'rust']
+```
+
+### Drive the engine over MCP
+
+```bash
+inclusio-mcp                          # stdio (Claude Code default)
+inclusio-mcp --http --port 8765       # Streamable HTTP
+```
+
+Wire into Claude Code via `~/.claude/claude_desktop_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "inclusio": {
+      "command": "inclusio-mcp",
+      "env": { "INCLUSIO_CONTENT_DIR": "/absolute/path/to/content" }
+    }
+  }
+}
+```
+
+### Embed C2PA Content Credentials
+
+```bash
+inclusio provenance --doc cv \
+  --cert /path/to/cert.pem \
+  --key  /path/to/key.pem \
+  --output build/cv.c2pa.pdf
+```
 
 ---
 
-## Public vs Private Boundary
+## Architecture
 
-Keep these surfaces public:
+```
+inclusio/                  # Python package
+  cli/                     # build · audit · render · tailor · judge · emit · provenance · …
+  judge/                   # ats · citations · jd_fit · local_llm · cloud_llm
+  emit/                    # pandoc (HTML5 / JATS XML / EPUB3)
+  provenance/              # c2pa (c2patool) · pades (pyhanko)
+  mcp/                     # FastMCP server
+  tools/                   # fix_semantic · stamp_pdfs · overlay
+core/                      # LaTeX classes (.cls) and styles (.sty)
+templates/                 # Jinja2 templates for the template-driven docs
+benches/                   # pytest-benchmark micro-benchmarks
+examples/                  # Six self-contained runnable scenarios
+docs/                      # Sphinx documentation
+```
 
-- `core/`
-- `inclusio/`
-- `scripts/`
-- `tests/`
-- non-sensitive fixtures in `data/`, `src/`, and `templates/`
-- CI, docs, and build metadata
+External consumers supply their own content tree (LaTeX sources,
+YAML metadata, brand assets) and point the engine at it through
+`INCLUSIO_CONTENT_DIR` or `--content-dir`. The repo's own `src/`
+and `data/` directories double as the public-engine self-test
+fixtures.
 
-Keep these surfaces private:
+## Examples
 
-- real briefs and client content
-- proprietary templates and assets
-- content-bearing metadata sets
-- content-specific QA and linguistic validation
+| # | Folder | What it teaches |
+|---|---|---|
+| 1 | [`01-hello-world/`](./examples/01-hello-world/) | Tagged-PDF build with the audit gate |
+| 2 | [`02-cv-from-jsonresume/`](./examples/02-cv-from-jsonresume/) | JSON Resume → CV → ATS + JD-fit scoring |
+| 3 | [`03-paper-with-citations/`](./examples/03-paper-with-citations/) | Paper → PDF + HTML + JATS + EPUB + citation judge |
+| 4 | [`04-mcp-agent/`](./examples/04-mcp-agent/) | `inclusio-mcp` + Claude Code skill |
+| 5 | [`05-c2pa-sign/`](./examples/05-c2pa-sign/) | C2PA Content Credentials |
+| 6 | [`06-pades-sign/`](./examples/06-pades-sign/) | PAdES B-T eIDAS signature |
 
-For the full boundary contract, read [docs/public-private-boundary.md](docs/public-private-boundary.md).
-
----
+Each folder has its own `Makefile` (`make help` lists targets) and
+a `README.md` with the why + the how.
 
 ## Documentation
 
-Start here:
+- **[Quickstart](./docs/quickstart.md)** — five-minute walkthrough.
+- **[Tutorials](./docs/tutorials/)** — four end-to-end walkthroughs
+  paired 1 : 1 with the examples.
+- **[Architecture](./docs/architecture.md)** — public-engine vs
+  content-repo boundary, sprint history, decision log.
+- **[Tagged PDF](./docs/tagged-pdf.md)** — the conformance stack.
+- **[Multi-format](./docs/multi-format.md)** — HTML / JATS / EPUB.
+- **[Judges](./docs/judges.md)** — ATS, citations, JD-fit, LLM
+  rerank contract.
+- **[Provenance](./docs/provenance.md)** — C2PA, PAdES, SLSA.
+- **[MCP server](./docs/mcp-server.md)** — tool + resource surface.
 
-- [docs/README.md](docs/README.md)
-- [docs/architecture.md](docs/architecture.md)
-- [docs/classes-and-styles.md](docs/classes-and-styles.md)
-- [docs/package-reference.md](docs/package-reference.md)
-- [docs/macro-reference.md](docs/macro-reference.md)
-- [docs/usage.md](docs/usage.md)
-- [docs/testing-and-ci.md](docs/testing-and-ci.md)
+## Publishing against an external content tree
 
-Folder guides:
+```bash
+make publish CONTENT_DIR=/absolute/path/to/your-content-repo
+```
 
-- [bin/README.md](bin/README.md)
-- [core/README.md](core/README.md)
-- [data/README.md](data/README.md)
-- [inclusio/README.md](inclusio/README.md)
-- [inclusio/cli/README.md](inclusio/cli/README.md)
-- [inclusio/tools/README.md](inclusio/tools/README.md)
-- [scripts/README.md](scripts/README.md)
-- [src/README.md](src/README.md)
-- [templates/README.md](templates/README.md)
-- [tests/README.md](tests/README.md)
+The content repo supplies its own `data/meta.yaml` (document
+registry) and `src/**.tex` (LaTeX sources). The engine reads no
+state from outside `INCLUSIO_CONTENT_DIR` once it's set.
 
----
+## Development
+
+```bash
+make test          # smoke (≤ 20 s)
+make coverage      # full suite + 97 % gate (~3 min)
+make docstrings    # 100 % interrogate gate
+make benchmark     # pytest-benchmark micro-budgets
+make audit-strict  # veraPDF, exits non-zero on any FAIL
+make docs          # Sphinx
+```
+
+All commits to `main` are squash-merged via PR. Branch protection
+requires `Lint (ruff)` + `Public Engine Checks (py3.11 / 3.12 /
+3.13)` + the `Signed-commit gate` to pass. See
+[`CONTRIBUTING.md`](./CONTRIBUTING.md).
+
+## Security
+
+- **SSH-signed commits.** Every commit on `main` is GitHub-verified.
+- **Signed tags.** Release tags are ED25519-signed.
+- **SLSA L3 build provenance** (gated on the repo being public or
+  on a paid GitHub plan).
+- **PyPI Trusted Publishing** wiring (`pypa/gh-action-pypi-publish`)
+  in `release.yml`; flip `vars.PYPI_TRUSTED_PUBLISHING=true` once
+  the PyPI publisher is configured.
+- **Cloud LLM keys are env-var only** — `inclusio` never auto-
+  discovers credentials from disk.
+
+Report vulnerabilities per [`SECURITY.md`](./SECURITY.md).
 
 ## License
 
-Licensed under the **MIT License**. See [LICENSE](LICENSE) for details.
+[MIT](./LICENSE). © 2026 Sebastien Rousseau.
