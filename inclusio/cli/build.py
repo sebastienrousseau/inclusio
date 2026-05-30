@@ -950,17 +950,16 @@ def cmd_judge(args, meta):
     Future judges (citations via ScholarCopilot pattern, local llama.cpp
     re-score) plug into the same dispatch table.
     """
-    if args.judge not in ("ats", "citations", "jd_fit"):
+    from inclusio.cli import render as render_module
+    from inclusio.judge import JUDGES
+
+    judge_inst = JUDGES.get(args.judge)
+    if judge_inst is None:
         print(
-            f"ERROR: unknown judge {args.judge!r} (expected: ats, citations, jd_fit)",
+            f"ERROR: unknown judge {args.judge!r} (expected one of {sorted(JUDGES)})",
             file=sys.stderr,
         )
         sys.exit(2)
-
-    from inclusio.cli import render as render_module
-    from inclusio.judge import ats as ats_judge
-    from inclusio.judge import citations as cit_judge
-    from inclusio.judge import jd_fit as jd_fit_judge
 
     doc_id = args.doc
 
@@ -1010,9 +1009,9 @@ def cmd_judge(args, meta):
             from inclusio.judge import local_llm
 
             llm = local_llm.LocalLLM(base_url=args.llm_url, timeout=args.llm_timeout)
-            report = jd_fit_judge.score_jd_fit_with_llm(jd_text, cv_text, llm)
+            report = judge_inst.score_with_llm(llm, jd_text=jd_text, cv_text=cv_text)
         else:
-            report = jd_fit_judge.score_jd_fit(jd_text, cv_text)
+            report = judge_inst.score(jd_text=jd_text, cv_text=cv_text)
         _print_and_persist_report(report, doc_id, args)
         return
 
@@ -1044,9 +1043,9 @@ def cmd_judge(args, meta):
             from inclusio.judge import local_llm
 
             llm = local_llm.LocalLLM(base_url=args.llm_url, timeout=args.llm_timeout)
-            report = cit_judge.score_citations_with_llm(tex_source, llm)
+            report = judge_inst.score_with_llm(llm, tex=tex_source)
         else:
-            report = cit_judge.score_citations(tex_source)
+            report = judge_inst.score(tex=tex_source)
         _print_and_persist_report(report, doc_id, args)
         return
 
@@ -1081,9 +1080,9 @@ def cmd_judge(args, meta):
         # Sprint 7 (S7.1 + S7.5): local or cloud LLM rerank. Falls
         # back to heuristic-only when the LLM is unreachable.
         llm = _make_llm(args)
-        report = ats_judge.score_cv_with_llm(plain_text, llm)
+        report = judge_inst.score_with_llm(llm, plain_text=plain_text)
     else:
-        report = ats_judge.score_cv(plain_text)
+        report = judge_inst.score(plain_text=plain_text)
     _print_and_persist_report(report, doc_id, args)
 
 
