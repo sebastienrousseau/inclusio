@@ -1,0 +1,75 @@
+name: Bug report
+description: Something doesn't work the way the docs say it should.
+labels: ["type: bug", "status: triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a bug. The more concrete
+        the reproducer, the faster the fix.
+  - type: input
+    id: inclusio-version
+    attributes:
+      label: Inclusio version
+      description: Output of `inclusio --version` or `pip show inclusio | grep Version`.
+      placeholder: "0.0.5"
+    validations:
+      required: true
+  - type: input
+    id: python-version
+    attributes:
+      label: Python version
+      description: Output of `python --version`.
+      placeholder: "3.12.13"
+    validations:
+      required: true
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating system
+      options:
+        - macOS
+        - Linux
+        - Windows (WSL)
+        - Windows (native)
+        - Docker
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: reproducer
+    attributes:
+      label: Minimal reproducer
+      description: |
+        Smallest LaTeX / YAML / Python snippet that triggers the bug.
+        Paste between the fences — the form turns it into a copyable
+        code block automatically.
+      render: shell
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behaviour
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behaviour
+      description: Full error output / stack trace / unexpected file content.
+      render: shell
+    validations:
+      required: true
+  - type: checkboxes
+    id: gates
+    attributes:
+      label: Toolchain
+      description: Tick what's installed locally (where relevant).
+      options:
+        - label: LuaLaTeX on PATH
+        - label: veraPDF on PATH
+        - label: Pandoc ≥ 3.0 on PATH
+        - label: c2patool on PATH
+        - label: pyhanko installed (`pip install 'inclusio[provenance]'`)
+        - label: MCP extra installed (`pip install 'inclusio[mcp]'`)
