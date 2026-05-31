@@ -24,6 +24,13 @@ jobs:
       # GHA forbids ${{ env.* }} in container.image; image inlined.
       image: texlive/texlive:TL2024-historic
       options: --user root
+    # Pin to bash for every `run:` step. The texlive container's
+    # default `/bin/sh` is POSIX (no arrays), and the "Test critical
+    # packages" step uses bash-array syntax — without this default,
+    # the step fails with `Syntax error: "(" unexpected`.
+    defaults:
+      run:
+        shell: bash
 
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
