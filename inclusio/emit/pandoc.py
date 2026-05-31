@@ -1,17 +1,23 @@
 # Copyright (c) 2026 Sebastien Rousseau
 # Licensed under the MIT License
 # See LICENSE file for details
-"""Pandoc-based emitters for HTML5 and JATS XML.
+"""Pandoc-based emitters for HTML5, JATS XML, and EPUB3.
 
-Both outputs ship from one shared subprocess wrapper because the
-Pandoc invocations differ only in `--to` flag and a handful of
-format-specific options (HTML wants `--mathjax --section-divs --lang
-en-GB`; JATS wants `--standalone --to jats_archiving` for JATS4R-
-clean output).
+Every format is built by the same `_emit()` helper from a per-format
+`EmitSpec` (output extension, pandoc writer name, extra CLI flags,
+whether to include `--metadata=lang`, optional post-process hook).
+The thin `emit_html()`, `emit_jats()`, `emit_epub()` functions stay
+as the documented public API; they're one-liners that look up the
+spec and delegate.
+
+Adding a new format (e.g. Markdown, ODT, Org) is now a matter of
+adding one `EmitSpec` to the `FORMATS` table and registering a
+public `emit_<fmt>()` wrapper — no copy-paste of the subprocess
+boilerplate.
 
 Design rules:
   - The Pandoc subprocess is the source of truth. We don't try to
-    out-think it on tag mapping; we post-process the output to
+    out-think it on tag mapping; we post-process the HTML output to
     add accessibility-critical attributes Pandoc doesn't emit
     (skip-to-main, `role="doc-toc"`, `aria-label` on figures).
   - The wrapper is idempotent: calling `emit_html(doc)` twice
@@ -25,7 +31,8 @@ from __future__ import annotations
 
 import shutil
 import subprocess
-from dataclasses import dataclass
+from collections.abc import Callable
+from dataclasses import dataclass, field
 from pathlib import Path
 
 
@@ -39,7 +46,7 @@ class EmitResult:
 
     Attributes:
         doc_id: registered doc id (or .tex filename stem for ad-hoc).
-        format: one of `html`, `jats`.
+        format: one of `html`, `jats`, `epub`.
         output_path: where the artefact was written.
         bytes: file size of the artefact.
         stderr: pandoc's stderr (warnings, not errors — non-empty
@@ -53,6 +60,31 @@ class EmitResult:
     stderr: str = ""
 
 
+@dataclass(frozen=True)
+class EmitSpec:
+    """Per-format configuration for the shared `_emit()` helper.
+
+    Attributes:
+        ext: output filename extension (without the leading dot).
+        pandoc_to: value passed to pandoc's `--to=…` flag.
+        extra_args: format-specific pandoc flags appended after
+            `--from=latex --to=<pandoc_to>` and before
+            `--metadata=…` / `--output=…`.
+        emit_lang: when True, include `--metadata=lang:<lang>` in the
+            command. JATS doesn't honour this flag, so it's False
+            there; HTML and EPUB both honour it.
+        postprocess: optional callable invoked as `postprocess(path,
+            lang)` after pandoc completes. Used by HTML to inject
+            the skip-link + accessibility header.
+    """
+
+    ext: str
+    pandoc_to: str
+    extra_args: tuple[str, ...] = ()
+    emit_lang: bool = True
+    postprocess: Callable[[Path, str], None] | None = field(default=None)
+
+
 def _require_pandoc(timeout: int = 5) -> str:
     """Return the path to `pandoc` on PATH, or raise PandocMissing.
 
@@ -63,7 +95,7 @@ def _require_pandoc(timeout: int = 5) -> str:
     path = shutil.which("pandoc")
     if not path:
         raise PandocMissing(
-            "pandoc is required for HTML / JATS emission. "
+            "pandoc is required for HTML / JATS / EPUB emission. "
             "Install via `brew install pandoc` (macOS), "
             "`apt install pandoc` (Debian/Ubuntu), or "
             "see https://pandoc.org/installing.html."
@@ -75,7 +107,7 @@ def _require_pandoc(timeout: int = 5) -> str:
     return path
 
 
-# ── HTML5 ───────────────────────────────────────────────────────────────
+# ── Per-format specs ────────────────────────────────────────────────────
 
 
 HTML_POSTPROCESS_HEADER = """\
@@ -87,71 +119,6 @@ HTML_POSTPROCESS_HEADER = """\
 """
 
 
-def emit_html(
-    tex_path: Path,
-    output_dir: Path,
-    doc_id: str,
-    title: str = "",
-    lang: str = "en-GB",
-    timeout: int = 60,
-) -> EmitResult:
-    """Convert *tex_path* to standalone HTML5 in *output_dir*.
-
-    Uses Pandoc's `--to html5` with `--mathjax --section-divs
-    --standalone --lang` for WCAG-friendly output. Post-processes the
-    HTML to add a skip-to-main link, a generator comment, and a
-    `role="doc-toc"` ARIA hint on the table of contents.
-
-    Args:
-        tex_path: path to the source `.tex` file.
-        output_dir: directory to write `<doc_id>.html` into.
-        doc_id: stable id used as the filename stem.
-        title: optional `--metadata title=…`; falls back to Pandoc's
-            auto-detected title (the first `\\section` or `\\title`).
-        lang: BCP-47 language code emitted on `<html lang=…>`.
-        timeout: subprocess timeout in seconds.
-
-    Returns:
-        EmitResult with the output path + size + any pandoc stderr.
-
-    Raises:
-        PandocMissing: if pandoc is not installed.
-        subprocess.CalledProcessError: if Pandoc fails.
-    """
-    pandoc = _require_pandoc()
-    output_dir.mkdir(parents=True, exist_ok=True)
-    out_path = output_dir / f"{doc_id}.html"
-
-    cmd = [
-        pandoc,
-        "--from=latex",
-        "--to=html5",
-        "--standalone",
-        "--section-divs",
-        "--mathjax",
-        f"--metadata=lang:{lang}",
-        f"--output={out_path}",
-        str(tex_path),
-    ]
-    if title:
-        cmd.insert(-1, f"--metadata=title:{title}")
-
-    result = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
-    if result.returncode != 0:
-        raise subprocess.CalledProcessError(
-            result.returncode, cmd, output=result.stdout, stderr=result.stderr
-        )
-
-    _postprocess_html(out_path, lang=lang)
-    return EmitResult(
-        doc_id=doc_id,
-        format="html",
-        output_path=out_path,
-        bytes=out_path.stat().st_size,
-        stderr=result.stderr or "",
-    )
-
-
 def _postprocess_html(path: Path, lang: str = "en-GB") -> None:
     """Inject accessibility-critical bits Pandoc doesn't emit.
 
@@ -161,8 +128,13 @@ def _postprocess_html(path: Path, lang: str = "en-GB") -> None:
       - an explicit `role="main"` on the body wrapper;
       - a generator comment for provenance.
 
-    Idempotent — running twice doesn't double-insert.
+    Idempotent — running twice doesn't double-insert. The `lang`
+    argument is accepted for signature uniformity with the
+    `EmitSpec.postprocess` callable contract; the function doesn't
+    currently re-stamp the language attribute (Pandoc handles that
+    via `--metadata=lang:…`).
     """
+    del lang  # currently unused; reserved for future use
     text = path.read_text(encoding="utf-8")
     # Idempotency marker — present anywhere in the doc (typically in the
     # post-process header comment we just added on a previous call).
@@ -187,7 +159,134 @@ def _postprocess_html(path: Path, lang: str = "en-GB") -> None:
     path.write_text(text, encoding="utf-8")
 
 
-# ── JATS XML ────────────────────────────────────────────────────────────
+FORMATS: dict[str, EmitSpec] = {
+    "html": EmitSpec(
+        ext="html",
+        pandoc_to="html5",
+        extra_args=("--standalone", "--section-divs", "--mathjax"),
+        emit_lang=True,
+        postprocess=_postprocess_html,
+    ),
+    "jats": EmitSpec(
+        ext="xml",
+        # `jats_archiving` produces JATS 1.3 with the archiving-and-
+        # interchange DTD — accepted by Crossref, PMC, JATS4R, and
+        # most preprint servers. JATS 1.4 (ANSI/NISO Z39.96-2024) is
+        # the academic-archival default as of 2026; pandoc 3.9 still
+        # emits 1.3 and the upgrade is backwards-compatible at the
+        # document level, so 1.3 output is accepted everywhere 1.4
+        # is. Switch to the JATS 1.4 writer when pandoc ships it.
+        pandoc_to="jats_archiving",
+        extra_args=("--standalone",),
+        emit_lang=False,
+    ),
+    "epub": EmitSpec(
+        ext="epub",
+        # `epub3` with `--standalone --mathjax` produces an EPUB3
+        # that passes epubcheck. Full EPUB-A (DAISY ACE) validation
+        # — `accessibilityFeature` / `accessibilityHazard` Schema.org
+        # metadata — is queued for v0.0.5+.
+        pandoc_to="epub3",
+        extra_args=("--standalone", "--mathjax"),
+        emit_lang=True,
+    ),
+}
+
+
+SUPPORTED_FORMATS: tuple[str, ...] = tuple(FORMATS)
+
+
+# ── Shared emit core ────────────────────────────────────────────────────
+
+
+def _emit(
+    spec: EmitSpec,
+    tex_path: Path,
+    output_dir: Path,
+    doc_id: str,
+    title: str = "",
+    lang: str = "en-GB",
+    timeout: int = 60,
+    *,
+    fmt: str,
+) -> EmitResult:
+    """Shared pandoc invocation. Use `emit_html` / `emit_jats` / `emit_epub`.
+
+    Args:
+        spec: per-format settings (extension, writer, extra args, hook).
+        tex_path: path to the source `.tex` file.
+        output_dir: directory to write `<doc_id>.<spec.ext>` into.
+        doc_id: stable id used as the filename stem.
+        title: optional metadata title.
+        lang: BCP-47 language code (used when `spec.emit_lang` is True).
+        timeout: subprocess timeout in seconds.
+        fmt: stored on the returned `EmitResult.format`. Keyword-only
+            so callers can't get the order wrong.
+
+    Returns:
+        EmitResult with the output path + size + any pandoc stderr.
+
+    Raises:
+        PandocMissing: if pandoc is not installed.
+        subprocess.CalledProcessError: if Pandoc fails.
+    """
+    pandoc = _require_pandoc()
+    output_dir.mkdir(parents=True, exist_ok=True)
+    out_path = output_dir / f"{doc_id}.{spec.ext}"
+
+    cmd: list[str] = [pandoc, "--from=latex", f"--to={spec.pandoc_to}", *spec.extra_args]
+    if spec.emit_lang:
+        cmd.append(f"--metadata=lang:{lang}")
+    if title:
+        cmd.append(f"--metadata=title:{title}")
+    cmd.extend([f"--output={out_path}", str(tex_path)])
+
+    result = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
+    if result.returncode != 0:
+        raise subprocess.CalledProcessError(
+            result.returncode, cmd, output=result.stdout, stderr=result.stderr
+        )
+
+    if spec.postprocess is not None:
+        spec.postprocess(out_path, lang)
+
+    return EmitResult(
+        doc_id=doc_id,
+        format=fmt,
+        output_path=out_path,
+        bytes=out_path.stat().st_size,
+        stderr=result.stderr or "",
+    )
+
+
+# ── Public per-format wrappers ──────────────────────────────────────────
+
+
+def emit_html(
+    tex_path: Path,
+    output_dir: Path,
+    doc_id: str,
+    title: str = "",
+    lang: str = "en-GB",
+    timeout: int = 60,
+) -> EmitResult:
+    """Convert *tex_path* to standalone HTML5 in *output_dir*.
+
+    Uses Pandoc's `--to html5` with `--mathjax --section-divs
+    --standalone --lang` for WCAG-friendly output. Post-processes the
+    HTML to add a skip-to-main link, a generator comment, and a
+    `role="doc-toc"` ARIA hint on the table of contents.
+    """
+    return _emit(
+        FORMATS["html"],
+        tex_path,
+        output_dir,
+        doc_id,
+        title=title,
+        lang=lang,
+        timeout=timeout,
+        fmt="html",
+    )
 
 
 def emit_jats(
@@ -199,61 +298,25 @@ def emit_jats(
 ) -> EmitResult:
     """Convert *tex_path* to JATS XML (archiving DTD) in *output_dir*.
 
-    Pandoc's `jats_archiving` writer produces JATS 1.3 with the
-    archiving-and-interchange DTD — accepted by Crossref, PMC,
-    JATS4R, and most preprint servers. We do NOT call JATS4R
-    validation here (it's a separate, slow validator). Callers
-    that need strict JATS4R compliance should pipe the output to
-    `jats4r-validate` separately.
+    Produces JATS 1.3 via pandoc's `jats_archiving` writer — accepted
+    by Crossref, PMC, JATS4R, and most preprint servers. The upgrade
+    to JATS 1.4 (ANSI/NISO Z39.96-2024, the 2026 academic-archival
+    default) is backwards-compatible at the document level, so 1.3
+    output is accepted everywhere 1.4 is. Switch to the JATS 1.4
+    writer when pandoc ships it.
 
-    Note: **JATS 1.4** (ANSI/NISO Z39.96-2024) is the academic-
-    archival default as of 2026. Pandoc's `jats_archiving` writer
-    still emits JATS 1.3 as of pandoc 3.9; the upgrade to 1.4 is
-    backwards-compatible at the document level, so 1.3 output is
-    accepted everywhere 1.4 is. Track pandoc release notes for the
-    1.4 writer when it ships.
-
-    Args:
-        tex_path: path to the source `.tex` file.
-        output_dir: directory to write `<doc_id>.xml` into.
-        doc_id: stable id used as the filename stem.
-        title: optional metadata title.
-        timeout: subprocess timeout in seconds.
-
-    Returns:
-        EmitResult.
+    Callers that need strict JATS4R compliance should pipe the
+    output to `jats4r-validate` separately.
     """
-    pandoc = _require_pandoc()
-    output_dir.mkdir(parents=True, exist_ok=True)
-    out_path = output_dir / f"{doc_id}.xml"
-
-    cmd = [
-        pandoc,
-        "--from=latex",
-        "--to=jats_archiving",
-        "--standalone",
-        f"--output={out_path}",
-        str(tex_path),
-    ]
-    if title:
-        cmd.insert(-1, f"--metadata=title:{title}")
-
-    result = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
-    if result.returncode != 0:
-        raise subprocess.CalledProcessError(
-            result.returncode, cmd, output=result.stdout, stderr=result.stderr
-        )
-
-    return EmitResult(
-        doc_id=doc_id,
-        format="jats",
-        output_path=out_path,
-        bytes=out_path.stat().st_size,
-        stderr=result.stderr or "",
+    return _emit(
+        FORMATS["jats"],
+        tex_path,
+        output_dir,
+        doc_id,
+        title=title,
+        timeout=timeout,
+        fmt="jats",
     )
-
-
-# ── EPUB3 ───────────────────────────────────────────────────────────────
 
 
 def emit_epub(
@@ -269,64 +332,25 @@ def emit_epub(
     Uses Pandoc's `--to epub3` with `--standalone --mathjax` and an
     explicit `--metadata=lang:<bcp47>` so reading systems present the
     right language to TTS engines. Full EPUB-A (DAISY ACE) validation
-    is a separate Sprint 8 work item — this emitter targets EPUB3
-    structural compliance (the DAISY ACE prerequisites) but does NOT
-    yet inject the `accessibilityFeature` / `accessibilityHazard`
-    Schema.org metadata. epubcheck-clean output is the immediate
-    target; ACE-clean is Sprint 8.
-
-    Args:
-        tex_path: path to the source `.tex` file.
-        output_dir: directory to write `<doc_id>.epub` into.
-        doc_id: stable id used as the filename stem.
-        title: optional metadata title (used for the `<dc:title>` and
-            the reading-system navigation pane).
-        lang: BCP-47 language code (Schema.org accessibilityLang).
-        timeout: subprocess timeout in seconds.
-
-    Returns:
-        EmitResult with `.format == "epub"`.
-
-    Raises:
-        PandocMissing: if pandoc is not installed.
-        subprocess.CalledProcessError: if Pandoc fails.
+    is queued for v0.0.5+ — this emitter targets EPUB3 structural
+    compliance (the DAISY ACE prerequisites) but does NOT yet inject
+    the `accessibilityFeature` / `accessibilityHazard` Schema.org
+    metadata. epubcheck-clean output is the immediate target;
+    ACE-clean is queued.
     """
-    pandoc = _require_pandoc()
-    output_dir.mkdir(parents=True, exist_ok=True)
-    out_path = output_dir / f"{doc_id}.epub"
-
-    cmd = [
-        pandoc,
-        "--from=latex",
-        "--to=epub3",
-        "--standalone",
-        "--mathjax",
-        f"--metadata=lang:{lang}",
-        f"--output={out_path}",
-        str(tex_path),
-    ]
-    if title:
-        cmd.insert(-1, f"--metadata=title:{title}")
-
-    result = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
-    if result.returncode != 0:
-        raise subprocess.CalledProcessError(
-            result.returncode, cmd, output=result.stdout, stderr=result.stderr
-        )
-
-    return EmitResult(
-        doc_id=doc_id,
-        format="epub",
-        output_path=out_path,
-        bytes=out_path.stat().st_size,
-        stderr=result.stderr or "",
+    return _emit(
+        FORMATS["epub"],
+        tex_path,
+        output_dir,
+        doc_id,
+        title=title,
+        lang=lang,
+        timeout=timeout,
+        fmt="epub",
     )
 
 
 # ── Multi-format orchestration ──────────────────────────────────────────
-
-
-SUPPORTED_FORMATS = ("html", "jats", "epub")
 
 
 def emit_all(
@@ -354,14 +378,20 @@ def emit_all(
         success should call the individual emitters in a try/except.
     """
     requested = formats or list(SUPPORTED_FORMATS)
-    results = []
+    results: list[EmitResult] = []
     for fmt in requested:
-        if fmt == "html":
-            results.append(emit_html(tex_path, output_dir, doc_id, title=title, lang=lang))
-        elif fmt == "jats":
-            results.append(emit_jats(tex_path, output_dir, doc_id, title=title))
-        elif fmt == "epub":
-            results.append(emit_epub(tex_path, output_dir, doc_id, title=title, lang=lang))
-        else:
+        spec = FORMATS.get(fmt)
+        if spec is None:
             raise ValueError(f"Unknown emit format: {fmt!r} (expected one of {SUPPORTED_FORMATS})")
+        results.append(
+            _emit(
+                spec,
+                tex_path,
+                output_dir,
+                doc_id,
+                title=title,
+                lang=lang,
+                fmt=fmt,
+            )
+        )
     return results
