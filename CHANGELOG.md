@@ -5,6 +5,53 @@ are documented here. Format based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and
 [Conventional Commits](https://www.conventionalcommits.org/).
 
+## [0.0.5] — 2026-05-30
+
+Second slice of the deferred Q3.4 refactor. Lands the `Judge`
+protocol + pandoc emitter parameterisation. Same pattern as v0.0.4
+(extract → preserve back-compat surface → keep tests green).
+
+### Added — `Judge` protocol + `JUDGES` registry
+
+- New `inclusio.judge.Judge` runtime-checkable Protocol documenting
+  the shared shape every judge follows: `name`, `score(**inputs)`,
+  `score_with_llm(llm, **inputs)`.
+- New `inclusio.judge.JUDGES` dict mapping each judge's name to a
+  concrete instance — the single source of truth the CLI
+  dispatcher resolves through.
+- Three private judge classes (`_ATSJudge`, `_CitationsJudge`,
+  `_JDFitJudge`) implementing the protocol. Each is a thin
+  delegator over the existing module-level `score_*` functions,
+  which remain the public API.
+- `inclusio.cli.build.cmd_judge` now dispatches via `JUDGES.get(args.judge)`
+  instead of the hand-coded `if args.judge == …` ladder.
+  Net: ~30 lines saved + a single place to register a new judge.
+
+### Changed — `inclusio.emit.pandoc` parameterisation
+
+- The near-identical `emit_html` / `emit_jats` / `emit_epub`
+  functions now delegate to a shared `_emit(spec, ...)` core,
+  driven by a `FORMATS` table of `EmitSpec` dataclasses (ext,
+  pandoc writer, extra flags, lang toggle, optional postprocess
+  hook).
+- Public API is unchanged: `emit_html()`, `emit_jats()`,
+  `emit_epub()`, `emit_all()` all keep their existing signatures
+  and behaviour.
+- Adding a new format (Markdown, ODT, Org, …) is now adding one
+  row to `FORMATS` + a thin public wrapper.
+
+### Internal
+
+- 890 tests still pass; coverage **98.13 %** (gate 97 %);
+  docstrings **100 %** (235/235); ruff clean.
+
+### Deferred to v0.0.6 or v0.0.7
+
+- `cli/build.py` argparse split into per-command modules.
+- DAISY ACE EPUB validation.
+- Citation-judge retrieval mode (CiteGuard-style RAG).
+- `src/+data/ → fixtures/` rename.
+
 ## [0.0.4] — 2026-05-29
 
 First slice of the **Q3.4 internal refactor** flagged in v0.0.3.
