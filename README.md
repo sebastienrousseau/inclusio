@@ -1,6 +1,5 @@
 <p align="center">
-  <!-- TODO: publish inclusio.svg under https://kura.pro/inclusio/ -->
-  <img src="https://kura.pro/inclusio/images/logos/inclusio.svg" alt="Inclusio logo" width="128" />
+  <img src="https://cloudcdn.pro/inclusio/v1/logos/inclusio.svg" alt="Inclusio logo" width="128" />
 </p>
 
 <h1 align="center">Inclusio</h1>
