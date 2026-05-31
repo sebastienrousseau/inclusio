@@ -1,0 +1,53 @@
+name: Feature request
+description: Propose a new capability or surface.
+labels: ["type: feature", "status: triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use-case-first, please. Inclusio is opinionated; "*it would
+        be cool if*" tends to lose to "*here's the workflow I can't
+        complete today*".
+  - type: textarea
+    id: use-case
+    attributes:
+      label: The use case
+      description: What are you trying to do? What's blocking you today?
+      placeholder: |
+        I publish accessibility-audited research papers. Today, JATS
+        XML emission stops at JATS 1.3; PMC's submission portal will
+        reject anything older than 1.4 from 2027-Q1, so I need …
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: What would you add / change in Inclusio?
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Other approaches you've tried or considered.
+  - type: dropdown
+    id: surface
+    attributes:
+      label: Surface area
+      multiple: true
+      options:
+        - CLI (`inclusio …`)
+        - Python library (`from inclusio … import …`)
+        - MCP server (`inclusio-mcp`)
+        - LaTeX classes (`core/cls/*`)
+        - Documentation
+        - CI / release workflow
+        - Other
+  - type: checkboxes
+    id: scope
+    attributes:
+      label: Scope check
+      options:
+        - label: I've checked CHANGELOG `[Unreleased]` and existing issues
+        - label: I'm willing to contribute the implementation (PR welcome — see CONTRIBUTING.md)
