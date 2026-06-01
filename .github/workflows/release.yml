@@ -39,7 +39,7 @@ jobs:
           fetch-depth: 0   # full history for release-notes generator
 
       - name: Set up uv
-        uses: astral-sh/setup-uv@caf0cab7a618c569241d31dcd442f54681755d39  # v3
+        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b  # v8.1.0
         with:
           enable-cache: true
           # Match the glob used by engine-validation.yml so the action
@@ -70,7 +70,7 @@ jobs:
         #   Settings → Secrets and variables → Actions → Variables →
         #   set `SLSA_ATTESTATION_ENABLED=true`.
         if: vars.SLSA_ATTESTATION_ENABLED == 'true'
-        uses: actions/attest-build-provenance@e8998f949152b193b063cb0ec769d69d929409be  # v2
+        uses: actions/attest-build-provenance@a2bbfa25375fe432b6a289bc6b6cd05ecd0c4c32  # v4.1.0
         with:
           subject-path: |
             dist/*.tar.gz
