@@ -37,6 +37,17 @@
 \AtBeginDocument{\onehalfspacing}
 \raggedbottom
 
+%% ── titlesec defaults ──────────────────────────────────────────────────
+%% pub-base loads titlesec but provides no defaults; without these,
+%% calling the unstarred \section{...} from user TeX (or from the
+%% per-class tagged-PDF smoke tests) raises "Package titlesec Error:
+%% No format for this command." The patent class itself routes through
+%% \patentSection/\patentSubSection (starred), which dodges the
+%% requirement, but plain \section must work for downstream authors.
+\titleformat{\section}{\large\bfseries\MakeUppercase}{\thesection}{1em}{}
+\titleformat{\subsection}{\normalsize\bfseries}{\thesubsection}{1em}{}
+\titleformat{\subsubsection}{\normalsize\bfseries\itshape}{\thesubsubsection}{1em}{}
+
 %% ── Patent mode flags ──────────────────────────────────────────────────
 \newif\ifPatentOfficeMode
 \PatentOfficeModetrue
