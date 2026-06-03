@@ -3,12 +3,11 @@
 # See LICENSE file for details
 """Deep-merge data + overlay for CV / paper / patent variants.
 
-Content repositories that author with Inclusio (e.g. the
-companion `inclusio-private`) tend to grow CV / paper / patent
-variants quickly: an author may keep a base CV and tailor it for
-Initech, Globex, or a specific job description. Each variant
-historically ships as a fully-cloned YAML data file — sustainable
-at four variants, painful at ten.
+Content repositories that author with Inclusio tend to grow
+CV / paper / patent variants quickly: an author may keep a base
+CV and tailor it for a target employer or a specific job
+description. Each variant historically ships as a fully-cloned
+YAML data file — sustainable at four variants, painful at ten.
 
 This module supports the "shared template, overlay data" pattern.
 A tailored variant declares only the fields that differ from a base
