@@ -45,6 +45,16 @@
 
 \linespread{1.15}
 
+%% ── titlesec defaults ──────────────────────────────────────────────────
+%% pub-base loads titlesec but provides no defaults. Calling the
+%% unstarred \section{...} from user TeX (or from the per-class
+%% tagged-PDF smoke tests) raises "Package titlesec Error: No format
+%% for this command." pub-bio doesn't ship its own sectioning macros,
+%% so provide sensible defaults for downstream authors.
+\titleformat{\section}{\Large\bfseries}{\thesection}{1em}{}
+\titleformat{\subsection}{\large\bfseries}{\thesubsection}{1em}{}
+\titleformat{\subsubsection}{\normalsize\bfseries\itshape}{\thesubsubsection}{1em}{}
+
 %% ── Headers / footers ──────────────────────────────────────────────────
 \pagestyle{fancy}
 \fancyhf{}
