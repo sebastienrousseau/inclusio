@@ -317,17 +317,27 @@ def _artifact_subdir(doc_id, doc_config):
       src/faqs/...    -> faqs/
       src/guides/...  -> guides/
       (tailored)      -> jobs/
+
+    When a per-job document declares `job_folder: <slug>`, the output is
+    routed to `jobs/<slug>/` so each application's artefacts can be grouped
+    in their own folder rather than the flat `jobs/` directory.
     """
     if doc_config.get("tailored"):
-        return "jobs"
-    src = doc_config.get("src", "")
-    if src.startswith("src/"):
-        parts = src.split("/")
-        if len(parts) >= 2:
-            return parts[1]  # cvs, papers, patents, faqs, guides
-    if "build/rendered" in src or doc_config.get("description", "").startswith("Tailored"):
-        return "jobs"
-    return ""
+        subdir = "jobs"
+    else:
+        src = doc_config.get("src", "")
+        subdir = ""
+        if src.startswith("src/"):
+            parts = src.split("/")
+            if len(parts) >= 2:
+                subdir = parts[1]  # cvs, papers, patents, faqs, guides
+        elif "build/rendered" in src or doc_config.get("description", "").startswith("Tailored"):
+            subdir = "jobs"
+
+    job_folder = doc_config.get("job_folder")
+    if subdir == "jobs" and job_folder:
+        return f"jobs/{job_folder}"
+    return subdir
 
 
 def _discover_tailored(meta):
@@ -430,6 +440,57 @@ def _discover_tailored(meta):
     return tailored_docs
 
 
+def _expand_ats_pairs(meta):
+    """Synthesize ATS sibling document + template entries.
+
+    For every pub-cv document with `ats_pair: true`, add a sibling document
+    `<doc-id>-orc` (and matching templates entry) so the publisher emits
+    both the design and the ATS-optimised variant in one build call.
+    Convention-based: the sibling template is `<base>-orc.tex.j2` rendered
+    against the same YAML data file. Explicit per-doc registrations win:
+    if `<doc-id>-orc` is already in meta, the synthesised entry is skipped.
+
+    Returns a fresh meta dict when any expansion happens; otherwise returns
+    the original meta unchanged so callers that compare by identity
+    (e.g. mock assertions) continue to pass.
+    """
+    if not any(c.get("ats_pair") for c in meta.get("documents", {}).values()):
+        return meta
+
+    expanded = dict(meta)
+    documents = dict(expanded.get("documents", {}))
+    templates = dict(expanded.get("templates", {}))
+
+    for doc_id, config in list(documents.items()):
+        if not config.get("ats_pair"):
+            continue
+        if config.get("class") != "pub-cv":
+            continue
+        orc_id = f"{doc_id}-orc"
+        if orc_id in documents:
+            continue  # explicit registration wins
+
+        orc_config = dict(config)
+        orc_config.pop("ats_pair", None)
+        if config.get("src"):
+            # The rendered source path follows the doc_id naming convention.
+            orc_config["src"] = config["src"].replace(f"{doc_id}.tex", f"{orc_id}.tex")
+        # Mark the sibling so downstream consumers (tests, judges) can spot it.
+        orc_config["ats_orc_of"] = doc_id
+        documents[orc_id] = orc_config
+
+        if doc_id in templates and orc_id not in templates:
+            base_tmpl = dict(templates[doc_id])
+            template_name = base_tmpl.get("template", "")
+            if template_name.endswith(".tex.j2"):
+                base_tmpl["template"] = template_name[: -len(".tex.j2")] + "-orc.tex.j2"
+            templates[orc_id] = base_tmpl
+
+    expanded["documents"] = documents
+    expanded["templates"] = templates
+    return expanded
+
+
 def build_document(doc_id, doc_config, mode, meta, force=False):
     """Compile a single document."""
     src_path = CONTENT_ROOT / doc_config["src"]
@@ -439,7 +500,7 @@ def build_document(doc_id, doc_config, mode, meta, force=False):
         try:
             render_module = _import_render_module()
             render_module.render_document(
-                doc_id, fmt="latex", build_mode=mode, content_root=CONTENT_ROOT
+                doc_id, fmt="latex", build_mode=mode, content_root=CONTENT_ROOT, meta=meta
             )
             src_path = RENDERED_DIR / f"{doc_id}.tex"
             original_src_dir = src_path.parent
@@ -570,6 +631,10 @@ def cmd_build(args, meta):
     force = getattr(args, "force", False)
     jobs = getattr(args, "jobs", 1)
     jobs_only = getattr(args, "jobs_only", False)
+
+    # Expand ats_pair: true entries into synthesised ORC siblings so the
+    # publisher emits both variants from a single registration.
+    meta = _expand_ats_pairs(meta)
     documents = meta.get("documents", {})
 
     # Promote supported briefs from data/jobs/ into data/tailored/
@@ -595,6 +660,12 @@ def cmd_build(args, meta):
             print(f"Available: {', '.join(all_documents.keys())}", file=sys.stderr)
             sys.exit(1)
         docs_to_build = {args.doc: all_documents[args.doc]}
+        # Include the synthesised ATS sibling automatically when the user
+        # selects only the design doc (so a single --doc call still emits
+        # both PDFs).
+        orc_id = f"{args.doc}-orc"
+        if orc_id in all_documents and all_documents[orc_id].get("ats_orc_of") == args.doc:
+            docs_to_build[orc_id] = all_documents[orc_id]
     else:
         docs_to_build = all_documents
 
