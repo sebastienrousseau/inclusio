@@ -110,8 +110,12 @@
 \newcommand{\setCodeLanguage}[1]{\lstset{language=#1}}
 
 %% ── List settings ───────────────────────────────────────────────────────
+%% leftmargin=* (enumitem's "compute from labelwidth + labelsep")
+%% conflicts with the sec-latex testphase + tagpdf list tagging in
+%% TeX Live 2026 — replaced with an explicit length so the lists
+%% tag reliably under the new kernel sectioning interface.
 \setlist{
-  leftmargin=*,
+  leftmargin=2em,
   itemsep=0.5ex,
   parsep=0.25ex,
   listparindent=0pt,

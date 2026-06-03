@@ -96,6 +96,18 @@
 \RequirePackage{array}
 \RequirePackage{titlesec}
 
+%% ── Default titleformat ────────────────────────────────────────────────
+%% titlesec requires an explicit \titleformat declaration for each
+%% sectioning command it intercepts; without one, the LaTeX kernel's
+%% sec-latex testphase raises "Package titlesec Error: No format for
+%% this command." pub-base provides minimal defaults that downstream
+%% classes can override; subclasses that already supply their own
+%% \titleformat (pub-cv, pub-faq, pub-guide, pub-bio, pub-patent) win
+%% via LaTeX's last-declaration-wins semantics.
+\titleformat{\section}{\Large\bfseries}{\thesection}{1em}{}
+\titleformat{\subsection}{\large\bfseries}{\thesubsection}{1em}{}
+\titleformat{\subsubsection}{\normalsize\bfseries\itshape}{\thesubsubsection}{1em}{}
+
 %% ── tagpdf version advisory ────────────────────────────────────────────
 %% tagpdf v1.0b (2026-04-24) is the first non-beta candidate release; it
 %% gates ~1000 extension packages as accessibility-tested. Earlier 0.x

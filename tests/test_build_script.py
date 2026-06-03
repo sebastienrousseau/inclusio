@@ -336,6 +336,32 @@ class TestCmdBuild:
     @patch("build.build_document", return_value=True)
     @patch("build.check_tools")
     @patch("build._sync_jobs_to_tailored")
+    @patch("build._discover_tailored", return_value={})
+    def test_build_doc_with_ats_pair_includes_orc_sibling(
+        self, mock_discover, mock_sync, mock_check, mock_build
+    ):
+        """`--doc design-id` on an ats_pair-flagged doc auto-includes -orc."""
+        meta = {
+            "documents": {
+                "cv-bny": {
+                    "class": "pub-cv",
+                    "src": "build/.cache/rendered/cv-bny.tex",
+                    "ats_pair": True,
+                    "jobs_only": True,
+                }
+            },
+            "templates": {
+                "cv-bny": {"template": "cv-bny.tex.j2", "data": "cv-bny.yaml", "type": "cv"}
+            },
+        }
+        args = Namespace(mode="draft", doc="cv-bny", jobs_only=False)
+        build.cmd_build(args, meta)
+        built_ids = [call.args[0] for call in mock_build.call_args_list]
+        assert built_ids == ["cv-bny", "cv-bny-orc"]
+
+    @patch("build.build_document", return_value=True)
+    @patch("build.check_tools")
+    @patch("build._sync_jobs_to_tailored")
     @patch("build._discover_tailored", return_value={"job-a": {"tailored": True, "src": "x", "class": "pub-cv"}})
     def test_build_jobs_only_filters_regular_documents(
         self, mock_discover, mock_sync, mock_check, mock_build
@@ -1893,6 +1919,95 @@ class TestArtifactSubdir:
     def test_empty_src(self):
         config = {}
         assert build._artifact_subdir("doc", config) == ""
+
+    def test_job_folder_routes_under_jobs(self):
+        """A tailored doc with job_folder lands under jobs/<folder>/."""
+        config = {"tailored": True, "job_folder": "2026-06-Acme"}
+        assert build._artifact_subdir("my-cv", config) == "jobs/2026-06-Acme"
+
+    def test_job_folder_ignored_outside_jobs(self):
+        """job_folder is only meaningful for per-job documents (subdir==jobs).
+        For a paper or canonical CV it must NOT mutate the output path."""
+        config = {"src": "src/papers/foo.tex", "job_folder": "ignored"}
+        assert build._artifact_subdir("doc", config) == "papers"
+
+    def test_job_folder_with_rendered_src(self):
+        """Tailored docs that landed in jobs via the rendered-path branch
+        still honour job_folder."""
+        config = {"src": "build/rendered/my-cv.tex", "job_folder": "2026-06-Globex"}
+        assert build._artifact_subdir("my-cv", config) == "jobs/2026-06-Globex"
+
+
+class TestExpandAtsPairs:
+    def _base_meta(self):
+        return {
+            "documents": {
+                "cv-design": {
+                    "class": "pub-cv",
+                    "src": "build/.cache/rendered/cv-design.tex",
+                    "ats_pair": True,
+                    "render_from_template": True,
+                    "jobs_only": True,
+                }
+            },
+            "templates": {
+                "cv-design": {
+                    "template": "cv-design.tex.j2",
+                    "data": "cv-design.yaml",
+                    "type": "cv",
+                }
+            },
+        }
+
+    def test_synthesises_orc_document(self):
+        meta = self._base_meta()
+        expanded = build._expand_ats_pairs(meta)
+        assert "cv-design-orc" in expanded["documents"]
+        orc = expanded["documents"]["cv-design-orc"]
+        assert orc["class"] == "pub-cv"
+        assert orc["src"] == "build/.cache/rendered/cv-design-orc.tex"
+        assert orc["ats_orc_of"] == "cv-design"
+        assert "ats_pair" not in orc  # not propagated to the sibling
+
+    def test_synthesises_orc_template_entry(self):
+        meta = self._base_meta()
+        expanded = build._expand_ats_pairs(meta)
+        assert "cv-design-orc" in expanded["templates"]
+        assert expanded["templates"]["cv-design-orc"]["template"] == "cv-design-orc.tex.j2"
+        assert expanded["templates"]["cv-design-orc"]["data"] == "cv-design.yaml"
+
+    def test_skips_when_orc_already_registered(self):
+        """Explicit registration of the sibling wins; we don't overwrite."""
+        meta = self._base_meta()
+        meta["documents"]["cv-design-orc"] = {"class": "pub-cv", "src": "custom.tex"}
+        expanded = build._expand_ats_pairs(meta)
+        assert expanded["documents"]["cv-design-orc"]["src"] == "custom.tex"
+        assert "ats_orc_of" not in expanded["documents"]["cv-design-orc"]
+
+    def test_ignores_non_cv_documents(self):
+        """ats_pair on a non-pub-cv doc is a no-op."""
+        meta = {
+            "documents": {
+                "paper": {"class": "pub-paper", "src": "src/papers/p.tex", "ats_pair": True}
+            },
+            "templates": {},
+        }
+        expanded = build._expand_ats_pairs(meta)
+        assert "paper-orc" not in expanded["documents"]
+
+    def test_no_op_without_ats_pair(self):
+        meta = {
+            "documents": {"cv": {"class": "pub-cv", "src": "src/cvs/cv.tex"}},
+            "templates": {},
+        }
+        expanded = build._expand_ats_pairs(meta)
+        assert list(expanded["documents"].keys()) == ["cv"]
+
+    def test_does_not_mutate_input(self):
+        meta = self._base_meta()
+        build._expand_ats_pairs(meta)
+        assert "cv-design-orc" not in meta["documents"]
+        assert "cv-design-orc" not in meta["templates"]
 
 
 class TestDiscoverTailored:
