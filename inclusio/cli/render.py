@@ -594,25 +594,30 @@ def _generate_xmpdata(doc_id, data, meta, rendered_dir=None):
     return xmp_path
 
 
-def render_document(doc_id, fmt="latex", build_mode="draft", content_root=None):
+def render_document(doc_id, fmt="latex", build_mode="draft", content_root=None, meta=None):
     """Look up a template in meta.yaml and render it.
 
     Writes output to build/rendered/{doc_id}.{ext}
 
     When *content_root* is provided, all content paths (data/, templates/,
     build/) resolve from it instead of the module-level defaults.
+
+    When *meta* is provided, it overrides the disk-loaded meta.yaml so the
+    caller can inject synthesised template entries (e.g. the ATS sibling
+    expanded by build's `ats_pair` flag) without writing to disk.
     """
     root = Path(content_root).resolve() if content_root else CONTENT_ROOT
     meta_file = root / "data" / "meta.yaml"
     template_dir = root / "templates"
     rendered_dir = root / "build" / ".cache" / "rendered"
 
-    if not meta_file.exists():
-        print(f"ERROR: {meta_file} not found", file=sys.stderr)
-        sys.exit(1)
+    if meta is None:
+        if not meta_file.exists():
+            print(f"ERROR: {meta_file} not found", file=sys.stderr)
+            sys.exit(1)
 
-    with open(meta_file) as f:
-        meta = yaml.safe_load(f)
+        with open(meta_file) as f:
+            meta = yaml.safe_load(f)
 
     templates = meta.get("templates", {})
     if doc_id not in templates:
