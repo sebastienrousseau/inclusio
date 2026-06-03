@@ -24,12 +24,12 @@ def _make_cv_data() -> dict:
         "contact": {"phone": "+44 0000", "email": "jane@example.com"},
         "executive_profile": "Builds payments rails for tier-1 banks.",
         "achievements": [
-            "Shipped Citi Payments API in 9 months",
+            "Shipped Acme Payments API in 9 months",
             r"Closed \$5M ARR in year one",
         ],
         "experience": [
             {
-                "company": "Citi",
+                "company": "Acme Bank",
                 "title": "VP, Payments",
                 "location": "London",
                 "dates": "2022--2026",
@@ -123,7 +123,7 @@ def test_render_text_cv_section_order_is_canonical():
 
 def test_render_text_cv_uses_hyphen_bullets():
     out = render.render_text(_make_cv_data(), "cv")
-    assert "- Shipped Citi Payments API" in out
+    assert "- Shipped Acme Payments API" in out
     assert "  - Led 12 person team" in out
 
 
