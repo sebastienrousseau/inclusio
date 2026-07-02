@@ -5,6 +5,59 @@ are documented here. Format based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and
 [Conventional Commits](https://www.conventionalcommits.org/).
 
+## [0.0.6] — 2026-07-02
+
+The **MCP-discoverability** cut. Registers `inclusio-mcp` with the
+official Model Context Protocol Registry, adds MCP-spec conformance
+CI, and ships a Glama directory manifest. No functional changes to
+the publishing engine — same accessibility surface as v0.0.5.
+
+### Added
+
+- **Official MCP Registry integration.** The embedded MCP server
+  (installed via `pip install 'inclusio[mcp]'`) is now registered
+  with the official Model Context Protocol Registry
+  (`registry.modelcontextprotocol.io`) as
+  `io.github.sebastienrousseau/inclusio-mcp`. A new `server.json`
+  at the repo root provides the registry metadata (PyPI package
+  identifier `inclusio`, stdio transport), and the README carries
+  an `mcp-name: io.github.sebastienrousseau/inclusio-mcp` marker
+  used by the registry to verify PyPI package ownership.
+  Discoverable in Claude Desktop's built-in "Add server" catalog
+  once the registry entry is live.
+- **Auto-publish workflow**
+  (`.github/workflows/publish-mcp.yml`) — authenticates to the MCP
+  Registry via GitHub OIDC (no secrets required) on every
+  `v*.*.*` tag push, syncs the tag version into `server.json`,
+  and runs `mcp-publisher publish`. Registry metadata now stays
+  in lockstep with each PyPI release automatically.
+- **Protocol conformance CI**
+  (`.github/workflows/mcp-inspect.yml`) — runs
+  `@modelcontextprotocol/inspector --cli` against `tools/list`
+  on every push and PR that touches the MCP server code
+  (`inclusio/mcp/**`). Path-filtered to keep the CI budget bounded.
+- **Glama directory manifest** (`glama.json`) — Glama listing under
+  the `productivity` category with accessibility, publishing, and
+  PDF conformance tags.
+- **Suite discoverability.** The README now cross-links sibling
+  MCP servers by the same author — `noyalib-mcp`, `rlg-mcp`, and
+  the four ISO 20022 banking MCP servers (`pain001-mcp`,
+  `bankstatementparser-mcp`, `camt053-mcp`, `acmt001-mcp`) — so
+  agents discovering one server surface the others.
+
+### Changed
+
+- **Package version** bumped to `0.0.6` for the MCP registry cut.
+- GitHub repository topics extended with `mcp-server` (repo already
+  had `mcp` and `model-context-protocol`).
+
+### No functional / API changes
+
+- The accessibility publishing engine is unchanged from `0.0.5`.
+  Same `Judge` protocol, same pandoc emitter parameterisation, same
+  PDF/UA-2 + WTPDF + PDF/A-4f triple-conformance surface. This
+  release is metadata, CI, and discoverability only.
+
 ## [0.0.5] — 2026-05-30
 
 Second slice of the deferred Q3.4 refactor. Lands the `Judge`

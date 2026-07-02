@@ -1,0 +1,42 @@
+{
+  "$schema": "https://glama.ai/api/mcp/v1/schemas/glama.json",
+  "maintainers": ["sebastienrousseau"],
+  "title": "inclusio-mcp",
+  "display_name": "Inclusio MCP",
+  "description": "Model Context Protocol server for the Inclusio accessibility-first LaTeX publishing engine. Exposes tools for tagged-PDF generation (PDF/UA-2 + WTPDF + PDF/A-4f triple-conformance), multi-format emission (HTML5 / JATS / EPUB3), C2PA + PAdES + SLSA provenance, LLM-augmented accessibility judges (ATS, citations, JD-fit). Requires `pip install 'inclusio[mcp]'`.",
+  "version": "0.0.6",
+  "repository": "https://github.com/sebastienrousseau/inclusio",
+  "homepage": "https://github.com/sebastienrousseau/inclusio",
+  "license": "MIT",
+  "language": "Python",
+  "runtime": "python",
+  "categories": ["productivity"],
+  "tags": [
+    "accessibility",
+    "pdf",
+    "pdf-ua",
+    "pdf-ua-2",
+    "wtpdf",
+    "pdf-a",
+    "tagged-pdf",
+    "latex",
+    "publishing",
+    "epub",
+    "jats",
+    "html5",
+    "c2pa",
+    "pades",
+    "slsa",
+    "provenance",
+    "wcag",
+    "eaa"
+  ],
+  "mcpServers": {
+    "inclusio": {
+      "command": "inclusio-mcp"
+    }
+  },
+  "installation": {
+    "pip": "pip install 'inclusio[mcp]'"
+  }
+}
