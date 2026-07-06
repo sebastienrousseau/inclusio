@@ -12,7 +12,7 @@ body:
     attributes:
       label: Inclusio version
       description: Output of `inclusio --version` or `pip show inclusio | grep Version`.
-      placeholder: "0.0.5"
+      placeholder: "0.0.6"
     validations:
       required: true
   - type: input

@@ -297,6 +297,29 @@ requires `Lint (ruff)` + `Public Engine Checks (py3.11 / 3.12 /
 
 Report vulnerabilities per [`SECURITY.md`](./SECURITY.md).
 
+## Related MCP Servers
+
+Sibling MCP servers by the same author — each targets a different agent workflow:
+
+| Server | Purpose |
+|---|---|
+| [`noyalib-mcp`](https://github.com/sebastienrousseau/noyalib) | Lossless YAML 1.2 parsing, formatting & validation (Rust) |
+| [`rlg-mcp`](https://github.com/sebastienrousseau/rlg) | RustLogs log streams for on-call / SRE agent workflows |
+| [`pain001-mcp`](https://github.com/sebastienrousseau/pain001-mcp) | Generate & validate ISO 20022 pain.001 payment initiation files |
+| [`bankstatementparser-mcp`](https://github.com/sebastienrousseau/bankstatementparser-mcp) | Parse bank statements (BAI2, MT940/MT942, CAMT.053, OFX, CSV) |
+| [`camt053-mcp`](https://github.com/sebastienrousseau/camt053-mcp) | Parse & reconcile ISO 20022 camt.053 bank-to-customer statements |
+| [`acmt001-mcp`](https://github.com/sebastienrousseau/acmt001-mcp) | Generate & validate ISO 20022 acmt.001 account management messages |
+
+---
+
+## MCP Registry
+
+`mcp-name: io.github.sebastienrousseau/inclusio-mcp`
+
+Install the MCP server with `pip install 'inclusio[mcp]'` (the `mcp` extra pulls in `mcp[cli]>=1.27.0`). Run with `inclusio-mcp` — stdio transport, exposes accessibility-publishing tools to Claude Desktop, Cursor, and other MCP clients.
+
+---
+
 ## License
 
 [MIT](./LICENSE). © 2026 Sebastien Rousseau.
