@@ -1,0 +1,57 @@
+# syntax=docker/dockerfile:1.7
+# Dockerfile.mcp — Model Context Protocol server image for inclusio.
+#
+# Runs `inclusio-mcp` over stdio so an MCP client (Claude Desktop, Cursor,
+# agents) — and Glama's automated inspector — can discover and call the
+# accessibility tools without a local Python toolchain:
+#
+#   docker run -i --rm inclusio-mcp
+#
+# This is a slim image: it starts the server and serves tools/list. Tools
+# that shell out to the TeX / veraPDF stack at call time (render, audit_pdf)
+# need those system binaries present; see the root Dockerfile for the full
+# LaTeX build environment.
+
+FROM python:3.12-slim AS builder
+
+WORKDIR /build
+
+ENV PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1
+
+# pyproject carries readme/metadata, so the whole source tree is needed to
+# resolve and build the package with its [mcp] extra.
+COPY . .
+
+RUN python -m venv /opt/venv \
+    && /opt/venv/bin/pip install --upgrade pip \
+    && /opt/venv/bin/pip install '.[mcp]'
+
+
+FROM python:3.12-slim
+
+LABEL org.opencontainers.image.title="inclusio-mcp" \
+      org.opencontainers.image.description="Model Context Protocol server for the Inclusio accessibility-first publishing engine." \
+      org.opencontainers.image.source="https://github.com/sebastienrousseau/inclusio" \
+      org.opencontainers.image.licenses="MIT"
+
+# Non-root user (MCP clients launch the container with stdio; no extra
+# privileges needed).
+RUN groupadd --system mcp && useradd --system --gid mcp --home /home/mcp mcp \
+    && mkdir -p /home/mcp \
+    && chown -R mcp:mcp /home/mcp
+
+COPY --from=builder /opt/venv /opt/venv
+ENV PATH=/opt/venv/bin:$PATH \
+    PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1
+
+USER mcp
+WORKDIR /home/mcp
+
+# A non-zero exit here means an import / dependency mismatch; the MCP
+# client will see it before the first tool call.
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD python -c "import inclusio.mcp.server" || exit 1
+
+ENTRYPOINT ["inclusio-mcp"]
