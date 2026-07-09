@@ -16,8 +16,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     pandoc \
     && rm -rf /var/lib/apt/lists/*
 
-# Python packages for build orchestration + templating
-RUN pip3 install --no-cache-dir jinja2
+# Python packages for build orchestration + templating.
+# The texlive base ships an externally-managed Python (PEP 668), so this
+# system-wide install needs an explicit override.
+RUN pip3 install --no-cache-dir --break-system-packages jinja2
 
 # Mermaid CLI for diagram generation
 RUN npm install -g @mermaid-js/mermaid-cli
