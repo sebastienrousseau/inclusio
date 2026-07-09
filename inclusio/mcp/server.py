@@ -33,8 +33,10 @@ from typing import Any
 # the `mcp` extra.
 try:
     from mcp.server.fastmcp import FastMCP
+    from mcp.types import ToolAnnotations
 except ImportError:  # pragma: no cover - exercised by test_mcp_optional_import
     FastMCP = None  # type: ignore[assignment]
+    ToolAnnotations = None  # type: ignore[assignment]
 
 from inclusio.cli import audit as audit_mod
 from inclusio.cli import build as build_mod
@@ -159,6 +161,32 @@ def create_server() -> Any:
     if FastMCP is None:  # pragma: no cover - exercised only without `[mcp]` extra
         raise RuntimeError("FastMCP is not installed. Install with: pip install 'inclusio[mcp]'")
 
+    # ── MCP tool annotations ────────────────────────────────────────────
+    # Behaviour hints so MCP clients (and the Glama quality grader) can
+    # reason about safety, caching, and auto-approval without executing a
+    # tool. Classified per each tool's ACTUAL behaviour:
+    #   * ``_FS_READ`` — read-only, idempotent, but reads a caller-supplied
+    #     path or the configurable content root (``INCLUSIO_CONTENT_DIR``),
+    #     so ``openWorldHint=True``. ``audit_pdf`` also shells out to the
+    #     external ``verapdf`` binary read-only; it never writes.
+    #   * ``_WRITE`` — not read-only: ``render`` writes a rendered artifact
+    #     into ``build/.cache/rendered/``. It is non-destructive (it only
+    #     regenerates a derived cache file, never mutating source or
+    #     ``data/meta.yaml``) and idempotent (identical inputs reproduce the
+    #     same output bytes).
+    _FS_READ = ToolAnnotations(
+        readOnlyHint=True,
+        destructiveHint=False,
+        idempotentHint=True,
+        openWorldHint=True,
+    )
+    _WRITE = ToolAnnotations(
+        readOnlyHint=False,
+        destructiveHint=False,
+        idempotentHint=True,
+        openWorldHint=True,
+    )
+
     app = FastMCP(
         "inclusio",
         instructions=(
@@ -170,18 +198,32 @@ def create_server() -> Any:
 
     # ── Tools ───────────────────────────────────────────────────────────
 
-    @app.tool()
+    @app.tool(title="List registered documents", annotations=_FS_READ)
     def list_docs() -> list[dict[str, Any]]:
-        """List every document registered in data/meta.yaml.
+        """List every document registered in data/meta.yaml with its metadata.
+
+        Use this first to discover the ``doc_id`` values and document
+        classes available before calling ``render`` or ``audit_pdf``. For
+        just the document count (a connectivity probe) call ``doc_count``
+        instead; to read the raw manifest text use the ``inclusio://meta``
+        resource. Reads ``data/meta.yaml`` under ``INCLUSIO_CONTENT_DIR``
+        (or the packaged content root); it writes nothing.
 
         Returns one dict per document with id, class, src, title, and
         any `pdf_a` / `note` flags. Empty list when no manifest exists.
         """
         return _list_docs_impl()
 
-    @app.tool()
+    @app.tool(title="Audit PDF accessibility (veraPDF)", annotations=_FS_READ)
     def audit_pdf(target: str = "", strict: bool = False) -> dict[str, Any]:
-        """Run veraPDF over a single PDF or every PDF under build/.
+        """Audit built PDFs for accessibility conformance with veraPDF.
+
+        Use this to check whether a rendered PDF meets PDF/UA-2, WTPDF, and
+        PDF/A-4f before publishing; it shells out to ``verapdf`` read-only
+        and never modifies the PDF or the manifest. To produce a document's
+        source first call ``render``; to see which documents exist call
+        ``list_docs``. This inspects existing PDFs only — it does not build
+        them.
 
         Args:
             target: PDF path or directory. Defaults to `build/` under
@@ -196,9 +238,17 @@ def create_server() -> Any:
         """
         return _audit_pdf_impl(target, strict)
 
-    @app.tool()
+    @app.tool(title="Render document to a file", annotations=_WRITE)
     def render(doc_id: str, fmt: str = "latex", mode: str = "draft") -> dict[str, Any]:
-        """Render a registered template-driven document.
+        """Render a registered template-driven document to a file on disk.
+
+        Use this to materialise a document's source (LaTeX, Markdown, JSON,
+        or text) into ``build/.cache/rendered/`` before compiling or
+        auditing it. This writes the rendered output file but never mutates
+        ``data/meta.yaml``. Discover valid ``doc_id`` values with
+        ``list_docs`` first; audit the resulting PDF afterwards with
+        ``audit_pdf``. This is the only write tool on this server — the
+        others are read-only.
 
         Args:
             doc_id: registered template id (see `list_docs`).
@@ -209,9 +259,14 @@ def create_server() -> Any:
         """
         return _render_impl(doc_id, fmt, mode)
 
-    @app.tool()
+    @app.tool(title="Count registered documents", annotations=_FS_READ)
     def doc_count() -> int:
-        """Return the number of documents registered in data/meta.yaml.
+        """Count the documents registered in data/meta.yaml.
+
+        Use this as a cheap connectivity/health probe to confirm the server
+        sees a valid manifest without transferring the full document list.
+        When you need each document's id, class, and flags, call
+        ``list_docs`` instead.
 
         Cheap probe for clients that just want to verify connectivity
         and that the engine sees a valid manifest.
@@ -220,12 +275,20 @@ def create_server() -> Any:
 
     # ── Resources ───────────────────────────────────────────────────────
 
-    @app.resource("inclusio://meta", mime_type="text/yaml")
+    @app.resource(
+        "inclusio://meta",
+        mime_type="text/yaml",
+        title="Project manifest (meta.yaml)",
+    )
     def meta_resource() -> str:
         """Return the raw text of data/meta.yaml (project manifest)."""
         return _meta_resource_impl()
 
-    @app.resource("inclusio://audit/latest", mime_type="application/json")
+    @app.resource(
+        "inclusio://audit/latest",
+        mime_type="application/json",
+        title="Latest audit report",
+    )
     def audit_latest_resource() -> str:
         """Return the last audit report JSON (build/.audit/latest.json).
 
@@ -233,7 +296,11 @@ def create_server() -> Any:
         """
         return _audit_latest_resource_impl()
 
-    @app.resource("inclusio://version", mime_type="application/json")
+    @app.resource(
+        "inclusio://version",
+        mime_type="application/json",
+        title="Engine version card",
+    )
     def version_resource() -> str:
         """Return the engine version and MCP Server Card metadata."""
         return _version_resource_impl()
