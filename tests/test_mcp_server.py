@@ -231,6 +231,49 @@ def test_version_resource_returns_engine_card(content_root):
     assert payload["mcp_spec"] == "0.1"
 
 
+# ── Closed-set parameter enums ─────────────────────────────────────────
+
+
+def test_format_enum_values_derive_from_ext_map():
+    """The format enum is derived from the single runtime source of truth
+    (`_RENDER_EXT_MAP`) so schema and runtime lookup cannot drift."""
+    assert mcp_server._FORMAT_VALUES == sorted(mcp_server._RENDER_EXT_MAP)
+    assert mcp_server._FORMAT_VALUES == ["json", "latex", "markdown", "text"]
+    # Every advertised format must have a runtime extension.
+    for fmt in mcp_server._FORMAT_VALUES:
+        assert fmt in mcp_server._RENDER_EXT_MAP
+
+
+def test_mode_enum_values():
+    assert mcp_server._MODE_VALUES == ["camera-ready", "draft", "submission"]
+
+
+def test_render_tool_schema_exposes_format_and_mode_enums(content_root):
+    """The rolled-out enum must surface as JSON-schema `enum` metadata on
+    the render tool's input schema (not just in the description)."""
+    app = mcp_server.create_server()
+    import asyncio
+
+    tools = asyncio.run(app.list_tools())
+    render = next(t for t in tools if t.name == "render")
+    props = render.inputSchema["properties"]
+    assert props["fmt"]["enum"] == ["json", "latex", "markdown", "text"]
+    assert props["mode"]["enum"] == ["camera-ready", "draft", "submission"]
+    # Defaults preserved through the alias swap.
+    assert props["fmt"]["default"] == "latex"
+    assert props["mode"]["default"] == "draft"
+    # The "must be exactly one of" sentence is folded into the description.
+    assert "Must be exactly one of" in props["fmt"]["description"]
+
+
+def test_render_runtime_guard_rejects_unknown_format(content_root, monkeypatch):
+    """Enum is schema-only; the runtime lookup remains the authority and
+    still raises on a format outside the closed set."""
+    monkeypatch.setattr(mcp_server.render_mod, "render_document", lambda *a, **k: None)
+    with pytest.raises(KeyError):
+        mcp_server._render_impl("cv", fmt="pdf", mode="draft")
+
+
 # ── _engine_version ────────────────────────────────────────────────────
 
 
@@ -275,6 +318,33 @@ def test_list_docs_impl_returns_manifest_records(content_root):
 def test_list_docs_impl_returns_empty_without_manifest(tmp_path, monkeypatch):
     monkeypatch.setenv("INCLUSIO_CONTENT_DIR", str(tmp_path))
     assert mcp_server._list_docs_impl() == []
+
+
+def test_list_docs_impl_coerces_non_dict_config(tmp_path, monkeypatch):
+    """A document entry whose config isn't a mapping (e.g. a bare string
+    or null in meta.yaml) must not crash — it falls back to empty defaults
+    with the title defaulting to the doc id."""
+    (tmp_path / "data").mkdir()
+    (tmp_path / "data" / "meta.yaml").write_text(
+        "documents:\n"
+        "  broken: just-a-string\n"
+        "  nulled:\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("INCLUSIO_CONTENT_DIR", str(tmp_path))
+    docs = mcp_server._list_docs_impl()
+    by_id = {d["id"]: d for d in docs}
+    assert set(by_id) == {"broken", "nulled"}
+    # Non-dict config → every field falls back to its default.
+    assert by_id["broken"] == {
+        "id": "broken",
+        "class": "",
+        "src": "",
+        "title": "broken",  # title defaults to the doc id
+        "pdf_a": None,
+        "note": None,
+    }
+    assert by_id["nulled"]["title"] == "nulled"
 
 
 def test_doc_count_impl(content_root):

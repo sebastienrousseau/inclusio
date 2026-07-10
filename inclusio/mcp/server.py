@@ -44,6 +44,59 @@ from inclusio.cli import audit as audit_mod
 from inclusio.cli import build as build_mod
 from inclusio.cli import render as render_mod
 
+# ── Closed-set parameter enums ─────────────────────────────────────────
+# Every MCP tool parameter whose valid values are a fixed, enumerable set
+# gets an Annotated alias here so the enum lives in the tool schema (and
+# an MCP client can validate before dispatch). The enum is schema metadata
+# only — the runtime guards below (the ``_RENDER_EXT_MAP`` lookup) stay the
+# authority. Values are derived from a single module-level source of truth
+# so the schema and the runtime lookup can never drift apart.
+
+# Source of truth for render output formats: the same extension map
+# ``_render_impl`` uses at runtime. The engine's ``render`` module only
+# exposes these as local argparse ``choices`` / a local dict, so the MCP
+# surface owns its own canonical copy here and derives both the enum and
+# the runtime lookup from it.
+_RENDER_EXT_MAP: dict[str, str] = {
+    "latex": "tex",
+    "markdown": "md",
+    "json": "json",
+    "text": "txt",
+}
+_FORMAT_VALUES: list[str] = sorted(_RENDER_EXT_MAP)
+_FORMAT_LIST = ", ".join(f"'{v}'" for v in _FORMAT_VALUES)
+
+# Render build modes — the closed set the engine's `render`/`build` CLIs
+# accept as `--mode` choices. Not exposed as an importable constant, so
+# mirrored here as the MCP surface's canonical copy.
+_MODE_VALUES: list[str] = sorted({"draft", "submission", "camera-ready"})
+_MODE_LIST = ", ".join(f"'{v}'" for v in _MODE_VALUES)
+
+if Field is not None:
+    _RenderFormat = Annotated[
+        str,
+        Field(
+            description=(
+                "Output format the document is rendered to. Must be exactly "
+                f"one of: {_FORMAT_LIST} (see `render`'s docstring / `list_docs`)."
+            ),
+            json_schema_extra={"enum": _FORMAT_VALUES},
+        ),
+    ]
+    _RenderMode = Annotated[
+        str,
+        Field(
+            description=(
+                "Build mode / profile applied when rendering. Must be exactly "
+                f"one of: {_MODE_LIST}."
+            ),
+            json_schema_extra={"enum": _MODE_VALUES},
+        ),
+    ]
+else:  # pragma: no cover - only when the optional `mcp` extra is absent
+    _RenderFormat = str  # type: ignore[misc,assignment]
+    _RenderMode = str  # type: ignore[misc,assignment]
+
 
 def _content_root() -> Path:
     """Resolve the content root (INCLUSIO_CONTENT_DIR or the package root)."""
@@ -108,7 +161,7 @@ def _render_impl(doc_id: str, fmt: str = "latex", mode: str = "draft") -> dict[s
     """Render a registered template-driven document."""
     root = _content_root()
     render_mod.render_document(doc_id, fmt=fmt, build_mode=mode, content_root=root)
-    ext = {"latex": "tex", "markdown": "md", "json": "json", "text": "txt"}[fmt]
+    ext = _RENDER_EXT_MAP[fmt]
     out_path = root / "build" / ".cache" / "rendered" / f"{doc_id}.{ext}"
     return {
         "doc_id": doc_id,
@@ -265,14 +318,8 @@ def create_server() -> Any:
             str,
             Field(description="Registered template document id — see `list_docs`."),
         ],
-        fmt: Annotated[
-            str,
-            Field(description="Output format: one of `latex`, `markdown`, `json`, `text`."),
-        ] = "latex",
-        mode: Annotated[
-            str,
-            Field(description="Render mode: one of `draft`, `submission`, `camera-ready`."),
-        ] = "draft",
+        fmt: _RenderFormat = "latex",
+        mode: _RenderMode = "draft",
     ) -> dict[str, Any]:
         """Render a registered template-driven document to a file on disk.
 
