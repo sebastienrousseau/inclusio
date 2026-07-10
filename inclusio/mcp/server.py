@@ -25,7 +25,7 @@ import json
 import os
 import sys
 from pathlib import Path
-from typing import Any
+from typing import Annotated, Any
 
 # FastMCP is an optional dependency — only required when the MCP server
 # is actually run. Import lazily so `pip install inclusio` works
@@ -34,9 +34,11 @@ from typing import Any
 try:
     from mcp.server.fastmcp import FastMCP
     from mcp.types import ToolAnnotations
+    from pydantic import Field
 except ImportError:  # pragma: no cover - exercised by test_mcp_optional_import
     FastMCP = None  # type: ignore[assignment]
     ToolAnnotations = None  # type: ignore[assignment]
+    Field = None  # type: ignore[assignment]
 
 from inclusio.cli import audit as audit_mod
 from inclusio.cli import build as build_mod
@@ -215,7 +217,26 @@ def create_server() -> Any:
         return _list_docs_impl()
 
     @app.tool(title="Audit PDF accessibility (veraPDF)", annotations=_FS_READ)
-    def audit_pdf(target: str = "", strict: bool = False) -> dict[str, Any]:
+    def audit_pdf(
+        target: Annotated[
+            str,
+            Field(
+                description=(
+                    "PDF file path or directory to audit; defaults to "
+                    "`build/` under INCLUSIO_CONTENT_DIR."
+                )
+            ),
+        ] = "",
+        strict: Annotated[
+            bool,
+            Field(
+                description=(
+                    "When true, every blocking-flavour FAIL is surfaced as "
+                    "`blocking_failure: true` in the response."
+                )
+            ),
+        ] = False,
+    ) -> dict[str, Any]:
         """Audit built PDFs for accessibility conformance with veraPDF.
 
         Use this to check whether a rendered PDF meets PDF/UA-2, WTPDF, and
@@ -239,7 +260,20 @@ def create_server() -> Any:
         return _audit_pdf_impl(target, strict)
 
     @app.tool(title="Render document to a file", annotations=_WRITE)
-    def render(doc_id: str, fmt: str = "latex", mode: str = "draft") -> dict[str, Any]:
+    def render(
+        doc_id: Annotated[
+            str,
+            Field(description="Registered template document id — see `list_docs`."),
+        ],
+        fmt: Annotated[
+            str,
+            Field(description="Output format: one of `latex`, `markdown`, `json`, `text`."),
+        ] = "latex",
+        mode: Annotated[
+            str,
+            Field(description="Render mode: one of `draft`, `submission`, `camera-ready`."),
+        ] = "draft",
+    ) -> dict[str, Any]:
         """Render a registered template-driven document to a file on disk.
 
         Use this to materialise a document's source (LaTeX, Markdown, JSON,
