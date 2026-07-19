@@ -79,6 +79,22 @@ BUILD_DIR = CONTENT_ROOT / "build"
 CACHE_DIR = BUILD_DIR / ".cache"
 RENDERED_DIR = CACHE_DIR / "rendered"
 JOBS_DIR = CONTENT_ROOT / "data" / "jobs"
+
+# ARTEFACT_PREFIX: optional sub-path under build/ for final artefacts (PDFs
+# under jobs/, cvs/, papers/, patents/, faqs/, guides/). Default empty keeps
+# the historic `build/<domain>/` layout unchanged. A content repo shared by
+# multiple people can set INCLUSIO_ARTEFACT_PREFIX=people/<name> so each
+# person's artefacts land under `build/people/<name>/<domain>/`. The cache
+# (build/.cache) is deliberately NOT prefixed — it stays shared.
+ARTEFACT_PREFIX = os.environ.get("INCLUSIO_ARTEFACT_PREFIX", "").strip("/")
+
+
+def _artefact_base():
+    """Return the base dir for final artefacts, honouring ARTEFACT_PREFIX.
+
+    Computed at call time so it tracks any BUILD_DIR rebind from
+    ``--content-dir`` (see ``_resolve_content_paths``)."""
+    return BUILD_DIR / ARTEFACT_PREFIX if ARTEFACT_PREFIX else BUILD_DIR
 TAILORED_DIR = CONTENT_ROOT / "data" / "tailored"
 
 
@@ -534,7 +550,7 @@ def build_document(doc_id, doc_config, mode, meta, force=False):
     build_dir = CACHE_DIR / "intermediates" / doc_id
     build_dir.mkdir(parents=True, exist_ok=True)
     subdir = _artifact_subdir(doc_id, doc_config)
-    artifact_dir = BUILD_DIR / subdir
+    artifact_dir = _artefact_base() / subdir
     artifact_dir.mkdir(parents=True, exist_ok=True)
 
     # Remove stale PDF before compilation to prevent copying an old
@@ -967,7 +983,7 @@ def cmd_provenance(args, meta):
     # mirroring how cmd_build resolves outputs.
     artefact_subdir = _artifact_subdir(args.doc, doc)
     pdf_stem = Path(src_rel).stem
-    pdf_path = BUILD_DIR / artefact_subdir / f"{pdf_stem}.pdf"
+    pdf_path = _artefact_base() / artefact_subdir / f"{pdf_stem}.pdf"
     if not pdf_path.exists():
         print(
             f"ERROR: {pdf_path} not found. Run `make publish` (or "
