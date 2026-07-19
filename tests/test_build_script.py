@@ -1938,6 +1938,24 @@ class TestArtifactSubdir:
         assert build._artifact_subdir("my-cv", config) == "jobs/2026-06-Globex"
 
 
+# ── _artefact_base (INCLUSIO_ARTEFACT_PREFIX) ────────────────────────────
+
+
+class TestArtefactBase:
+    def test_default_no_prefix(self, monkeypatch, tmp_path):
+        """With no prefix, artefacts stay at build/<domain>/ (historic layout)."""
+        monkeypatch.setattr(build, "BUILD_DIR", tmp_path / "build")
+        monkeypatch.setattr(build, "ARTEFACT_PREFIX", "")
+        assert build._artefact_base() == tmp_path / "build"
+
+    def test_prefix_namespaces_artefacts(self, monkeypatch, tmp_path):
+        """A prefix routes artefacts under build/<prefix>/<domain>/ without
+        moving the shared cache (build/.cache stays put)."""
+        monkeypatch.setattr(build, "BUILD_DIR", tmp_path / "build")
+        monkeypatch.setattr(build, "ARTEFACT_PREFIX", "people/sebastien-rousseau")
+        assert build._artefact_base() == tmp_path / "build" / "people" / "sebastien-rousseau"
+
+
 class TestExpandAtsPairs:
     def _base_meta(self):
         return {
