@@ -32,6 +32,7 @@
 - [Quick Start](#quick-start) — first tagged PDF in 60 seconds
 - [Features](#features) — what the engine ships
 - [Usage](#usage) — common Python + CLI recipes
+- [Tools](#tools) — the MCP tool and resource surface
 - [Architecture](#architecture) — the engine's package layout
 - [Examples](#examples) — six runnable scenarios
 - [Documentation](#documentation) — quickstart, tutorials, reference
@@ -203,6 +204,23 @@ inclusio provenance --doc cv \
   --key  /path/to/key.pem \
   --output build/cv.c2pa.pdf
 ```
+
+---
+
+## Tools
+
+The `inclusio-mcp` server exposes four MCP tools:
+
+- `list_docs` — Enumerate documents registered in the content tree
+- `doc_count` — Quick count of available documents
+- `render` — Build a tagged, conformant PDF (and other formats) for a document
+- `audit_pdf` — Accessibility audit of a PDF (veraPDF)
+
+Plus three read-only resources:
+
+- `inclusio://meta` — Project manifest (`meta.yaml`)
+- `inclusio://audit/latest` — Latest audit report
+- `inclusio://version` — Engine version card
 
 ---
 
