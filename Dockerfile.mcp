@@ -12,7 +12,7 @@
 # need those system binaries present; see the root Dockerfile for the full
 # LaTeX build environment.
 
-FROM python:3.12-slim AS builder
+FROM python:3.14-slim AS builder
 
 WORKDIR /build
 
@@ -28,7 +28,7 @@ RUN python -m venv /opt/venv \
     && /opt/venv/bin/pip install '.[mcp]'
 
 
-FROM python:3.12-slim
+FROM python:3.14-slim
 
 LABEL org.opencontainers.image.title="inclusio-mcp" \
       org.opencontainers.image.description="Model Context Protocol server for the Inclusio accessibility-first publishing engine." \
