@@ -177,6 +177,82 @@ def _doc_count_impl() -> int:
     return len(_load_meta().get("documents") or {})
 
 
+# Known inclusio document families and a one-line focus note per family.
+# Anything outside this set falls back to a generic note in
+# ``_generate_accessible_template_wizard_impl`` — both branches are
+# exercised by the test suite so the wizard body stays covered.
+_WIZARD_DOC_NOTES: dict[str, str] = {
+    "cv": "a curriculum vitae / résumé (a pub-cv-class document)",
+    "resume": "a curriculum vitae / résumé (a pub-cv-class document)",
+    "paper": "an academic paper (a pub-paper-class document)",
+    "report": "a technical report",
+    "letter": "a cover letter",
+}
+
+
+def _generate_accessible_template_wizard_impl(document_type: str = "cv") -> str:
+    """Build the accessible-template wizard guidance string.
+
+    Extracted from the FastMCP-decorated closure so tests can drive both
+    the known-``document_type`` and fallback branches directly (the SDK
+    dispatch path isn't traced by coverage).
+    """
+    kind = document_type.strip().lower()
+    if kind in _WIZARD_DOC_NOTES:
+        focus = _WIZARD_DOC_NOTES[kind]
+    else:
+        focus = f"a '{document_type}' document"
+    return (
+        f"You are helping the user create {focus} with inclusio, a "
+        "LaTeX-first accessible-publishing engine. inclusio renders "
+        "registered templates and audits the resulting PDFs for "
+        "PDF/UA-2, WTPDF, and PDF/A-4f conformance; it does not design "
+        "documents from scratch, so work from the templates the "
+        "repository already registers.\n\n"
+        "Follow this tool order — do not skip steps:\n\n"
+        "1. Call `list_docs` first. It enumerates every document "
+        "registered in data/meta.yaml with its id, class, source path, "
+        "and any pdf_a flag. Pick the doc_id whose class matches "
+        f"{focus}; if none fits, tell the user which classes exist "
+        "rather than inventing one. (`doc_count` is a cheaper "
+        "connectivity probe when you only need to confirm the manifest "
+        "loads.)\n\n"
+        "2. Call `render` with that doc_id to materialise the source "
+        "into build/.cache/rendered/. Use fmt='latex' for the "
+        "accessible print pipeline (the LaTeX toolchain is what emits "
+        "tagged, PDF/UA-2 structure); markdown, json, and text formats "
+        "exist for other consumers. Choose mode='draft' while iterating "
+        "and 'submission' or 'camera-ready' for the final artifact. "
+        "`render` writes the rendered file but never mutates "
+        "data/meta.yaml.\n\n"
+        "3. After the PDF is compiled, call `audit_pdf` (pass "
+        "strict=True to surface any blocking-flavour FAIL as "
+        "blocking_failure). It shells out to veraPDF read-only and "
+        "reports conformance against PDF/UA-2, WTPDF, and PDF/A-4f. Do "
+        "not treat a document as accessible until this audit is clean; "
+        "read the raw report via the inclusio://audit/latest resource "
+        "if you need detail.\n\n"
+        "Accessible-template best practices to hold the source to, so "
+        "the audit passes rather than merely reporting failures:\n"
+        "- Tagged structure: every heading, paragraph, list, and table "
+        "carries a real structure tag so assistive tech can navigate it.\n"
+        "- Alt text: every figure, logo, or non-decorative image has a "
+        "concise text alternative; mark purely decorative art as "
+        "artifact.\n"
+        "- Reading order: the logical (tag) order matches the intended "
+        "reading order, independent of visual placement.\n"
+        "- Embedded fonts: all fonts are embedded and subsettable with "
+        "correct ToUnicode maps so text extracts and reads back "
+        "cleanly.\n"
+        "- High contrast: body and accent colours meet WCAG contrast "
+        "ratios; never encode meaning with colour alone.\n"
+        "- Document language and a descriptive title are set so screen "
+        "readers announce the right pronunciation and window title.\n\n"
+        "Report each step's result to the user and stop for their "
+        "confirmation before moving to the next tool."
+    )
+
+
 def _meta_resource_impl() -> str:
     """Return the raw text of data/meta.yaml."""
     meta_path = _content_root() / "data" / "meta.yaml"
@@ -385,6 +461,43 @@ def create_server() -> Any:
     def version_resource() -> str:
         """Return the engine version and MCP Server Card metadata."""
         return _version_resource_impl()
+
+    # ── Prompts ───────────────────────────────────────────────────────────
+
+    @app.prompt(title="Accessible-template wizard")
+    def generate_accessible_template_wizard(
+        document_type: Annotated[
+            str,
+            Field(
+                description=(
+                    "The kind of document to build — e.g. 'cv', 'paper', "
+                    "'report', 'letter'. Steers which registered class the "
+                    "wizard points the user toward; unknown values still get "
+                    "generic guidance."
+                )
+            ),
+        ] = "cv",
+    ) -> str:
+        """Guide the user through building an accessible document with inclusio.
+
+        Produces a step-by-step wizard that teaches the correct tool order —
+        ``list_docs`` to discover registered templates, ``render`` to
+        materialise a document's source, then ``audit_pdf`` to check PDF/UA-2,
+        WTPDF, and PDF/A-4f conformance — alongside accessible-template best
+        practices (tagged structure, alt text, reading order, embedded fonts,
+        high contrast, document language). Faithful to what inclusio actually
+        does: it renders registered LaTeX-first templates and audits PDFs; it
+        does not design documents from scratch.
+
+        Args:
+            document_type: the kind of document to build (e.g. `cv`, `paper`,
+                `report`, `letter`). Known kinds are steered toward the
+                matching registered class; any other value receives generic
+                guidance.
+
+        Returns the wizard guidance string for the requested document type.
+        """
+        return _generate_accessible_template_wizard_impl(document_type)
 
     return app
 

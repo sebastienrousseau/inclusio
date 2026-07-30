@@ -422,6 +422,85 @@ def test_audit_pdf_impl_with_pdfs_runs_audit(content_root, tmp_path, monkeypatch
     assert rep["blocking_failure"] is False
 
 
+# ── Prompt: generate_accessible_template_wizard ────────────────────────
+
+
+def test_create_server_registers_prompt(content_root):
+    """The accessible-template wizard prompt must be registered on the
+    configured server alongside the tools and resources."""
+    app = mcp_server.create_server()
+    prompts = app._prompt_manager.list_prompts()
+    names = {p.name for p in prompts}
+    assert "generate_accessible_template_wizard" in names
+    wizard = next(p for p in prompts if p.name == "generate_accessible_template_wizard")
+    # Registered with the matching title idiom.
+    assert wizard.title == "Accessible-template wizard"
+    # The document_type argument is optional (has a default).
+    arg = next(a for a in (wizard.arguments or []) if a.name == "document_type")
+    assert arg.required is False
+
+
+def test_prompt_renders_through_get_prompt(content_root):
+    """Drive the prompt through FastMCP's get_prompt surface (default arg)."""
+    import asyncio
+
+    app = mcp_server.create_server()
+    result = asyncio.run(app.get_prompt("generate_accessible_template_wizard", {}))
+    text = result.messages[0].content.text
+    assert "list_docs" in text
+    assert "render" in text
+    assert "audit_pdf" in text
+
+
+def test_prompt_impl_default_cv_branch():
+    """Default argument resolves to the known-`cv` branch and teaches the
+    full tool order plus PDF/UA-2 conformance."""
+    text = mcp_server._generate_accessible_template_wizard_impl()
+    # Known document type → the tailored pub-cv focus note.
+    assert "pub-cv" in text
+    assert "résumé" in text
+    # Tool order is taught in sequence.
+    assert "list_docs" in text
+    assert "render" in text
+    assert "audit_pdf" in text
+    # Conformance targets and accessible best practices are named.
+    assert "PDF/UA-2" in text
+    assert "WTPDF" in text
+    assert "PDF/A-4f" in text
+    assert "Alt text" in text
+    assert "Reading order" in text
+    assert "Embedded fonts" in text
+
+
+def test_prompt_impl_known_non_cv_branch():
+    """Another known document type still lands in the known branch with its
+    own tailored focus note (not the fallback)."""
+    text = mcp_server._generate_accessible_template_wizard_impl("paper")
+    assert "pub-paper" in text
+    assert "academic paper" in text
+    # Not the generic fallback wording.
+    assert "a 'paper' document" not in text
+
+
+def test_prompt_impl_unknown_type_fallback_branch():
+    """An unregistered document type takes the generic fallback branch,
+    echoing the caller's raw value rather than a canned class note."""
+    text = mcp_server._generate_accessible_template_wizard_impl("invoice")
+    assert "a 'invoice' document" in text
+    # Fallback still teaches the same tool order + conformance targets.
+    assert "list_docs" in text
+    assert "audit_pdf" in text
+    assert "PDF/UA-2" in text
+
+
+def test_prompt_impl_normalises_case_and_whitespace():
+    """`document_type` is matched case-insensitively and trimmed, so a
+    padded/upper variant of a known kind hits the known branch."""
+    text = mcp_server._generate_accessible_template_wizard_impl("  CV  ")
+    assert "pub-cv" in text
+    assert "a '  CV  ' document" not in text
+
+
 # ── Helpers ────────────────────────────────────────────────────────────
 
 
