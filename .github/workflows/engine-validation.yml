@@ -37,7 +37,10 @@ jobs:
       - name: Install ruff
         run: |
           uv venv
-          uv pip install "ruff>=0.6.0"
+          # Pinned exactly (not >=) so a new ruff release can't reformat the
+          # tree out from under a green PR. Bump deliberately via Dependabot /
+          # a manual PR that also runs `ruff format`.
+          uv pip install "ruff==0.16.0"
           echo "$PWD/.venv/bin" >> "$GITHUB_PATH"
 
       - name: ruff check
