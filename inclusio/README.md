@@ -9,12 +9,12 @@ without shelling out to the CLI.
 
 ```python
 # Programmatic access to every major surface.
-from inclusio.cli      import audit, build, render
-from inclusio.judge    import ats, citations, jd_fit
-from inclusio.emit     import pandoc as emit       # HTML / JATS / EPUB
-from inclusio.provenance import c2pa, pades        # signing layers
-from inclusio.mcp      import server as mcp        # FastMCP factory
-from inclusio.tools    import overlay              # CV/paper/patent overlays
+from inclusio.cli import audit, build, render
+from inclusio.judge import ats, citations, jd_fit
+from inclusio.emit import pandoc as emit  # HTML / JATS / EPUB
+from inclusio.provenance import c2pa, pades  # signing layers
+from inclusio.mcp import server as mcp  # FastMCP factory
+from inclusio.tools import overlay  # CV/paper/patent overlays
 ```
 
 ## Layout

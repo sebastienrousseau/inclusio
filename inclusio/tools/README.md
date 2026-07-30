@@ -26,20 +26,20 @@ python -m inclusio.tools.stamp_pdfs build/ --watermark DRAFT
 from inclusio.tools.overlay import merge
 
 base = {
-    "name":     "Jane Doe",
-    "role":     "Staff Engineer",
-    "summary":  "Distributed systems with 12 years of production experience.",
-    "skills":   ["Python", "Go", "Kubernetes", "PostgreSQL"],
+    "name": "Jane Doe",
+    "role": "Staff Engineer",
+    "summary": "Distributed systems with 12 years of production experience.",
+    "skills": ["Python", "Go", "Kubernetes", "PostgreSQL"],
 }
 overlay = {
-    "role":     "Senior Platform Engineer",          # overrides
-    "skills":   ["Python", "Go", "Rust", "OpenTelemetry"],  # replaces
-    "context":  "Application to Acme Platform team", # adds
-    "summary":  None,                                # deletes
+    "role": "Senior Platform Engineer",  # overrides
+    "skills": ["Python", "Go", "Rust", "OpenTelemetry"],  # replaces
+    "context": "Application to Acme Platform team",  # adds
+    "summary": None,  # deletes
 }
 
 variant = merge(base, overlay)
-assert "summary" not in variant            # None in overlay → key deleted
+assert "summary" not in variant  # None in overlay → key deleted
 assert variant["role"] == "Senior Platform Engineer"
 assert variant["skills"] == ["Python", "Go", "Rust", "OpenTelemetry"]
 ```

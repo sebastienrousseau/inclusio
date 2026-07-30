@@ -82,7 +82,7 @@ jobs:
       - name: Install test dependencies
         run: |
           uv venv
-          uv pip install pyyaml jinja2 pikepdf pytest pytest-cov pytest-benchmark "interrogate>=1.7" sphinx myst-parser furo "mcp[cli]>=1.27.0"
+          uv pip install pyyaml jinja2 pikepdf pytest pytest-cov pytest-benchmark "interrogate>=1.7" sphinx myst-parser furo "mcp[cli]>=1.27.0,<2"
           echo "$PWD/.venv/bin" >> "$GITHUB_PATH"
 
       - name: Show Python interpreter
