@@ -22,6 +22,8 @@ from pathlib import Path
 
 import pytest
 
+from inclusio.mcp._mcp_compat import result_content, result_structured
+
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from inclusio.mcp import server as mcp_server
@@ -256,7 +258,9 @@ def test_render_tool_schema_exposes_format_and_mode_enums(content_root):
 
     tools = asyncio.run(app.list_tools())
     render = next(t for t in tools if t.name == "render")
-    props = render.inputSchema["properties"]
+    # `inputSchema` was renamed `input_schema` in mcp 2.x.
+    schema = getattr(render, "input_schema", None) or render.inputSchema
+    props = schema["properties"]
     assert props["fmt"]["enum"] == ["json", "latex", "markdown", "text"]
     assert props["mode"]["enum"] == ["camera-ready", "draft", "submission"]
     # Defaults preserved through the alias swap.
@@ -511,17 +515,15 @@ def _extract_structured(call_tool_result):
     the dict is returned directly. Older FastMCP returns just
     list[Content]; fall back to parsing the first text payload as JSON.
     """
-    if isinstance(call_tool_result, tuple) and len(call_tool_result) >= 2:
-        payload = call_tool_result[1]
+    # mcp 2.x returns a CallToolResult object, which is not subscriptable;
+    # the compat layer normalises both shapes.
+    payload = result_structured(call_tool_result)
+    if payload is not None:
         if isinstance(payload, dict) and set(payload.keys()) == {"result"}:
             return payload["result"]
         return payload
     # Fallback: parse JSON from the first text content.
-    items = (
-        call_tool_result
-        if isinstance(call_tool_result, list)
-        else (call_tool_result[0] if isinstance(call_tool_result, tuple) else [])
-    )
+    items = result_content(call_tool_result) or []
     for item in items:
         text = getattr(item, "text", None)
         if text:

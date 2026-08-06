@@ -32,9 +32,15 @@ from typing import Annotated, Any
 # without it; clear error if a user runs `inclusio-mcp` without installing
 # the `mcp` extra.
 try:
-    from mcp.server.fastmcp import FastMCP
+    # mcp 2.0 removed `mcp.server.fastmcp` and renamed FastMCP to
+    # MCPServer. `_mcp_compat` resolves whichever major is installed, so
+    # the declared `mcp >=1.27.0,<3` range is actually honoured — without
+    # it a 2.x install would land in the ImportError branch below and
+    # silently disable the server instead of failing loudly.
     from mcp.types import ToolAnnotations
     from pydantic import Field
+
+    from inclusio.mcp._mcp_compat import MCPServer as FastMCP
 except ImportError:  # pragma: no cover - exercised by test_mcp_optional_import
     FastMCP = None  # type: ignore[assignment]
     ToolAnnotations = None  # type: ignore[assignment]
