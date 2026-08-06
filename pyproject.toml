@@ -63,7 +63,7 @@ dev = [
 mcp = [
     # Capped <2: mcp 2.0 removed mcp.server.fastmcp (the FastMCP import the
     # server uses), so an uncapped install breaks the MCP server + Inspector.
-    "mcp[cli]>=1.27.0,<2",
+    "mcp[cli]>=1.27.0,<3",
 ]
 # Sprint 8.5 (#11 / F7 closure): PAdES eIDAS-aligned PDF signing
 # via pyhanko. Optional because pyhanko pulls in a small dependency
