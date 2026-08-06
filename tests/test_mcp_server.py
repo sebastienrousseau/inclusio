@@ -22,8 +22,6 @@ from pathlib import Path
 
 import pytest
 
-from inclusio.mcp._mcp_compat import result_content, result_structured
-
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from inclusio.mcp import server as mcp_server
@@ -176,15 +174,11 @@ def test_render_tool_invokes_impl(content_root, monkeypatch):
     rendered_dir = content_root / "build" / ".cache" / "rendered"
     rendered_dir.mkdir(parents=True)
     (rendered_dir / "cv.tex").write_text("\\documentclass{pub-cv}")
-    monkeypatch.setattr(
-        mcp_server.render_mod, "render_document", lambda *a, **k: None
-    )
+    monkeypatch.setattr(mcp_server.render_mod, "render_document", lambda *a, **k: None)
     app = mcp_server.create_server()
     import asyncio
 
-    result = asyncio.run(
-        app.call_tool("render", {"doc_id": "cv", "fmt": "latex", "mode": "draft"})
-    )
+    result = asyncio.run(app.call_tool("render", {"doc_id": "cv", "fmt": "latex", "mode": "draft"}))
     rep = _extract_structured(result)
     assert rep["doc_id"] == "cv"
     assert rep["format"] == "latex"
@@ -330,9 +324,7 @@ def test_list_docs_impl_coerces_non_dict_config(tmp_path, monkeypatch):
     with the title defaulting to the doc id."""
     (tmp_path / "data").mkdir()
     (tmp_path / "data" / "meta.yaml").write_text(
-        "documents:\n"
-        "  broken: just-a-string\n"
-        "  nulled:\n",
+        "documents:\n  broken: just-a-string\n  nulled:\n",
         encoding="utf-8",
     )
     monkeypatch.setenv("INCLUSIO_CONTENT_DIR", str(tmp_path))
@@ -515,6 +507,11 @@ def _extract_structured(call_tool_result):
     the dict is returned directly. Older FastMCP returns just
     list[Content]; fall back to parsing the first text payload as JSON.
     """
+    # Imported here, not at module scope: the compat layer pulls in
+    # `mcp`, which is an optional extra, and a module-level import would
+    # break collection before the FastMCP skip guard below can apply.
+    from inclusio.mcp._mcp_compat import result_content, result_structured
+
     # mcp 2.x returns a CallToolResult object, which is not subscriptable;
     # the compat layer normalises both shapes.
     payload = result_structured(call_tool_result)

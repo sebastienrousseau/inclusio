@@ -89,9 +89,7 @@ def _resolve_prompts() -> tuple[Any, Any]:
     import importlib
 
     path = (
-        "mcp.server.mcpserver.prompts.base"
-        if MCP_MAJOR >= 2
-        else "mcp.server.fastmcp.prompts.base"
+        "mcp.server.mcpserver.prompts.base" if MCP_MAJOR >= 2 else "mcp.server.fastmcp.prompts.base"
     )
     base = importlib.import_module(path)
     return base.UserMessage, base.AssistantMessage
