@@ -339,15 +339,23 @@ def create_server() -> Any:
     def list_docs() -> list[dict[str, Any]]:
         """List every document registered in data/meta.yaml with its metadata.
 
-        Use this first to discover the ``doc_id`` values and document
-        classes available before calling ``render`` or ``audit_pdf``. For
-        just the document count (a connectivity probe) call ``doc_count``
-        instead; to read the raw manifest text use the ``inclusio://meta``
-        resource. Reads ``data/meta.yaml`` under ``INCLUSIO_CONTENT_DIR``
-        (or the packaged content root); it writes nothing.
+        Purpose:
+        Enumerates all registered documents, returning their identifiers, classes, source paths,
+        titles, and PDF/A flags.
 
-        Returns one dict per document with id, class, src, title, and
-        any `pdf_a` / `note` flags. Empty list when no manifest exists.
+        When to use:
+        - When discovering valid `doc_id` values before calling `render` or `audit_pdf`.
+        - When checking document classes (e.g. CV, paper, report, letter) registered in the workspace.
+
+        When NOT to use:
+        - Do NOT use if you only need a quick connectivity probe; use `doc_count` instead.
+        - Do NOT use for raw YAML content; use the `inclusio://meta` resource instead.
+
+        Behavioral transparency:
+        Pure, read-only filesystem inspection. Reads `data/meta.yaml` without mutating any state.
+
+        Returns:
+        List of document specification dictionaries. Empty list when no manifest exists.
         """
         return _list_docs_impl()
 
@@ -374,23 +382,23 @@ def create_server() -> Any:
     ) -> dict[str, Any]:
         """Audit built PDFs for accessibility conformance with veraPDF.
 
-        Use this to check whether a rendered PDF meets PDF/UA-2, WTPDF, and
-        PDF/A-4f before publishing; it shells out to ``verapdf`` read-only
-        and never modifies the PDF or the manifest. To produce a document's
-        source first call ``render``; to see which documents exist call
-        ``list_docs``. This inspects existing PDFs only — it does not build
-        them.
+        Purpose:
+        Verifies whether built PDFs satisfy PDF/UA-2, WTPDF, and PDF/A-4f triple-conformance
+        accessibility and preservation standards using veraPDF.
 
-        Args:
-            target: PDF path or directory. Defaults to `build/` under
-                INCLUSIO_CONTENT_DIR.
-            strict: When True, every blocking-flavour FAIL is surfaced
-                in the response (`blocking_failure: True`); the caller
-                decides whether to treat this as an error.
+        When to use:
+        - When validating accessibility compliance of compiled PDF documents prior to publication.
+        - When auditing batch PDFs under `build/` for regulatory standards (EAA, WCAG 2.2 AA).
 
-        Returns the audit report dict (summary, by_pdf, by_flavour).
-        Requires `verapdf` on PATH; the report contains
-        `verapdf_present: False` when it is not.
+        When NOT to use:
+        - Do NOT use to generate or compile documents; use `render` and the build pipeline first.
+        - Do NOT use if veraPDF is not installed or available on PATH.
+
+        Behavioral transparency:
+        Read-only audit. Shells out to veraPDF without modifying any PDF or source files.
+
+        Returns:
+        Audit report dictionary detailing summary, per-PDF results, and per-flavour passes/fails.
         """
         return _audit_pdf_impl(target, strict)
 
@@ -405,20 +413,24 @@ def create_server() -> Any:
     ) -> dict[str, Any]:
         """Render a registered template-driven document to a file on disk.
 
-        Use this to materialise a document's source (LaTeX, Markdown, JSON,
-        or text) into ``build/.cache/rendered/`` before compiling or
-        auditing it. This writes the rendered output file but never mutates
-        ``data/meta.yaml``. Discover valid ``doc_id`` values with
-        ``list_docs`` first; audit the resulting PDF afterwards with
-        ``audit_pdf``. This is the only write tool on this server — the
-        others are read-only.
+        Purpose:
+        Materializes document templates into concrete source files (LaTeX, Markdown, JSON, text)
+        under `build/.cache/rendered/` applying the specified build mode.
 
-        Args:
-            doc_id: registered template id (see `list_docs`).
-            fmt: one of `latex`, `markdown`, `json`, `text`.
-            mode: one of `draft`, `submission`, `camera-ready`.
+        When to use:
+        - When generating LaTeX source for PDF compilation and accessibility tagging.
+        - When generating Markdown or text representations for review or downstream processing.
 
-        Returns `{"doc_id": …, "format": …, "output_path": …, "bytes": int}`.
+        When NOT to use:
+        - Do NOT use without discovering valid `doc_id` values first using `list_docs`.
+        - Do NOT use to compile PDFs directly; this tool produces rendered sources for compilation.
+
+        Behavioral transparency:
+        Non-destructive, idempotent cache writer. Regenerates files under `build/.cache/rendered/`
+        without modifying template sources or `data/meta.yaml`.
+
+        Returns:
+        Dictionary containing doc_id, format, build mode, output_path, and byte size.
         """
         return _render_impl(doc_id, fmt, mode)
 
@@ -426,13 +438,18 @@ def create_server() -> Any:
     def doc_count() -> int:
         """Count the documents registered in data/meta.yaml.
 
-        Use this as a cheap connectivity/health probe to confirm the server
-        sees a valid manifest without transferring the full document list.
-        When you need each document's id, class, and flags, call
-        ``list_docs`` instead.
+        Purpose:
+        Fast, lightweight health and connectivity probe that counts registered documents in the manifest.
 
-        Cheap probe for clients that just want to verify connectivity
-        and that the engine sees a valid manifest.
+        When to use:
+        - When verifying server availability and project manifest readability with minimal payload size.
+        - When performing initial connectivity checks before deeper inspection.
+
+        When NOT to use:
+        - Do NOT use when full metadata (doc_id, class, title) is needed; use `list_docs` instead.
+
+        Behavioral transparency:
+        Read-only, instantaneous manifest header check.
         """
         return _doc_count_impl()
 
