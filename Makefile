@@ -4,7 +4,7 @@
 
 .DEFAULT_GOAL := help
 
-PYTHON := $(shell command -v mise >/dev/null 2>&1 && mise which python3 2>/dev/null || echo python3)
+PYTHON := $(shell [ -x .venv/bin/python ] && echo .venv/bin/python || (command -v mise >/dev/null 2>&1 && mise which python3 2>/dev/null || echo python3))
 BUILD  := $(PYTHON) -m inclusio.cli.build
 
 # External content directory (set via INCLUSIO_CONTENT_DIR env var)
@@ -18,7 +18,13 @@ endif
 # Build Targets
 ###############################################################################
 
-.PHONY: all draft submission final publish publish-jobs assets lint fix render render-md blog tailor sitemap audit audit-strict docs setup clean clean-build distclean test coverage benchmark docstrings validate validate-private list help
+.PHONY: all draft submission final publish publish-jobs assets lint fix render render-md blog tailor sitemap audit audit-strict docs setup clean clean-build distclean test coverage benchmark docstrings validate validate-private list help demo
+
+VHS ?= $(shell which vhs 2>/dev/null || echo /opt/homebrew/bin/vhs)
+
+demo: ## Generate terminal demo animation gif using vhs
+	$(VHS) .github/demo.tape
+
 
 all: draft ## Build all documents in draft mode (default)
 

@@ -28,7 +28,12 @@
   <a href="https://github.com/sebastienrousseau/inclusio/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-Apache_2.0_OR_MIT-blue?style=for-the-badge" alt="Apache-2.0 OR MIT licence" /></a>
 </p>
 
+<p align="center">
+  <img src=".github/demo.gif" alt="Inclusio Demo" width="100%" />
+</p>
+
 ---
+
 
 ## Contents
 
