@@ -26,7 +26,7 @@ authors:
     orcid: "https://orcid.org/0009-0005-1434-284X"
 repository-code: "https://github.com/sebastienrousseau/inclusio"
 url: "https://github.com/sebastienrousseau/inclusio"
-version: "0.0.7"
+version: "0.0.8"
 date-released: "2026-10-03"
 license: "Apache-2.0 OR MIT"
 keywords:
