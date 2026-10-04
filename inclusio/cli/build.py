@@ -95,6 +95,8 @@ def _artefact_base():
     Computed at call time so it tracks any BUILD_DIR rebind from
     ``--content-dir`` (see ``_resolve_content_paths``)."""
     return BUILD_DIR / ARTEFACT_PREFIX if ARTEFACT_PREFIX else BUILD_DIR
+
+
 TAILORED_DIR = CONTENT_ROOT / "data" / "tailored"
 
 

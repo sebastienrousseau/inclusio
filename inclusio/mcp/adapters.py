@@ -83,8 +83,7 @@ def as_langchain_tools() -> list[Any]:
         from langchain_core.tools import StructuredTool, ToolException
     except ImportError as exc:
         raise ImportError(
-            "LangChain is not installed. Install it with "
-            "`pip install 'inclusio[langchain]'`."
+            "LangChain is not installed. Install it with `pip install 'inclusio[langchain]'`."
         ) from exc
 
     return [
@@ -113,8 +112,7 @@ def as_crewai_tools() -> list[Any]:
         from crewai.tools import CrewStructuredTool
     except ImportError as exc:
         raise ImportError(
-            "CrewAI is not installed. Install it with "
-            "`pip install 'inclusio[crewai]'`."
+            "CrewAI is not installed. Install it with `pip install 'inclusio[crewai]'`."
         ) from exc
 
     return [
@@ -143,8 +141,7 @@ def as_llamaindex_tools() -> list[Any]:
         from llama_index.core.tools import FunctionTool
     except ImportError as exc:
         raise ImportError(
-            "LlamaIndex is not installed. Install it with "
-            "`pip install 'inclusio[llamaindex]'`."
+            "LlamaIndex is not installed. Install it with `pip install 'inclusio[llamaindex]'`."
         ) from exc
 
     return [
