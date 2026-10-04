@@ -1,3 +1,6 @@
+<!-- SPDX-FileCopyrightText: 2026 Sebastien Rousseau <sebastian.rousseau@gmail.com> -->
+<!-- SPDX-License-Identifier: Apache-2.0 OR MIT -->
+
 <p align="center">
   <img src="https://cloudcdn.pro/inclusio/v1/logos/inclusio.svg" alt="Inclusio logo" width="128" />
 </p>
@@ -19,12 +22,18 @@
 <p align="center">
   <a href="https://github.com/sebastienrousseau/inclusio/actions/workflows/engine-validation.yml"><img src="https://img.shields.io/github/actions/workflow/status/sebastienrousseau/inclusio/engine-validation.yml?style=for-the-badge&logo=github&label=CI" alt="Engine Validation" /></a>
   <a href="https://github.com/sebastienrousseau/inclusio/actions/workflows/verapdf.yml"><img src="https://img.shields.io/github/actions/workflow/status/sebastienrousseau/inclusio/verapdf.yml?style=for-the-badge&logo=github&label=veraPDF" alt="veraPDF Audit" /></a>
+  <a href="https://glama.ai/mcp/servers/sebastienrousseau/inclusio-mcp"><img src="https://glama.ai/mcp/servers/sebastienrousseau/inclusio-mcp/badges/score.svg" alt="Glama MCP server score" /></a>
   <a href="https://github.com/sebastienrousseau/inclusio"><img src="https://img.shields.io/badge/Python-%3E%3D3.11-3776AB?style=for-the-badge&logo=python&logoColor=white" alt="Python &gt;= 3.11" /></a>
   <a href="https://github.com/sebastienrousseau/inclusio"><img src="https://img.shields.io/badge/PDF%2FUA--2%20%7C%20WTPDF%20%7C%20PDF%2FA--4f-blue?style=for-the-badge" alt="PDF/UA-2 · WTPDF · PDF/A-4f" /></a>
-  <a href="https://github.com/sebastienrousseau/inclusio/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-MIT-black?style=for-the-badge" alt="MIT licence" /></a>
+  <a href="https://github.com/sebastienrousseau/inclusio/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-Apache_2.0_OR_MIT-blue?style=for-the-badge" alt="Apache-2.0 OR MIT licence" /></a>
+</p>
+
+<p align="center">
+  <img src=".github/demo.gif" alt="Inclusio Demo" width="100%" />
 </p>
 
 ---
+
 
 ## Contents
 
@@ -340,4 +349,9 @@ Install the MCP server with `pip install 'inclusio[mcp]'` (the `mcp` extra pulls
 
 ## License
 
-[MIT](./LICENSE). © 2026 Sebastien Rousseau.
+Licensed under either of:
+
+- [Apache License, Version 2.0](LICENSE-APACHE)
+- [MIT License](LICENSE-MIT)
+
+at your option. © 2026 Sebastien Rousseau.

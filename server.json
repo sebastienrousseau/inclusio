@@ -6,12 +6,12 @@
     "url": "https://github.com/sebastienrousseau/inclusio",
     "source": "github"
   },
-  "version": "0.0.6",
+  "version": "0.0.7",
   "packages": [
     {
       "registryType": "pypi",
       "identifier": "inclusio",
-      "version": "0.0.6",
+      "version": "0.0.7",
       "transport": {
         "type": "stdio"
       }

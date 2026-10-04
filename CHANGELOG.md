@@ -5,6 +5,27 @@ are documented here. Format based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and
 [Conventional Commits](https://www.conventionalcommits.org/).
 
+## [0.0.7] - 2026-10-03
+
+### Added
+
+- Agent framework adapters in `inclusio.mcp.adapters` exposing all MCP tools
+  (`list_docs`, `audit_pdf`, `render`, `doc_count`) to LangChain, CrewAI,
+  and LlamaIndex via optional extras (`inclusio[langchain]`,
+  `inclusio[crewai]`, `inclusio[llamaindex]`).
+- Structured Tool Definition Quality Score (TDQS) descriptions across all
+  MCP tools with explicit Purpose, When to use, When NOT to use, and
+  Behavioral transparency.
+- Dual licensing standard with full Apache-2.0 `LICENSE`, `LICENSE-APACHE`,
+  `LICENSE-MIT`, and `LICENSES/` tree.
+- Repository standards: `AGENTS.md`, `CODE_OF_CONDUCT.md`, and
+  `scripts/verify_versions.py`.
+
+### Changed
+
+- Updated `pyproject.toml` and `glama.json` license metadata to
+  `Apache-2.0 OR MIT`.
+
 ## [0.0.6] — 2026-07-02
 
 The **MCP-discoverability** cut. Registers `inclusio-mcp` with the
