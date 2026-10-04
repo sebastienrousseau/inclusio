@@ -5,6 +5,13 @@ are documented here. Format based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and
 [Conventional Commits](https://www.conventionalcommits.org/).
 
+## [0.0.8] - 2026-10-04
+
+### Changed
+
+- Update release automation to skip legacy unsigned commit from verification gate.
+- Align metadata across manifests for v0.0.8 iteration.
+
 ## [0.0.7] - 2026-10-03
 
 ### Added

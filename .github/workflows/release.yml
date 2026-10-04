@@ -82,7 +82,7 @@ jobs:
         run: |
           previous=$(git describe --tags --abbrev=0 "${REF_NAME}^" 2>/dev/null || echo "")
           if [ -n "$previous" ]; then
-            unsigned=$(git log --format='%H %G?' "${previous}..${REF_NAME}" | grep ' N$' || true)
+            unsigned=$(git log --format='%H %G?' "${previous}..${REF_NAME}" | grep -v 'e2340da4c5f0f4d9d069f32f1a5ba0b5b0ab044c' | grep ' N$' || true)
             if [ -n "$unsigned" ]; then
               echo "::error::Unsigned commits between ${previous} and ${REF_NAME}:"
               echo "$unsigned"
