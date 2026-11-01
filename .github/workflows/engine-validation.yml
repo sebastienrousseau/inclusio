@@ -133,6 +133,22 @@ jobs:
             grep -q "${id}" /tmp/euxis-doc-list.txt || { echo "Missing expected doc id: ${id}"; exit 1; }
           done
 
+  validate-all:
+    # Branch protection requires this check by name. It stands for every
+    # leg of the validate matrix, so adding or dropping a version never
+    # renames a required check.
+    name: Public Engine Checks (all)
+    if: always()
+    needs: validate
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions: {}
+    steps:
+      - name: Every leg of the matrix passed
+        env:
+          RESULT: ${{ needs.validate.result }}
+        run: test "$RESULT" = success
+
   signed-commits:
     name: Signed-commit gate (PR only)
     if: github.event_name == 'pull_request'
