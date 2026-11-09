@@ -31,7 +31,7 @@ jobs:
           python-version: '3.12'
 
       - name: Install TeX Live (with tagpdf)
-        uses: zauguin/install-texlive@6671d0c62046c7e349fe154d5208fe746b07e037  # v4.4.0
+        uses: zauguin/install-texlive@c9f3ea3d51b2e04d092c4f9d208a19542d5dabcf  # v4.5.0
         with:
           # scheme-full pulls in every package on the TL distribution
           # so the smoke test never trips over a missing dependency
@@ -48,7 +48,7 @@ jobs:
             latex-lab
 
       - name: Set up Java (veraPDF dep)
-        uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad  # v6.1.0
+        uses: actions/setup-java@77dd5b2ce225ea11469928ac317850245a74ae78  # v6.2.0
         with:
           distribution: temurin
           java-version: '17'
@@ -99,7 +99,7 @@ jobs:
           verapdf --version
 
       - name: Set up uv
-        uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e  # v10.3.2
+        uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2  # v10.3.3
         with:
           enable-cache: true
           cache-dependency-glob: pyproject.toml
