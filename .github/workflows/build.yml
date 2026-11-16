@@ -39,7 +39,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
 
       - name: Set up uv
-        uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e  # v10.3.2
+        uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2  # v10.3.3
         with:
           enable-cache: true
           cache-dependency-glob: pyproject.toml
@@ -58,7 +58,7 @@ jobs:
         # scheme-full matches verapdf.yml so pub-base.cls's full
         # dependency tree (tcolorbox, adjustbox, datetime2, ...) resolves.
         # The runner cache (~600 MB) makes repeat runs ~30 s.
-        uses: zauguin/install-texlive@6671d0c62046c7e349fe154d5208fe746b07e037  # v4.4.0
+        uses: zauguin/install-texlive@c9f3ea3d51b2e04d092c4f9d208a19542d5dabcf  # v4.5.0
         with:
           packages: >
             scheme-full
@@ -129,7 +129,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
 
       - name: Set up uv
-        uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e  # v10.3.2
+        uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2  # v10.3.3
         with:
           enable-cache: true
           cache-dependency-glob: pyproject.toml
